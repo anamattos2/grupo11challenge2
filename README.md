@@ -6,6 +6,8 @@ Artificial — Desafio 02, Grupo 11.
 
 ## Planejamento técnico
 
+- [Como contribuir: branches, commits, revisão e definição de pronto](CONTRIBUTING.md)
+- [Política de versionamento e preservação de pesquisa](docs/desenvolvimento/versionamento.md)
 - [Arquitetura inicial e responsabilidades](docs/arquitetura/arquitetura-inicial.md)
 - [Ambiente de desenvolvimento e organização do monorepositório](docs/desenvolvimento/ambiente.md)
 - [Experimentos RAG preservados](experiments/rag/README.md)
