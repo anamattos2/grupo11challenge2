@@ -1,0 +1,5 @@
+# Dependências opcionais da exportação; não pertencem ao runtime do produto.
+reportlab==4.4.5
+PyMuPDF==1.26.6
+pillow==13.0.0
+charset-normalizer==3.5.2
