@@ -7,6 +7,7 @@ Artificial — Desafio 02, Grupo 11.
 ## Planejamento técnico
 
 - [Escopo e requisitos do MVP](docs/definicao/escopo-requisitos.md)
+- [Stakeholders e personas de referência](docs/definicao/stakeholders-personas.md)
 - [Cenário, público, problema e Essential Question](docs/definicao/cenario-problema.md)
 - [Como contribuir: branches, commits, revisão e definição de pronto](CONTRIBUTING.md)
 - [Política de versionamento e preservação de pesquisa](docs/desenvolvimento/versionamento.md)
