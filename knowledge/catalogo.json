@@ -1,0 +1,549 @@
+{
+  "schema_version": 1,
+  "review_date": "2026-11-16",
+  "sources": [
+    {
+      "id": "F001",
+      "title": "A educação financeira para a gestão do orçamento pessoal e familiar",
+      "author": "Fernando Ramirez Rosal Marinho / UNITINS",
+      "year": 2021,
+      "origin": {
+        "description": "Fernando Ramirez Rosal Marinho / UNITINS",
+        "url": "https://www.unitins.br/RepositorioDigital/Publico/Home/VisualizarArquivo/368",
+        "evidence": "Capa e identificação bibliográfica nas duas primeiras páginas do PDF; URL é referência, não comprovação de igualdade binária."
+      },
+      "sha256": "de41591f35909bf8f37a634f376830d7a572f691a556d396a5602e0c9ba0d5f5",
+      "bytes": 1479885,
+      "format": "pdf",
+      "pages": 47,
+      "canonical_path": "fontes/A EDUCAÇÃO FINANCEIRA PARA A GESTÃO DO ORÇAMENTO  PESSOAL E FAMILIAR.pdf",
+      "aliases": [
+        "RAG/projeto-rag/docs/A EDUCAÇÃO FINANCEIRA PARA A GESTÃO DO ORÇAMENTO  PESSOAL E FAMILIAR.pdf",
+        "fontes/A EDUCAÇÃO FINANCEIRA PARA A GESTÃO DO ORÇAMENTO  PESSOAL E FAMILIAR.pdf",
+        "fontes/A EDUCAÇÃO FINANCEIRA PARA A GESTÃO DO ORÇAMENTO  PESSOAL E FAMILIAR.pdf"
+      ],
+      "status": "identificado",
+      "use_conditions": "Reprodução total ou parcial autorizada com citação da fonte; aviso na página física 3.",
+      "approved_for_ingestion": false
+    },
+    {
+      "id": "F002",
+      "title": "Contabilidade mental e finanças comportamentais: um estudo com colaboradores de uma instituição de ensino superior da cidade de Cruz Alta/RS",
+      "author": "Canto; Treter; Cavalli / RARA",
+      "year": 2017,
+      "origin": {
+        "description": "Canto; Treter; Cavalli / RARA",
+        "url": "https://doi.org/10.18361/2176-8366/rara.v9n3p139-162",
+        "evidence": "Capa e identificação bibliográfica nas duas primeiras páginas do PDF; URL é referência, não comprovação de igualdade binária."
+      },
+      "sha256": "199b5b1ba3dd386bd3c21ef18ed245deaf028e85aee432d9f508a213030fbd0a",
+      "bytes": 1038116,
+      "format": "pdf",
+      "pages": 24,
+      "canonical_path": "fontes/admin,+8+-ok+1997-9018-1-CE.pdf",
+      "aliases": [
+        "RAG/projeto-rag/docs/CONTABILIDADE MENTAL E FINANÇAS COMPORTAMENTAIS.pdf",
+        "fontes/admin,+8+-ok+1997-9018-1-CE.pdf"
+      ],
+      "status": "identificado",
+      "use_conditions": "Licença ou autorização de reutilização não identificada; requer verificação com a origem.",
+      "approved_for_ingestion": false
+    },
+    {
+      "id": "F003",
+      "title": "Finanças pessoais: um estudo da gestão financeira pessoal dos profissionais contábeis da cidade de Salvador - BA",
+      "author": "Silva; Sena / Contabilometria",
+      "year": 2023,
+      "origin": {
+        "description": "Silva; Sena / Contabilometria",
+        "url": "https://revistas.fucamp.edu.br/index.php/contabilometria/article/download/2632/1671",
+        "evidence": "Capa e identificação bibliográfica nas duas primeiras páginas do PDF; URL é referência, não comprovação de igualdade binária."
+      },
+      "sha256": "c770c80300db0dceda7e459a0567afb2eff0d5f44f611c09438704cb9b90a411",
+      "bytes": 952963,
+      "format": "pdf",
+      "pages": 19,
+      "canonical_path": "fontes/2632-Texto do Artigo-9777-1-10-20211227.pdf",
+      "aliases": [
+        "RAG/projeto-rag/docs/FINANÇAS PESSOAIS.pdf",
+        "fontes/2632-Texto do Artigo-9777-1-10-20211227.pdf"
+      ],
+      "status": "identificado",
+      "use_conditions": "Licença ou autorização de reutilização não identificada; requer verificação com a origem.",
+      "approved_for_ingestion": false
+    },
+    {
+      "id": "F004",
+      "title": "Planejamento financeiro pessoal: fluxo de caixa",
+      "author": "Silvia Helena Rocatelli / RCiC-UFMT",
+      "year": 2018,
+      "origin": {
+        "description": "Silvia Helena Rocatelli / RCiC-UFMT",
+        "url": null,
+        "evidence": "Capa e identificação bibliográfica nas duas primeiras páginas do PDF; URL é referência, não comprovação de igualdade binária."
+      },
+      "sha256": "9f7545c5148f2da28c6dfc165027e27fb3652a6c722002d7f3b7b33242a34696",
+      "bytes": 264340,
+      "format": "pdf",
+      "pages": 8,
+      "canonical_path": "fontes/almeida-santos,+ID-5548+modificado-4.pdf",
+      "aliases": [
+        "RAG/projeto-rag/docs/FLUXODECAIXA.pdf",
+        "fontes/almeida-santos,+ID-5548+modificado-4.pdf"
+      ],
+      "status": "identificado",
+      "use_conditions": "Licença ou autorização de reutilização não identificada; requer verificação com a origem.",
+      "approved_for_ingestion": false
+    },
+    {
+      "id": "F005",
+      "title": "Guia CVM de planejamento financeiro",
+      "author": "CVM",
+      "year": 2014,
+      "origin": {
+        "description": "CVM",
+        "url": "http://www.investidor.gov.br/guiafinanceiro",
+        "evidence": "Capa e identificação bibliográfica nas duas primeiras páginas do PDF; URL é referência, não comprovação de igualdade binária."
+      },
+      "sha256": "4f270ea6b55876a7f3e5d6be3a40c7f4384b8065be4f302c35577709515b09a0",
+      "bytes": 1356575,
+      "format": "pdf",
+      "pages": 18,
+      "canonical_path": "fontes/GUIA planejamento financeiro.pdf",
+      "aliases": [
+        "RAG/projeto-rag/docs/GUIA planejamento financeiro.pdf",
+        "fontes/GUIA planejamento financeiro.pdf"
+      ],
+      "status": "identificado",
+      "use_conditions": "CC BY-NC-ND 3.0 Brasil; página física 3. Avaliar compatibilidade antes de transformar ou redistribuir.",
+      "approved_for_ingestion": false
+    },
+    {
+      "id": "F006",
+      "title": "O preço invisível de ser mulher (e como parar de pagar por isso)",
+      "author": null,
+      "year": null,
+      "origin": {
+        "description": "Origem não confirmada; título baseado no arquivo/documento.",
+        "url": null,
+        "evidence": "Atribuição insuficiente para confirmar procedência."
+      },
+      "sha256": "3c6ae41ce707fed9c799297176bdce23412353c05d6215f20845b41bd9f7887b",
+      "bytes": 102277,
+      "format": "pdf",
+      "pages": 3,
+      "canonical_path": "fontes/O preço invisível de ser mulher (e como parar de pagar por isso).pdf",
+      "aliases": [
+        "RAG/projeto-rag/docs/O preço invisível de ser mulher (e como parar de pagar por isso).pdf",
+        "fontes/O preço invisível de ser mulher (e como parar de pagar por isso).pdf",
+        "fontes/O preço invisível de ser mulher (e como parar de pagar por isso).pdf"
+      ],
+      "status": "origem_pendente",
+      "use_conditions": "Licença ou autorização de reutilização não identificada; requer verificação com a origem.",
+      "approved_for_ingestion": false
+    },
+    {
+      "id": "F007",
+      "title": "Orçamento (Susesp)",
+      "author": null,
+      "year": null,
+      "origin": {
+        "description": "Origem não confirmada; título baseado no arquivo/documento.",
+        "url": null,
+        "evidence": "Atribuição insuficiente para confirmar procedência."
+      },
+      "sha256": "6c3c5c490374b818224d7166745c7768f71b326742167c9f0653f62fc3c839a5",
+      "bytes": 100457,
+      "format": "pdf",
+      "pages": 3,
+      "canonical_path": "fontes/Orçamento (Susesp).pdf",
+      "aliases": [
+        "RAG/projeto-rag/docs/Orçamento (Susesp).pdf",
+        "fontes/Orçamento (Susesp).pdf",
+        "fontes/Orçamento (Susesp).pdf"
+      ],
+      "status": "origem_pendente",
+      "use_conditions": "Licença ou autorização de reutilização não identificada; requer verificação com a origem.",
+      "approved_for_ingestion": false
+    },
+    {
+      "id": "F008",
+      "title": "A importância da educação financeira pessoal para a qualidade de vida",
+      "author": "Juliana Cezario Ferreira / Caderno de Administração PUC-SP",
+      "year": 2017,
+      "origin": {
+        "description": "Juliana Cezario Ferreira / Caderno de Administração PUC-SP",
+        "url": null,
+        "evidence": "Capa e identificação bibliográfica nas duas primeiras páginas do PDF; URL é referência, não comprovação de igualdade binária."
+      },
+      "sha256": "114bf480d538f875214e91ad645576b19df398baf92243ef29c64bc121437432",
+      "bytes": 380955,
+      "format": "pdf",
+      "pages": 17,
+      "canonical_path": "RAG/projeto-rag/docs/afcsanto,+Gerente+da+revista,+33268-90078-1-SM_formatados.pdf",
+      "aliases": [
+        "RAG/projeto-rag/docs/afcsanto,+Gerente+da+revista,+33268-90078-1-SM_formatados.pdf"
+      ],
+      "status": "identificado",
+      "use_conditions": "Licença ou autorização de reutilização não identificada; requer verificação com a origem.",
+      "approved_for_ingestion": false
+    },
+    {
+      "id": "F009",
+      "title": "Caderno de Educação Financeira — 2ª edição revisada",
+      "author": "Banco Central do Brasil",
+      "year": 2026,
+      "origin": {
+        "description": "Banco Central do Brasil",
+        "url": "https://www.bcb.gov.br/content/cidadaniafinanceira/documentos_cidadania/cuidando_do_seu_dinheiro_gestao_de_Financas_Pessoais/caderno_cidadania_financeira.pdf",
+        "evidence": "Capa e identificação bibliográfica nas duas primeiras páginas do PDF; URL é referência, não comprovação de igualdade binária."
+      },
+      "sha256": "e42aa64c16d7e35ccaba4c73b28f604873e442fa1b093f13cfc2ec056db90cc3",
+      "bytes": 8160797,
+      "format": "pdf",
+      "pages": 98,
+      "canonical_path": "fontes/caderno_cidadania_financeira.pdf",
+      "aliases": [
+        "RAG/projeto-rag/docs/caderno_cidadania_financeira.pdf",
+        "fontes/caderno_cidadania_financeira.pdf"
+      ],
+      "status": "identificado",
+      "use_conditions": "Licença ou autorização de reutilização não identificada; requer verificação com a origem.",
+      "approved_for_ingestion": false
+    },
+    {
+      "id": "F010",
+      "title": "Gestão financeira familiar: aplicativo compartilhado para planejamento, monitoramento e controle do orçamento",
+      "author": "Santos; Cruz; Caldeira; Silva",
+      "year": null,
+      "origin": {
+        "description": "Santos; Cruz; Caldeira; Silva",
+        "url": null,
+        "evidence": "Capa e identificação bibliográfica nas duas primeiras páginas do PDF; URL é referência, não comprovação de igualdade binária."
+      },
+      "sha256": "57662e06567a2cdba2f0e3204ece24b72646364fa157c46d711a6e59f355ec3e",
+      "bytes": 947431,
+      "format": "pdf",
+      "pages": 19,
+      "canonical_path": "fontes/02+-+Artigo+GEstão+Financeira+Familiar.pdf",
+      "aliases": [
+        "fontes/02+-+Artigo+GEstão+Financeira+Familiar.pdf",
+        "fontes/02+-+Artigo+GEstão+Financeira+Familiar.pdf"
+      ],
+      "status": "identificado",
+      "use_conditions": "Licença ou autorização de reutilização não identificada; requer verificação com a origem.",
+      "approved_for_ingestion": false
+    },
+    {
+      "id": "F011",
+      "title": "Planilha de orçamento v2.0 (nome do arquivo)",
+      "author": null,
+      "year": null,
+      "origin": {
+        "description": "Origem não confirmada; título baseado no arquivo/documento.",
+        "url": null,
+        "evidence": "Atribuição insuficiente para confirmar procedência."
+      },
+      "sha256": "50a1c8eaec2379cf07327e52198dd38720f1e646f3c9901a72f1547e37b9525f",
+      "bytes": 3636224,
+      "format": "xls",
+      "pages": null,
+      "canonical_path": "fontes/2020_12_01_planilha_orcamento_v_2.0.xls",
+      "aliases": [
+        "fontes/2020_12_01_planilha_orcamento_v_2.0.xls"
+      ],
+      "status": "auxiliar",
+      "use_conditions": "Licença ou autorização de reutilização não identificada; requer verificação com a origem.",
+      "approved_for_ingestion": false
+    },
+    {
+      "id": "F012",
+      "title": "Aplicativos de gestão financeira pessoal: usabilidade percebida, experiência financeira percebida e lacunas de design dos aplicativos",
+      "author": "Erimilson Edilson Silva Ribeiro; Rogério Leite Araújo / IFPE",
+      "year": null,
+      "origin": {
+        "description": "Erimilson Edilson Silva Ribeiro; Rogério Leite Araújo / IFPE",
+        "url": null,
+        "evidence": "Capa e identificação bibliográfica nas duas primeiras páginas do PDF; URL é referência, não comprovação de igualdade binária."
+      },
+      "sha256": "21a4977b77724a85f75f3783779e3f5a28b98c065037d634a9579d43cca82e0f",
+      "bytes": 716230,
+      "format": "pdf",
+      "pages": 10,
+      "canonical_path": "fontes/46278-1105-38650-1-10-20261026.pdf",
+      "aliases": [
+        "fontes/46278-1105-38650-1-10-20261026.pdf"
+      ],
+      "status": "identificado",
+      "use_conditions": "Licença ou autorização de reutilização não identificada; requer verificação com a origem.",
+      "approved_for_ingestion": false
+    },
+    {
+      "id": "F013",
+      "title": "Finanças pessoais: estudo de caso de um planejamento financeiro pessoal para pessoa física",
+      "author": "Fernanda Melo de Moraes / UFRJ",
+      "year": 2022,
+      "origin": {
+        "description": "Fernanda Melo de Moraes / UFRJ",
+        "url": null,
+        "evidence": "Capa e identificação bibliográfica nas duas primeiras páginas do PDF; URL é referência, não comprovação de igualdade binária."
+      },
+      "sha256": "27c95594583e8c9eec00e9469ad28ec932825b18acf0338caed1d1f0a5cf1c52",
+      "bytes": 338854,
+      "format": "pdf",
+      "pages": 35,
+      "canonical_path": "fontes/FMMoraes.pdf",
+      "aliases": [
+        "fontes/FMMoraes.pdf"
+      ],
+      "status": "identificado",
+      "use_conditions": "Licença ou autorização de reutilização não identificada; requer verificação com a origem.",
+      "approved_for_ingestion": false
+    },
+    {
+      "id": "F014",
+      "title": "Importância do orçamento financeiro (CrediSIS)",
+      "author": null,
+      "year": null,
+      "origin": {
+        "description": "Origem não confirmada; título baseado no arquivo/documento.",
+        "url": null,
+        "evidence": "Atribuição insuficiente para confirmar procedência."
+      },
+      "sha256": "c5a1697a8dd22303b731b77c81b43f11474d9a3c2f6511b9a4b47f39b0ae7f40",
+      "bytes": 109065,
+      "format": "pdf",
+      "pages": 4,
+      "canonical_path": "fontes/Importância do orçamento financeiro (CrediSIS).pdf",
+      "aliases": [
+        "fontes/Importância do orçamento financeiro (CrediSIS).pdf",
+        "fontes/Importância do orçamento financeiro (CrediSIS).pdf"
+      ],
+      "status": "origem_pendente",
+      "use_conditions": "Licença ou autorização de reutilização não identificada; requer verificação com a origem.",
+      "approved_for_ingestion": false
+    },
+    {
+      "id": "F015",
+      "title": "Método 50-30-20: aprenda a dividir o salário",
+      "author": "Serasa — atribuição e correspondência com página pública",
+      "year": null,
+      "origin": {
+        "description": "Serasa — atribuição e correspondência com página pública",
+        "url": "https://www.serasa.com.br/score/blog/metodo-50-30-20-como-utilizar/",
+        "evidence": "Capa e identificação bibliográfica nas duas primeiras páginas do PDF; URL é referência, não comprovação de igualdade binária."
+      },
+      "sha256": "0a6b2a74f0c67f749c1c1cd8b6de10f407ee039453c12f5950e0d27a89487e8c",
+      "bytes": 101267,
+      "format": "pdf",
+      "pages": 6,
+      "canonical_path": "fontes/Método 50-30-20_ aprenda a dividir o salário (Serasa).pdf",
+      "aliases": [
+        "fontes/Método 50-30-20_ aprenda a dividir o salário (Serasa).pdf",
+        "fontes/Método 50-30-20_ aprenda a dividir o salário (Serasa).pdf"
+      ],
+      "status": "identificado",
+      "use_conditions": "Licença ou autorização de reutilização não identificada; requer verificação com a origem.",
+      "approved_for_ingestion": false
+    },
+    {
+      "id": "F016",
+      "title": "Planejamento financeiro no orçamento familiar",
+      "author": "André Luiz Domacoski / UFPR",
+      "year": 2016,
+      "origin": {
+        "description": "André Luiz Domacoski / UFPR",
+        "url": null,
+        "evidence": "Capa e identificação bibliográfica nas duas primeiras páginas do PDF; URL é referência, não comprovação de igualdade binária."
+      },
+      "sha256": "0cc6f66c36fa293ea14cdbd53a048099527048b74ca9cf6bd4de678c8ab1f5a8",
+      "bytes": 726130,
+      "format": "pdf",
+      "pages": 51,
+      "canonical_path": "fontes/R - E - ANDRE LUIZ DOMACOSKI.pdf",
+      "aliases": [
+        "fontes/R - E - ANDRE LUIZ DOMACOSKI.pdf"
+      ],
+      "status": "identificado",
+      "use_conditions": "Licença ou autorização de reutilização não identificada; requer verificação com a origem.",
+      "approved_for_ingestion": false
+    },
+    {
+      "id": "F017",
+      "title": "Educação financeira nas escolas — ensino médio — bloco 1 — caderno do aluno",
+      "author": "CONEF / AEF",
+      "year": null,
+      "origin": {
+        "description": "CONEF / AEF",
+        "url": "http://www.vidaedinheiro.gov.br",
+        "evidence": "Capa e identificação bibliográfica nas duas primeiras páginas do PDF; URL é referência, não comprovação de igualdade binária."
+      },
+      "sha256": "1e0fc7d3bc982de9dc2342790e2918c12c7238641f0a5c4e75fae8646d02456b",
+      "bytes": 373429,
+      "format": "pdf",
+      "pages": 28,
+      "canonical_path": "fontes/aluno_caderno01_2014.pdf",
+      "aliases": [
+        "fontes/aluno_caderno01_2014.pdf"
+      ],
+      "status": "identificado",
+      "use_conditions": "CC BY-NC-ND 3.0 Brasil; página física 4. Ano do nome do arquivo não comprova edição.",
+      "approved_for_ingestion": false
+    },
+    {
+      "id": "F018",
+      "title": "A contabilidade no planejamento das finanças pessoais: um estudo de caso com os acadêmicos do curso de Ciências Contábeis da UESPI de Picos",
+      "author": "Elvis Gomes Marques Filho et al. / Research, Society and Development",
+      "year": 2021,
+      "origin": {
+        "description": "Elvis Gomes Marques Filho et al. / Research, Society and Development",
+        "url": "https://doi.org/10.33448/rsd-v10i7.16879",
+        "evidence": "Capa e identificação bibliográfica nas duas primeiras páginas do PDF; URL é referência, não comprovação de igualdade binária."
+      },
+      "sha256": "3248419d22272ee2877b27fbb935ca6f3d8e50cdd2e09d81097a9af779f37857",
+      "bytes": 398908,
+      "format": "pdf",
+      "pages": 24,
+      "canonical_path": "fontes/dorlivete,+e50310716879.pdf",
+      "aliases": [
+        "fontes/dorlivete,+e50310716879.pdf"
+      ],
+      "status": "identificado",
+      "use_conditions": "CC BY 4.0; aviso na página física 1; manter atribuição e indicação das alterações.",
+      "approved_for_ingestion": false
+    },
+    {
+      "id": "F019",
+      "title": "Gestão das finanças pessoais: uma vida economicamente correta",
+      "author": "Costa; Souza; Amaral / Cadernos de Graduação",
+      "year": 2021,
+      "origin": {
+        "description": "Costa; Souza; Amaral / Cadernos de Graduação",
+        "url": null,
+        "evidence": "Capa e identificação bibliográfica nas duas primeiras páginas do PDF; URL é referência, não comprovação de igualdade binária."
+      },
+      "sha256": "a12d2ccdf51b12de4788207399fc4f0999887ea6078a473f298edc586fe9457a",
+      "bytes": 275528,
+      "format": "pdf",
+      "pages": 14,
+      "canonical_path": "fontes/ellenfumagali,+5.pdf",
+      "aliases": [
+        "fontes/ellenfumagali,+5.pdf"
+      ],
+      "status": "identificado",
+      "use_conditions": "Licença ou autorização de reutilização não identificada; requer verificação com a origem.",
+      "approved_for_ingestion": false
+    },
+    {
+      "id": "F020",
+      "title": "De dispositivo de prescrição às racionalidades cotidianas: o orçamento doméstico e familiar no Brasil",
+      "author": "Elaine da Silveira Leite / TOMO",
+      "year": 2017,
+      "origin": {
+        "description": "Elaine da Silveira Leite / TOMO",
+        "url": null,
+        "evidence": "Capa e identificação bibliográfica nas duas primeiras páginas do PDF; URL é referência, não comprovação de igualdade binária."
+      },
+      "sha256": "9080177503241e24781d02261f25c55bbb13295fe628738cc956688195b2e2d6",
+      "bytes": 325359,
+      "format": "pdf",
+      "pages": 30,
+      "canonical_path": "fontes/fnmarcon,+05+-+Elaine.pdf",
+      "aliases": [
+        "fontes/fnmarcon,+05+-+Elaine.pdf"
+      ],
+      "status": "identificado",
+      "use_conditions": "Licença ou autorização de reutilização não identificada; requer verificação com a origem.",
+      "approved_for_ingestion": false
+    },
+    {
+      "id": "F021",
+      "title": "A contabilidade e seu uso no planejamento das finanças pessoais: estudo de caso com alunos do UNIPAM",
+      "author": "Amália Ferreira de Souza; Jarim Marciano Ferreira / Fórum Gerencial",
+      "year": 2021,
+      "origin": {
+        "description": "Amália Ferreira de Souza; Jarim Marciano Ferreira / Fórum Gerencial",
+        "url": null,
+        "evidence": "Capa e identificação bibliográfica nas duas primeiras páginas do PDF; URL é referência, não comprovação de igualdade binária."
+      },
+      "sha256": "3241a72f255e91f944654939877d31870dd31ca323083bada95b0d4de04a9af9",
+      "bytes": 801714,
+      "format": "pdf",
+      "pages": 13,
+      "canonical_path": "fontes/fórum+gerencial-v1-n3-2021_contábeis-10-22.pdf",
+      "aliases": [
+        "fontes/fórum+gerencial-v1-n3-2021_contábeis-10-22.pdf",
+        "fontes/fórum+gerencial-v1-n3-2021_contábeis-10-22.pdf"
+      ],
+      "status": "identificado",
+      "use_conditions": "Aviso de copyright do Centro Universitário de Patos de Minas; licença de reutilização não identificada.",
+      "approved_for_ingestion": false
+    },
+    {
+      "id": "F022",
+      "title": "Aplicativos de gestão financeira: um estudo exploratório",
+      "author": "Silva; Coelho; Silva / Revista Pesquisa em Administração",
+      "year": 2020,
+      "origin": {
+        "description": "Silva; Coelho; Silva / Revista Pesquisa em Administração",
+        "url": null,
+        "evidence": "Capa e identificação bibliográfica nas duas primeiras páginas do PDF; URL é referência, não comprovação de igualdade binária."
+      },
+      "sha256": "dfe98e17beba7e6475abf5b394e4f2322e14a5861159df0fbce1e18f7dc05657",
+      "bytes": 317004,
+      "format": "pdf",
+      "pages": 21,
+      "canonical_path": "fontes/nfernandes,+Artigo2_Final.pdf",
+      "aliases": [
+        "fontes/nfernandes,+Artigo2_Final.pdf"
+      ],
+      "status": "identificado",
+      "use_conditions": "Licença ou autorização de reutilização não identificada; requer verificação com a origem.",
+      "approved_for_ingestion": false
+    },
+    {
+      "id": "F023",
+      "title": "Planejamento financeiro pessoal e sua influência na tomada de decisões",
+      "author": "Giovanna Siqueira Roque de Oliveira / UNESP",
+      "year": 2025,
+      "origin": {
+        "description": "Giovanna Siqueira Roque de Oliveira / UNESP",
+        "url": null,
+        "evidence": "Capa e identificação bibliográfica nas duas primeiras páginas do PDF; URL é referência, não comprovação de igualdade binária."
+      },
+      "sha256": "c4442cd648bd0c81a93414e60e6af47d3927a00c774e911ba12b99267000545f",
+      "bytes": 1436790,
+      "format": "pdf",
+      "pages": 48,
+      "canonical_path": "fontes/oliveira_gsr_tcc_jabo",
+      "aliases": [
+        "fontes/oliveira_gsr_tcc_jabo"
+      ],
+      "status": "identificado",
+      "use_conditions": "Licença ou autorização de reutilização não identificada; requer verificação com a origem.",
+      "approved_for_ingestion": false
+    },
+    {
+      "id": "F024",
+      "title": "Guia de orientação e defesa do segurado — 2ª edição",
+      "author": "SUSEP",
+      "year": 2006,
+      "origin": {
+        "description": "Publicação oficial da SUSEP; obtenção em 16/11/2026.",
+        "url": "https://www2.susep.gov.br/download/cartilha/cartilha_susep2e.pdf",
+        "evidence": "Download direto da origem; identificação e autorização na página física 3."
+      },
+      "sha256": "5e9e57e939de85acfc5634366e87e239d86d0ed3174e32bc3e540d104aa3b77e",
+      "bytes": 616907,
+      "format": "pdf",
+      "pages": 54,
+      "canonical_path": "knowledge/sources/susep-guia-orientacao-defesa-segurado.pdf",
+      "aliases": [
+        "knowledge/sources/susep-guia-orientacao-defesa-segurado.pdf"
+      ],
+      "status": "identificado",
+      "use_conditions": "Reprodução total ou parcial permitida com citação da fonte, página física 3. Edição de 2006: revisar conceitos e excluir regras, produtos ou normas desatualizados.",
+      "approved_for_ingestion": false
+    }
+  ]
+}
