@@ -1,0 +1,286 @@
+{
+  "source_commit": "a733da0e53c2b34506e52156a9ab7d7a96eb2614",
+  "hash_algorithm": "git blob SHA-1",
+  "files": [
+    {
+      "path": "RAG/.DS_Store",
+      "git_blob": "bc29833344d5a3a9137f5209299a3d63fb424117"
+    },
+    {
+      "path": "RAG/banco/chroma.sqlite3",
+      "git_blob": "cfd677e872a18f35c117ee01fb1904932cce3cc1"
+    },
+    {
+      "path": "RAG/projeto-rag/.DS_Store",
+      "git_blob": "7ef59da4b23524e0f811ed5416942b9183f82435"
+    },
+    {
+      "path": "RAG/projeto-rag/__pycache__/config.cpython-314.pyc",
+      "git_blob": "9d65c0bfda981d07398fab264272f9a1b8768f5f"
+    },
+    {
+      "path": "RAG/projeto-rag/__pycache__/rag.cpython-314.pyc",
+      "git_blob": "2605ad27c758fd9f3399e736442ca26fd7c9dcff"
+    },
+    {
+      "path": "RAG/projeto-rag/app.py",
+      "git_blob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+    },
+    {
+      "path": "RAG/projeto-rag/avaliacao/comparacao.md",
+      "git_blob": "20e0ce463beb796afb1f72f46858e3dda5132663"
+    },
+    {
+      "path": "RAG/projeto-rag/avaliacao/comparacao.pdf",
+      "git_blob": "4ad45a9e1b4ae938dc1de703aa84ceacac70eb5b"
+    },
+    {
+      "path": "RAG/projeto-rag/avaliacao/resultados.json",
+      "git_blob": "8504f8f779837d3595150d203fbf499ab18d83ad"
+    },
+    {
+      "path": "RAG/projeto-rag/avaliacao/resultados.md",
+      "git_blob": "ae0686a794fb19d2503c4b0ede2f79710249de46"
+    },
+    {
+      "path": "RAG/projeto-rag/avaliar.py",
+      "git_blob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+    },
+    {
+      "path": "RAG/projeto-rag/banco/14257cc9-0344-4879-9489-d1e338d292ed/data_level0.bin",
+      "git_blob": "54787dcf2bfa4b2a9c05b9350b8d6467b00afb47"
+    },
+    {
+      "path": "RAG/projeto-rag/banco/14257cc9-0344-4879-9489-d1e338d292ed/header.bin",
+      "git_blob": "bb54792626c8e16cb8f8a2b989bd1998268ad65c"
+    },
+    {
+      "path": "RAG/projeto-rag/banco/14257cc9-0344-4879-9489-d1e338d292ed/length.bin",
+      "git_blob": "cb3e1628bcb246bfc7b4a4b378b1586758115f3d"
+    },
+    {
+      "path": "RAG/projeto-rag/banco/14257cc9-0344-4879-9489-d1e338d292ed/link_lists.bin",
+      "git_blob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+    },
+    {
+      "path": "RAG/projeto-rag/banco/2f5be54a-d5f1-4291-8422-c919953a6f4a/data_level0.bin",
+      "git_blob": "b069a07df04c868e86973624dc9f4c5b6e241021"
+    },
+    {
+      "path": "RAG/projeto-rag/banco/2f5be54a-d5f1-4291-8422-c919953a6f4a/header.bin",
+      "git_blob": "6ef3ab3c17af7d7db73b012069e93efd1a8353d6"
+    },
+    {
+      "path": "RAG/projeto-rag/banco/2f5be54a-d5f1-4291-8422-c919953a6f4a/index_metadata.pickle",
+      "git_blob": "43e81c849e9c24c32167c3075179ab79480b7a72"
+    },
+    {
+      "path": "RAG/projeto-rag/banco/2f5be54a-d5f1-4291-8422-c919953a6f4a/length.bin",
+      "git_blob": "5efdbbf38bc0c62b83b21d221793d34731c94f61"
+    },
+    {
+      "path": "RAG/projeto-rag/banco/2f5be54a-d5f1-4291-8422-c919953a6f4a/link_lists.bin",
+      "git_blob": "a31ec9544ffded25fd9f228da058f178e1ac02f1"
+    },
+    {
+      "path": "RAG/projeto-rag/banco/chroma.sqlite3",
+      "git_blob": "67107cea7da3a33bf4871fbd776614c3f52ee86c"
+    },
+    {
+      "path": "RAG/projeto-rag/config.py",
+      "git_blob": "d3c66bc43780c872285050017321715eae1b55c0"
+    },
+    {
+      "path": "RAG/projeto-rag/debug.py",
+      "git_blob": "d78a253de0a29f43e28c0781ceb02ffa038e59e8"
+    },
+    {
+      "path": "RAG/projeto-rag/docs/A EDUCAÇÃO FINANCEIRA PARA A GESTÃO DO ORÇAMENTO  PESSOAL E FAMILIAR.pdf",
+      "git_blob": "211d74fd936dc4d814740a9f785ec6518592244a"
+    },
+    {
+      "path": "RAG/projeto-rag/docs/CONTABILIDADE MENTAL E FINANÇAS COMPORTAMENTAIS.pdf",
+      "git_blob": "48ca514d6a3dc2336f639ccfa53345df8151b716"
+    },
+    {
+      "path": "RAG/projeto-rag/docs/FINANÇAS PESSOAIS.pdf",
+      "git_blob": "975588d7bef7cbdf32d823b78270cb4dd14b7e76"
+    },
+    {
+      "path": "RAG/projeto-rag/docs/FLUXODECAIXA.pdf",
+      "git_blob": "c8a4d22d05d338c7969cc062ecf761a7931a60f1"
+    },
+    {
+      "path": "RAG/projeto-rag/docs/GUIA planejamento financeiro.pdf",
+      "git_blob": "803a34fbbad0d9f936758d17561c28ea665fce96"
+    },
+    {
+      "path": "RAG/projeto-rag/docs/O preço invisível de ser mulher (e como parar de pagar por isso).pdf",
+      "git_blob": "c0ab96c3dda5c6d9d5a6d524f5e5efc47cae0a2d"
+    },
+    {
+      "path": "RAG/projeto-rag/docs/Orçamento (Susesp).pdf",
+      "git_blob": "6782b58d172fc2cadf57d86281e50a363c0af043"
+    },
+    {
+      "path": "RAG/projeto-rag/docs/afcsanto,+Gerente+da+revista,+33268-90078-1-SM_formatados.pdf",
+      "git_blob": "8ab9301e8d5033218f0c76696cf71e1e7561d235"
+    },
+    {
+      "path": "RAG/projeto-rag/docs/caderno_cidadania_financeira.pdf",
+      "git_blob": "08a473a96483d7f958dc5dff7bd013da2d9847e6"
+    },
+    {
+      "path": "RAG/projeto-rag/indexar.py",
+      "git_blob": "b7c341834753d3b1476eb061156fdccdad6e4d78"
+    },
+    {
+      "path": "RAG/projeto-rag/perguntar.py",
+      "git_blob": "c227e9d9164571c3600b0cd0676a7ad03536acf3"
+    },
+    {
+      "path": "RAG/projeto-rag/rag.py",
+      "git_blob": "ae7f223a36bb3100de004cbc11ffcac913a72e85"
+    },
+    {
+      "path": "RAG/projeto-rag/requirements.txt",
+      "git_blob": "1c052f20d9b4fe535a6ffda74382a830267637df"
+    },
+    {
+      "path": "RAG/projeto-rag/testar_perguntas.py",
+      "git_blob": "00564c13def2fd21088cba5db8c5d6b75f383e49"
+    },
+    {
+      "path": "RAG/projeto-rag/teste_extracao.py",
+      "git_blob": "da339ab883e451f50620d6cf5bae57666d334f0b"
+    },
+    {
+      "path": "fontes/02+-+Artigo+GEstão+Financeira+Familiar.pdf",
+      "git_blob": "12b7a697c59ee122aee0faf32fca056722ac1184"
+    },
+    {
+      "path": "fontes/02+-+Artigo+GEstão+Financeira+Familiar.pdf",
+      "git_blob": "12b7a697c59ee122aee0faf32fca056722ac1184"
+    },
+    {
+      "path": "fontes/2020_12_01_planilha_orcamento_v_2.0.xls",
+      "git_blob": "6e495ef8ca5ff17b07f9e48a817a834a022980a6"
+    },
+    {
+      "path": "fontes/2632-Texto do Artigo-9777-1-10-20211227.pdf",
+      "git_blob": "975588d7bef7cbdf32d823b78270cb4dd14b7e76"
+    },
+    {
+      "path": "fontes/46278-1105-38650-1-10-20261026.pdf",
+      "git_blob": "a3977d83d04b44b8d621e5c5348030204aaf09f9"
+    },
+    {
+      "path": "fontes/A EDUCAÇÃO FINANCEIRA PARA A GESTÃO DO ORÇAMENTO  PESSOAL E FAMILIAR.pdf",
+      "git_blob": "211d74fd936dc4d814740a9f785ec6518592244a"
+    },
+    {
+      "path": "fontes/A EDUCAÇÃO FINANCEIRA PARA A GESTÃO DO ORÇAMENTO  PESSOAL E FAMILIAR.pdf",
+      "git_blob": "211d74fd936dc4d814740a9f785ec6518592244a"
+    },
+    {
+      "path": "fontes/FMMoraes.pdf",
+      "git_blob": "4a2a95f411b447eb4c416841c6394372eb7879c7"
+    },
+    {
+      "path": "fontes/GUIA planejamento financeiro.pdf",
+      "git_blob": "803a34fbbad0d9f936758d17561c28ea665fce96"
+    },
+    {
+      "path": "fontes/Importância do orçamento financeiro (CrediSIS).pdf",
+      "git_blob": "569027a889be6996d0b8550143aa2d033c8f8328"
+    },
+    {
+      "path": "fontes/Importância do orçamento financeiro (CrediSIS).pdf",
+      "git_blob": "569027a889be6996d0b8550143aa2d033c8f8328"
+    },
+    {
+      "path": "fontes/Método 50-30-20_ aprenda a dividir o salário (Serasa).pdf",
+      "git_blob": "d2046d56f1b8c104278b6804e3cac9ef45853c79"
+    },
+    {
+      "path": "fontes/Método 50-30-20_ aprenda a dividir o salário (Serasa).pdf",
+      "git_blob": "d2046d56f1b8c104278b6804e3cac9ef45853c79"
+    },
+    {
+      "path": "fontes/O preço invisível de ser mulher (e como parar de pagar por isso).pdf",
+      "git_blob": "c0ab96c3dda5c6d9d5a6d524f5e5efc47cae0a2d"
+    },
+    {
+      "path": "fontes/O preço invisível de ser mulher (e como parar de pagar por isso).pdf",
+      "git_blob": "c0ab96c3dda5c6d9d5a6d524f5e5efc47cae0a2d"
+    },
+    {
+      "path": "fontes/Orçamento (Susesp).pdf",
+      "git_blob": "6782b58d172fc2cadf57d86281e50a363c0af043"
+    },
+    {
+      "path": "fontes/Orçamento (Susesp).pdf",
+      "git_blob": "6782b58d172fc2cadf57d86281e50a363c0af043"
+    },
+    {
+      "path": "fontes/R - E - ANDRE LUIZ DOMACOSKI.pdf",
+      "git_blob": "0f8df05e1c3b261461e293bc9ca8ebdd146f5b83"
+    },
+    {
+      "path": "fontes/admin,+8+-ok+1997-9018-1-CE.pdf",
+      "git_blob": "48ca514d6a3dc2336f639ccfa53345df8151b716"
+    },
+    {
+      "path": "fontes/almeida-santos,+ID-5548+modificado-4.pdf",
+      "git_blob": "c8a4d22d05d338c7969cc062ecf761a7931a60f1"
+    },
+    {
+      "path": "fontes/aluno_caderno01_2014.pdf",
+      "git_blob": "45921501bcb6572c56f7d34d4f3e2fd05ded3cbe"
+    },
+    {
+      "path": "fontes/caderno_cidadania_financeira.pdf",
+      "git_blob": "08a473a96483d7f958dc5dff7bd013da2d9847e6"
+    },
+    {
+      "path": "fontes/dorlivete,+e50310716879.pdf",
+      "git_blob": "8968ed9feec6c32935d8033c54664336f6ac374d"
+    },
+    {
+      "path": "fontes/ellenfumagali,+5.pdf",
+      "git_blob": "8d0d26ab1e428098ef999f12d08a77a7ef166214"
+    },
+    {
+      "path": "fontes/fnmarcon,+05+-+Elaine.pdf",
+      "git_blob": "744be7a36890e84fb1ea7961d6b7f5c1ac115c45"
+    },
+    {
+      "path": "fontes/fórum+gerencial-v1-n3-2021_contábeis-10-22.pdf",
+      "git_blob": "a76591136fd8d5cbd13fc834e5ae9099029d1387"
+    },
+    {
+      "path": "fontes/fórum+gerencial-v1-n3-2021_contábeis-10-22.pdf",
+      "git_blob": "a76591136fd8d5cbd13fc834e5ae9099029d1387"
+    },
+    {
+      "path": "fontes/nfernandes,+Artigo2_Final.pdf",
+      "git_blob": "4eeca491f2bbb781e369383c41d846d024702f25"
+    },
+    {
+      "path": "fontes/oliveira_gsr_tcc_jabo",
+      "git_blob": "b6e1ea263a83116ec0e5c09112d0d0d03bc94023"
+    },
+    {
+      "path": "rag_educacao_financeira.ipynb",
+      "git_blob": "525d3ecd00d958250bc0165a88f65148d2b1ef0d"
+    },
+    {
+      "path": "rag_notebook.ipynb",
+      "git_blob": "308c002e3cd459ed13bc904edf95a82959e5e2f6"
+    },
+    {
+      "path": "requirements.txt",
+      "git_blob": "da0fd1e7c496385d04d1e9174e734812964a2639"
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+# Ambiente e segredos locais
+.env
+.env.*
+!.env.example
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.ipynb_checkpoints/
+.DS_Store
+node_modules/
+*.log
+
+# Dados gerados: o material já rastreado permanece preservado
+.runtime/
