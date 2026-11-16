@@ -23,6 +23,11 @@ jobs:
         with:
           python-version: '3.12'
 
+      - name: Validate source catalog and integrity checks
+        run: |
+          python scripts/verificar_catalogo.py
+          python -m unittest discover -s tests -p 'test_catalogo.py'
+
       - name: Validate tracked Python files and notebooks
         shell: bash
         run: |
