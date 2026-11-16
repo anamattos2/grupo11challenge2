@@ -1,0 +1,61 @@
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  python-and-notebooks:
+    name: python-and-notebooks
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Validate tracked Python files and notebooks
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          import pathlib
+          import subprocess
+          import sys
+
+          tracked = subprocess.check_output(["git", "ls-files", "-z"]).split(b"\0")
+          checked_py = 0
+          checked_notebooks = 0
+          errors = []
+
+          for raw_path in filter(None, tracked):
+              path = pathlib.Path(raw_path.decode("utf-8", errors="surrogateescape"))
+              if path.suffix == ".py":
+                  try:
+                      compile(path.read_bytes(), str(path), "exec")
+                      checked_py += 1
+                  except (SyntaxError, OSError, ValueError) as exc:
+                      errors.append(f"{path}: {exc}")
+              elif path.suffix == ".ipynb":
+                  try:
+                      notebook = json.loads(path.read_text(encoding="utf-8"))
+                      if not isinstance(notebook, dict) or not isinstance(notebook.get("cells"), list):
+                          raise ValueError("Invalid notebook: missing cells list")
+                      checked_notebooks += 1
+                  except (OSError, UnicodeError, ValueError) as exc:
+                      errors.append(f"{path}: {exc}")
+
+          print(f"Checked {checked_py} Python files and {checked_notebooks} notebooks.")
+          if errors:
+              print("\n".join(errors), file=sys.stderr)
+              sys.exit(1)
+          PY
