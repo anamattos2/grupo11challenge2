@@ -6,6 +6,8 @@ Artificial — Desafio 02, Grupo 11.
 
 ## Planejamento técnico
 
+- [Como contribuir: branches, commits, revisão e definição de pronto](CONTRIBUTING.md)
+- [Política de versionamento e preservação de pesquisa](docs/desenvolvimento/versionamento.md)
 - [Arquitetura inicial e responsabilidades](docs/arquitetura/arquitetura-inicial.md)
 - [Issue #55 — BASE-01](https://github.com/anamattos2/grupo11challenge2/issues/55)
 
