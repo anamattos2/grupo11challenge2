@@ -13,3 +13,6 @@ Consulte [extração documental](../../docs/desenvolvimento/extracao-documental.
 para instalação, execução, contrato do relatório e limites da limpeza.
 
 Consulte [o guia do ambiente](../../docs/desenvolvimento/ambiente.md).
+
+Consulte [chunking documental](../../docs/desenvolvimento/chunking-documental.md)
+para segmentar relatórios de extração com metadados reproduzíveis.
