@@ -12,7 +12,10 @@ interfaces HTTP. Nunca aceitar identidade sugerida pelo modelo como autorizaçã
 
 ## Executar localmente
 
-Pré-requisitos: Python 3.12 a 3.14 e Docker com Compose. Na raiz do repositório:
+Pré-requisitos: Python 3.12 a 3.14 e Docker com Compose. A instalação, a configuração
+e a verificação de cada ferramenta estão no
+[guia de instalação do backend](../../docs/desenvolvimento/instalacao-backend.md).
+Com as ferramentas prontas, execute na raiz do repositório:
 
 ```bash
 cp .env.example .env

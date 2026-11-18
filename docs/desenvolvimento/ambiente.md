@@ -24,7 +24,8 @@ completa da aplicação.
   `setuptools==80.9.0`, fixado em `packages/ai/pyproject.toml`.
 - Nenhuma dependência de execução de terceiros, chave de API, Docker, Node,
   PostgreSQL ou Ollama é necessária para verificar o pacote de IA.
-- O backend exige Docker com Compose para executar o PostgreSQL local.
+- O backend exige Docker com Compose para executar o PostgreSQL local. Veja o
+  [guia de instalação do backend](instalacao-backend.md).
 
 Dependências do produto serão declaradas junto à implementação de cada frente.
 Os dois `requirements.txt` históricos permanecem intactos e são específicos dos
