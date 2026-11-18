@@ -1,6 +1,74 @@
 {
   "components": {
     "schemas": {
+      "CategoriaIn": {
+        "additionalProperties": false,
+        "properties": {
+          "essencial": {
+            "default": false,
+            "title": "Essencial",
+            "type": "boolean"
+          },
+          "nome": {
+            "examples": [
+              "Alimentação"
+            ],
+            "maxLength": 80,
+            "minLength": 1,
+            "pattern": "^[^\\x00-\\x1f\\x7f]+$",
+            "title": "Nome",
+            "type": "string"
+          },
+          "tipo": {
+            "$ref": "#/components/schemas/TipoLancamento"
+          }
+        },
+        "required": [
+          "nome",
+          "tipo"
+        ],
+        "title": "CategoriaIn",
+        "type": "object"
+      },
+      "CategoriaOut": {
+        "properties": {
+          "atualizado_em": {
+            "format": "date-time",
+            "title": "Atualizado Em",
+            "type": "string"
+          },
+          "criado_em": {
+            "format": "date-time",
+            "title": "Criado Em",
+            "type": "string"
+          },
+          "essencial": {
+            "title": "Essencial",
+            "type": "boolean"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "nome": {
+            "title": "Nome",
+            "type": "string"
+          },
+          "tipo": {
+            "$ref": "#/components/schemas/TipoLancamento"
+          }
+        },
+        "required": [
+          "id",
+          "nome",
+          "tipo",
+          "essencial",
+          "criado_em",
+          "atualizado_em"
+        ],
+        "title": "CategoriaOut",
+        "type": "object"
+      },
       "ContaIn": {
         "additionalProperties": false,
         "properties": {
@@ -148,6 +216,78 @@
         "title": "ErroValidacaoOut",
         "type": "object"
       },
+      "FiltrosIn": {
+        "properties": {
+          "categoria_id": {
+            "anyOf": [
+              {
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Categoria Id"
+          },
+          "data_fim": {
+            "anyOf": [
+              {
+                "examples": [
+                  "2026-11-10"
+                ],
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Data Fim"
+          },
+          "data_inicio": {
+            "anyOf": [
+              {
+                "examples": [
+                  "2026-11-10"
+                ],
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Data Inicio"
+          },
+          "deslocamento": {
+            "default": 0,
+            "maximum": 1000000,
+            "minimum": 0,
+            "title": "Deslocamento",
+            "type": "integer"
+          },
+          "limite": {
+            "default": 50,
+            "maximum": 200,
+            "minimum": 1,
+            "title": "Limite",
+            "type": "integer"
+          },
+          "tipo": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TipoLancamento"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "title": "FiltrosIn",
+        "type": "object"
+      },
       "HealthOut": {
         "properties": {
           "database": {
@@ -164,6 +304,50 @@
           "database"
         ],
         "title": "HealthOut",
+        "type": "object"
+      },
+      "ListaTransacoesOut": {
+        "properties": {
+          "deslocamento": {
+            "title": "Deslocamento",
+            "type": "integer"
+          },
+          "itens": {
+            "items": {
+              "$ref": "#/components/schemas/TransacaoOut"
+            },
+            "title": "Itens",
+            "type": "array"
+          },
+          "limite": {
+            "title": "Limite",
+            "type": "integer"
+          },
+          "moeda": {
+            "title": "Moeda",
+            "type": "string"
+          },
+          "periodo": {
+            "$ref": "#/components/schemas/PeriodoOut"
+          },
+          "quantidade": {
+            "title": "Quantidade",
+            "type": "integer"
+          },
+          "totais": {
+            "$ref": "#/components/schemas/TotaisOut"
+          }
+        },
+        "required": [
+          "periodo",
+          "moeda",
+          "totais",
+          "quantidade",
+          "limite",
+          "deslocamento",
+          "itens"
+        ],
+        "title": "ListaTransacoesOut",
         "type": "object"
       },
       "PerfilIn": {
@@ -223,6 +407,40 @@
         "title": "PerfilOut",
         "type": "object"
       },
+      "PeriodoOut": {
+        "properties": {
+          "fim": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fim"
+          },
+          "inicio": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Inicio"
+          }
+        },
+        "required": [
+          "inicio",
+          "fim"
+        ],
+        "title": "PeriodoOut",
+        "type": "object"
+      },
       "PrevisibilidadeRenda": {
         "enum": [
           "fixa",
@@ -243,6 +461,181 @@
         ],
         "title": "Tipo",
         "type": "string"
+      },
+      "TipoLancamento": {
+        "enum": [
+          "receita",
+          "despesa"
+        ],
+        "title": "TipoLancamento",
+        "type": "string"
+      },
+      "TotaisOut": {
+        "properties": {
+          "despesas": {
+            "examples": [
+              "1500.50"
+            ],
+            "pattern": "^-?[0-9]{1,12}(\\.[0-9]{1,2})?$",
+            "title": "Despesas",
+            "type": "string"
+          },
+          "receitas": {
+            "examples": [
+              "1500.50"
+            ],
+            "pattern": "^-?[0-9]{1,12}(\\.[0-9]{1,2})?$",
+            "title": "Receitas",
+            "type": "string"
+          },
+          "resultado": {
+            "examples": [
+              "1500.50"
+            ],
+            "pattern": "^-?[0-9]{1,12}(\\.[0-9]{1,2})?$",
+            "title": "Resultado",
+            "type": "string"
+          }
+        },
+        "required": [
+          "receitas",
+          "despesas",
+          "resultado"
+        ],
+        "title": "TotaisOut",
+        "type": "object"
+      },
+      "TransacaoIn": {
+        "additionalProperties": false,
+        "properties": {
+          "categoria_id": {
+            "minimum": 1,
+            "title": "Categoria Id",
+            "type": "integer"
+          },
+          "conta_id": {
+            "anyOf": [
+              {
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Conta Id"
+          },
+          "data": {
+            "examples": [
+              "2026-11-10"
+            ],
+            "format": "date",
+            "title": "Data",
+            "type": "string"
+          },
+          "descricao": {
+            "default": "",
+            "maxLength": 200,
+            "pattern": "^[^\\x00-\\x1f\\x7f]*$",
+            "title": "Descricao",
+            "type": "string"
+          },
+          "tipo": {
+            "$ref": "#/components/schemas/TipoLancamento"
+          },
+          "valor": {
+            "examples": [
+              "89.90"
+            ],
+            "pattern": "^[0-9]{1,12}(\\.[0-9]{1,2})?$",
+            "title": "Valor",
+            "type": "string"
+          }
+        },
+        "required": [
+          "tipo",
+          "valor",
+          "data",
+          "categoria_id"
+        ],
+        "title": "TransacaoIn",
+        "type": "object"
+      },
+      "TransacaoOut": {
+        "properties": {
+          "atualizado_em": {
+            "format": "date-time",
+            "title": "Atualizado Em",
+            "type": "string"
+          },
+          "categoria_id": {
+            "title": "Categoria Id",
+            "type": "integer"
+          },
+          "categoria_nome": {
+            "title": "Categoria Nome",
+            "type": "string"
+          },
+          "conta_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Conta Id"
+          },
+          "criado_em": {
+            "format": "date-time",
+            "title": "Criado Em",
+            "type": "string"
+          },
+          "data": {
+            "format": "date",
+            "title": "Data",
+            "type": "string"
+          },
+          "descricao": {
+            "title": "Descricao",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "moeda": {
+            "title": "Moeda",
+            "type": "string"
+          },
+          "tipo": {
+            "$ref": "#/components/schemas/TipoLancamento"
+          },
+          "valor": {
+            "examples": [
+              "1500.50"
+            ],
+            "pattern": "^-?[0-9]{1,12}(\\.[0-9]{1,2})?$",
+            "title": "Valor",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "tipo",
+          "valor",
+          "moeda",
+          "data",
+          "descricao",
+          "categoria_id",
+          "categoria_nome",
+          "conta_id",
+          "criado_em",
+          "atualizado_em"
+        ],
+        "title": "TransacaoOut",
+        "type": "object"
       },
       "UsuariaOut": {
         "properties": {
@@ -390,6 +783,347 @@
         "summary": "Usuaria Atual",
         "tags": [
           "autenticação"
+        ]
+      }
+    },
+    "/api/categorias": {
+      "get": {
+        "description": "Lista somente as categorias da usuária autenticada.",
+        "operationId": "financas_api_transacoes_listar_categorias",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/CategoriaOut"
+                  },
+                  "title": "Response",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroOut"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          }
+        },
+        "security": [
+          {
+            "SessionAuth": []
+          }
+        ],
+        "summary": "Listar Categorias",
+        "tags": [
+          "categorias"
+        ]
+      },
+      "post": {
+        "description": "Cria uma categoria; o nome é único por usuária e tipo.",
+        "operationId": "financas_api_transacoes_criar_categoria",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CategoriaIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CategoriaOut"
+                }
+              }
+            },
+            "description": "Created"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroOut"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroOut"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroOut"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroValidacaoOut"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "security": [
+          {
+            "SessionAuth": []
+          }
+        ],
+        "summary": "Criar Categoria",
+        "tags": [
+          "categorias"
+        ]
+      }
+    },
+    "/api/categorias/{categoria_id}": {
+      "delete": {
+        "description": "Exclui uma categoria própria que não possua transações.",
+        "operationId": "financas_api_transacoes_excluir_categoria",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "categoria_id",
+            "required": true,
+            "schema": {
+              "title": "Categoria Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroOut"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroOut"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroOut"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroOut"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "security": [
+          {
+            "SessionAuth": []
+          }
+        ],
+        "summary": "Excluir Categoria",
+        "tags": [
+          "categorias"
+        ]
+      },
+      "get": {
+        "description": "Retorna uma categoria própria.",
+        "operationId": "financas_api_transacoes_consultar_categoria",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "categoria_id",
+            "required": true,
+            "schema": {
+              "title": "Categoria Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CategoriaOut"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroOut"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroOut"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "security": [
+          {
+            "SessionAuth": []
+          }
+        ],
+        "summary": "Consultar Categoria",
+        "tags": [
+          "categorias"
+        ]
+      },
+      "put": {
+        "description": "Substitui os dados; o tipo só muda se não houver transações vinculadas.",
+        "operationId": "financas_api_transacoes_editar_categoria",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "categoria_id",
+            "required": true,
+            "schema": {
+              "title": "Categoria Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CategoriaIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CategoriaOut"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroOut"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroOut"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroOut"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroOut"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroValidacaoOut"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "security": [
+          {
+            "SessionAuth": []
+          }
+        ],
+        "summary": "Editar Categoria",
+        "tags": [
+          "categorias"
         ]
       }
     },
@@ -819,6 +1553,420 @@
         "summary": "Salvar Perfil",
         "tags": [
           "perfil financeiro"
+        ]
+      }
+    },
+    "/api/transacoes": {
+      "get": {
+        "description": "Lista as transações próprias; os totais consideram todo o filtro aplicado.",
+        "operationId": "financas_api_transacoes_listar_transacoes",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "data_inicio",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "examples": [
+                    "2026-11-10"
+                  ],
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Data Inicio"
+            }
+          },
+          {
+            "in": "query",
+            "name": "data_fim",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "examples": [
+                    "2026-11-10"
+                  ],
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Data Fim"
+            }
+          },
+          {
+            "in": "query",
+            "name": "categoria_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Categoria Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "tipo",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/TipoLancamento"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "limite",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limite",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "deslocamento",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "maximum": 1000000,
+              "minimum": 0,
+              "title": "Deslocamento",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListaTransacoesOut"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroOut"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroValidacaoOut"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "security": [
+          {
+            "SessionAuth": []
+          }
+        ],
+        "summary": "Listar Transacoes",
+        "tags": [
+          "transações"
+        ]
+      },
+      "post": {
+        "description": "Registra uma receita ou despesa declarada pela usuária.",
+        "operationId": "financas_api_transacoes_criar_transacao",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TransacaoIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransacaoOut"
+                }
+              }
+            },
+            "description": "Created"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroOut"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroOut"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroValidacaoOut"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "security": [
+          {
+            "SessionAuth": []
+          }
+        ],
+        "summary": "Criar Transacao",
+        "tags": [
+          "transações"
+        ]
+      }
+    },
+    "/api/transacoes/{transacao_id}": {
+      "delete": {
+        "description": "Exclui uma transação própria.",
+        "operationId": "financas_api_transacoes_excluir_transacao",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "transacao_id",
+            "required": true,
+            "schema": {
+              "title": "Transacao Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroOut"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroOut"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroOut"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "security": [
+          {
+            "SessionAuth": []
+          }
+        ],
+        "summary": "Excluir Transacao",
+        "tags": [
+          "transações"
+        ]
+      },
+      "get": {
+        "description": "Retorna uma transação própria.",
+        "operationId": "financas_api_transacoes_consultar_transacao",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "transacao_id",
+            "required": true,
+            "schema": {
+              "title": "Transacao Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransacaoOut"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroOut"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroOut"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "security": [
+          {
+            "SessionAuth": []
+          }
+        ],
+        "summary": "Consultar Transacao",
+        "tags": [
+          "transações"
+        ]
+      },
+      "put": {
+        "description": "Substitui todos os dados de uma transação própria.",
+        "operationId": "financas_api_transacoes_editar_transacao",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "transacao_id",
+            "required": true,
+            "schema": {
+              "title": "Transacao Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TransacaoIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransacaoOut"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroOut"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroOut"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroOut"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroValidacaoOut"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "security": [
+          {
+            "SessionAuth": []
+          }
+        ],
+        "summary": "Editar Transacao",
+        "tags": [
+          "transações"
         ]
       }
     }

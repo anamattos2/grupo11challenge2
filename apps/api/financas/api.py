@@ -94,11 +94,11 @@ ERROS_LEITURA = {401: ErroOut}
 ERROS_ESCRITA = {401: ErroOut, 403: ErroOut, 422: ErroValidacaoOut}
 
 
-def salvar_conta(conta: ContaManual) -> bool:
-    """Grava a conta e informa se o nome já estava em uso pela usuária."""
+def salvar_com_nome_unico(registro) -> bool:
+    """Grava o registro e informa se o nome já estava em uso pela usuária."""
     try:
         with transaction.atomic():
-            conta.save()
+            registro.save()
     except IntegrityError:
         return False
     return True
@@ -130,7 +130,7 @@ def listar_contas(request):
 def criar_conta(request, dados: ContaIn):
     """Cria uma conta manual; o nome é único por usuária, sem diferenciar caixa."""
     conta = ContaManual(usuaria=request.auth, **dados.model_dump())
-    if not salvar_conta(conta):
+    if not salvar_com_nome_unico(conta):
         return 409, CONTA_DUPLICADA
     return 201, conta
 
@@ -153,6 +153,6 @@ def editar_conta(request, conta_id: int, dados: ContaIn):
     conta = obter_da_usuaria_ou_404(ContaManual, request.auth, id=conta_id)
     for campo, valor in dados.model_dump().items():
         setattr(conta, campo, valor)
-    if not salvar_conta(conta):
+    if not salvar_com_nome_unico(conta):
         return 409, CONTA_DUPLICADA
     return 200, conta

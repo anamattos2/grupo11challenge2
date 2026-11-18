@@ -24,8 +24,9 @@ sincronização com bancos, e `saldo_declarado` não é um saldo bancário verif
 | `GET /api/contas/{conta_id}` | Consulta uma conta própria | 200 | 404 |
 | `PUT /api/contas/{conta_id}` | Substitui nome, tipo e saldo de uma conta própria | 200 | 404, 409, 422 |
 
-Esta etapa não oferece exclusão de contas. A regra depende de como as transações
-da BE-04 vão se relacionar com elas.
+A API não oferece exclusão de contas. Transações podem ser vinculadas a uma conta,
+conforme [transacoes-categorias.md](transacoes-categorias.md), sem alterar o saldo
+declarado.
 
 ## Validações
 
