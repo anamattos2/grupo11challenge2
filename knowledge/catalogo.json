@@ -436,7 +436,7 @@
       "year": 2021,
       "origin": {
         "description": "Costa; Souza; Amaral / Cadernos de Graduação",
-        "url": null,
+        "url": "https://periodicos.set.edu.br/cadernohumanas/article/view/7683",
         "evidence": "Capa e identificação bibliográfica nas duas primeiras páginas do PDF; URL é referência, não comprovação de igualdade binária."
       },
       "sha256": "a12d2ccdf51b12de4788207399fc4f0999887ea6078a473f298edc586fe9457a",
@@ -448,8 +448,15 @@
         "fontes/ellenfumagali,+5.pdf"
       ],
       "status": "identificado",
-      "use_conditions": "Licença ou autorização de reutilização não identificada; requer verificação com a origem.",
-      "approved_for_ingestion": false
+      "use_conditions": "Reutilização e distribuição autorizadas com citação, conforme seção Licença na página oficial do artigo.",
+      "approved_for_ingestion": true,
+      "ingestion_review": {
+        "pages": [
+          8
+        ],
+        "evidence": "A seção Licença da página do artigo autoriza livre uso, cópia e distribuição com citação. Página selecionada: registro de receitas e despesas.",
+        "citation": "Costa, Souza e Amaral. Gestão das finanças pessoais: uma vida economicamente correta. Cadernos de Graduação, 2021. https://periodicos.set.edu.br/cadernohumanas/article/view/7683. Trecho extraído e normalizado."
+      }
     },
     {
       "id": "F020",
@@ -458,7 +465,7 @@
       "year": 2017,
       "origin": {
         "description": "Elaine da Silveira Leite / TOMO",
-        "url": null,
+        "url": "https://periodicos.ufs.br/tomo/article/view/6713",
         "evidence": "Capa e identificação bibliográfica nas duas primeiras páginas do PDF; URL é referência, não comprovação de igualdade binária."
       },
       "sha256": "9080177503241e24781d02261f25c55bbb13295fe628738cc956688195b2e2d6",
@@ -470,8 +477,16 @@
         "fontes/fnmarcon,+05+-+Elaine.pdf"
       ],
       "status": "identificado",
-      "use_conditions": "Licença ou autorização de reutilização não identificada; requer verificação com a origem.",
-      "approved_for_ingestion": false
+      "use_conditions": "CC BY 4.0, conforme seção Licença na página oficial do artigo. Manter atribuição, link e indicação das alterações.",
+      "approved_for_ingestion": true,
+      "ingestion_review": {
+        "pages": [
+          3,
+          4
+        ],
+        "evidence": "A seção Licença da página oficial do artigo declara CC BY 4.0. Páginas selecionadas: categorias de orçamento e contexto social.",
+        "citation": "Elaine da Silveira Leite. De dispositivo de prescrição às racionalidades cotidianas: o orçamento doméstico e familiar no Brasil. Revista TOMO, 2017. https://doi.org/10.21669/tomo.v0i0.6713. CC BY 4.0: https://creativecommons.org/licenses/by/4.0/. Trecho extraído e normalizado."
+      }
     },
     {
       "id": "F021",

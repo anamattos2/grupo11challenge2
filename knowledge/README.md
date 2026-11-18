@@ -43,13 +43,12 @@ páginas revisadas e citação em `ingestion_review`, e marque
 `approved_for_ingestion: true` no registro da fonte. A citação acompanha os
 chunks no índice e deve aparecer junto de trechos exibidos ao público.
 
-O primeiro lote cobre F001 (páginas 20 e 21) e F018 (páginas 4 a 6) para
-fundamentos de orçamento e planejamento. F018 é um estudo com estudantes e
-seus resultados não representam o público-alvo do aplicativo. A página de
-contatos fica fora da seleção. F024 permanece pendente de atualização do
-conteúdo. F005 e F017 têm condições específicas que ainda precisam ser
-verificadas para o uso proposto. Os registros sem licença ou autorização
-confirmada seguem pendentes.
+A seleção atual cobre F001 (páginas 20 e 21), F018 (páginas 4 a 6),
+F019 (página 8) e F020 (páginas 3 e 4). O escopo é orçamento, planejamento
+e contexto social. F018 é um estudo com estudantes e seus resultados não
+representam o público-alvo do aplicativo. A página de contatos fica fora
+da seleção. Consulte o [registro da revisão](revisao-ingestao.md) para
+as fontes pendentes.
 
 ## Verificar
 
