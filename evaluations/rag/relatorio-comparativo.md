@@ -49,6 +49,41 @@ estruturada identifica afirmações, evidências e limites por resposta.
 Multi-Query pode ser estudado como estratégia adicional de recuperação
 em uma comparação futura.
 
+## Entregas e rastreabilidade
+
+| Entrega | O que ficou disponível |
+| --- | --- |
+| Catálogo, extração e chunking | Inventário de 20 PDFs identificados, extração por página e janelas com IDs reproduzíveis. [Catálogo](../../knowledge/catalogo.json) · [Extração](../../docs/desenvolvimento/extracao-documental.md) · [Chunking](../../docs/desenvolvimento/chunking-documental.md) |
+| Embeddings, Chroma e reconstrução local | E5 Small com revisão fixada, persistência sem duplicatas e comando para cada colega reconstruir a seleção acadêmica. [Índice](../../docs/desenvolvimento/indice-vetorial.md) · [PR de reconstrução do acervo](https://github.com/anamattos2/grupo11challenge2/pull/120) |
+| Busca e demonstração | Evidências com documento, página, offsets e score. A demonstração inicial usou PDFs fictícios. A calibração com o acervo usou os 20 PDFs originais. [Recuperação](../../docs/desenvolvimento/recuperacao-documental.md) · [Guia do pipeline](https://github.com/anamattos2/grupo11challenge2/pull/124) |
+| Dataset e três executores | 18 perguntas únicas com gabarito separado, 6 para calibração e 12 para avaliação. Os executores registram configurações, respostas, falhas e latências em JSONL. [Dataset e protocolo](README.md) · [PR do dataset](https://github.com/anamattos2/grupo11challenge2/pull/125) |
+
+## Experimentos complementares
+
+As observações abaixo são de calibração. A tabela principal compara as
+três variantes sob uma configuração comum. Os experimentos seguintes
+incluem mudanças de prompt, modelo, seleção de trechos e triagem. Os
+números são comparáveis dentro de cada linha, nas condições indicadas.
+
+| Experimento | Resultado observado | O que aprendemos |
+| --- | --- | --- |
+| Prompt original e direto no LLM puro, Qwen2.5 0,5B | Aprovação de 0/6 para 1/6. Cortes de 2/6 para 0/6. | O prompt mais direto reduziu cortes. Erros de orçamento e fluxo de caixa persistiram. |
+| LLM puro com 0,5B e 3B, mesmo prompt direto | Ambos aprovaram 1/6. Latência mediana de 514 ms e 1.195 ms, respectivamente. | O aumento de tamanho, isolado, não elevou a aprovação nesta rodada. |
+| LLM puro e primeiro RAG com 0,5B | Aprovação de 1/6 e 0/6, respectivamente. O RAG recuperou a página esperada em 4/4 casos com evidência. | Encontrar a página certa ainda permitiu erros de geração e uso de um valor de exemplo como se fosse pessoal. |
+| Cinco trechos em texto livre e dois trechos com resposta estruturada | A página esperada caiu de 4/4 para 2/4. Ambas as configurações aprovaram 0/6. Quatro das cinco saídas estruturadas foram rejeitadas. | O teste mudou dois fatores ao mesmo tempo. |
+| Reordenação dos cinco candidatos e envio de até três páginas distintas | A página esperada entre os trechos enviados caiu de 4/4 para 3/4. Ambas aprovaram 0/6. | A seleção perdeu a página sobre revisão de metas. |
+| Triagem separada que gera classe e texto | Após validação, os modelos 0,5B e 3B acertaram 1/6 rotas cada. Nenhuma pergunta chegou ao gerador RAG. | O 0,5B concentrou tudo em dados insuficientes. O 3B acertou 4/6 rótulos brutos, mas misturou classe e texto. |
+| Triagem 3B com rótulo único e prompt revisado | A saída só com rótulo elevou as rotas válidas e corretas de 1/6 para 4/6. O prompt revisado chegou a 6/6 e acertou 6/6 em uma sondagem separada. | Explicitar a diferença entre orientação educativa e execução reduziu os bloqueios indevidos. |
+| Prompt de geração fundamentada e troca do gerador 0,5B pelo 3B | O prompt mais curto manteve 0/4 nas perguntas educativas. A troca pelo 3B também manteve 0/4, com cortes de 2/4 para 0/4. | Citações numericamente válidas ainda podiam apontar para outra fonte ou para um trecho sem suporte à conclusão. |
+| Explicação estruturada com cópia de frase e depois seleção por ID | No acervo original, a cópia literal produziu seis abstenções. A seleção por ID passou a entregar cinco respostas rastreáveis e aprovou 2/6. | Conferimos os offsets das sete frases selecionadas no texto dos PDFs. A pertinência continuou sendo avaliada pelo gabarito. |
+| Triagem revisada combinada com seleção por ID | Aprovação de 2/6 para 4/6, com 6/6 rotas corretas. | O sistema pediu os lançamentos de transporte e declarou o conserto fora de escopo. As quatro respostas educativas ficaram iguais. |
+
+O experimento combinado usou o mesmo acervo acadêmico e as mesmas seis
+perguntas. A triagem continua experimental. A mensagem de esclarecimento
+foi avaliada apenas para um gasto por categoria e período. O índice, as
+saídas e os trechos recuperados permanecem em `.runtime/avaliacoes/` e
+`.runtime/chroma-academico-local/`.
+
 ## Limitações e revisão humana
 
 O resultado é de uma execução curta por variante, com seleção de páginas
