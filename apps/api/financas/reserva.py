@@ -42,6 +42,16 @@ def calcular_progresso(saldo: Decimal, meta: Decimal) -> Optional[Decimal]:
     return arredondar(100 * saldo / meta)
 
 
+def calcular_cobertura(
+    saldo: Optional[Decimal],
+    despesas_mensais: Optional[Decimal],
+) -> Optional[Decimal]:
+    """Informa quantos meses de despesas essenciais o saldo declarado cobre."""
+    if saldo is None or despesas_mensais is None or despesas_mensais <= 0:
+        return None
+    return arredondar(saldo / despesas_mensais)
+
+
 def avaliar_reserva(
     despesas_mensais: Optional[Decimal],
     meses_cobertura: Optional[int],

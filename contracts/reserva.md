@@ -15,6 +15,7 @@ pela usuária e não representam consulta a um saldo bancário.
 | Meta | Despesas essenciais mensais × meses de cobertura |
 | Saldo declarado | Saldo inicial + aportes − retiradas |
 | Progresso | 100 × saldo declarado ÷ meta, somente quando a meta é maior que zero |
+| Meses cobertos | Saldo declarado ÷ despesas essenciais mensais, quando esses dados existem |
 
 Exemplo fictício: despesas essenciais de R$ 2.000,00 por mês e 3 meses de cobertura
 geram meta de R$ 6.000,00. Saldo inicial de R$ 500,00, aporte de R$ 200,00 e retirada de
@@ -82,6 +83,7 @@ GET /api/reserva?mes_inicio=2026-10&mes_fim=2026-10
   "despesas_essenciais_total": "2000.00",
   "despesas_essenciais_mensais": "2000.00",
   "meses_cobertura": 3,
+  "meses_cobertos": "0.30",
   "saldo_inicial": "500.00",
   "aportes": "200.00",
   "retiradas": "100.00",
