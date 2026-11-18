@@ -1,0 +1,30 @@
+{
+  "schema": "SaidaValidacao",
+  "caso": "reprovada",
+  "descricao": "Número do texto diverge da ferramenta.",
+  "documento": {
+    "versao": "1.0",
+    "decisao": "reprovada",
+    "verificacoes": [
+      {
+        "regra": "referencias_existentes",
+        "resultado": "ok",
+        "detalhe": "Todas as evidências citadas existem na pesquisa."
+      },
+      {
+        "regra": "numeros_conferem",
+        "resultado": "falha",
+        "afirmacao_id": "a1",
+        "detalhe": "Texto informa 1950.40, evidência informa 1850.40."
+      }
+    ],
+    "afirmacoes_aprovadas": [],
+    "alegacoes_sem_suporte": [
+      "a1"
+    ],
+    "motivo_bloqueio": "numero_divergente",
+    "feedback": [
+      "Use exatamente o valor retornado pela ferramenta financeira em a1."
+    ]
+  }
+}

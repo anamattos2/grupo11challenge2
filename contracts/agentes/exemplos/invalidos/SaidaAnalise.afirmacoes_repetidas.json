@@ -1,0 +1,29 @@
+{
+  "schema": "SaidaAnalise",
+  "caso": "afirmacoes_repetidas",
+  "motivo": "IDs de afirmação únicos.",
+  "erro_esperado": "value_error",
+  "documento": {
+    "versao": "1.0",
+    "status": "analisada",
+    "afirmacoes": [
+      {
+        "id": "a1",
+        "natureza": "dado_pessoal",
+        "evidencias_ids": [
+          "fin:resumo_transacoes:53dd2d27e384"
+        ],
+        "texto": "Em outubro de 2026 você registrou R$ 1.850,40 em despesas de categorias essenciais."
+      },
+      {
+        "id": "a1",
+        "natureza": "orientacao_educativa",
+        "evidencias_ids": [
+          "doc:4ca5959e85ae1899"
+        ],
+        "texto": "A reserva de emergência serve para cobrir despesas essenciais quando a renda é interrompida ou surge um imprevisto."
+      }
+    ],
+    "lacunas": []
+  }
+}

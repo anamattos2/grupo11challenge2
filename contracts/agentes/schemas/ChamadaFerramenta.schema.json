@@ -1,0 +1,125 @@
+{
+  "$defs": {
+    "OperacaoFinanceira": {
+      "description": "Lista fechada de consultas financeiras. Não há SQL livre nem escrita.",
+      "enum": [
+        "resumo_transacoes",
+        "listar_contas",
+        "situacao_reserva"
+      ],
+      "title": "OperacaoFinanceira",
+      "type": "string"
+    },
+    "ParametrosFinanceiros": {
+      "additionalProperties": false,
+      "description": "Parâmetros que o planejador (regra ou LLM) pode preencher.\n\nRepare que não existe campo de usuária: quem é a dona dos dados vem do\n``ContextoAutorizado``, e ``extra=\"forbid\"`` recusa qualquer tentativa.",
+      "properties": {
+        "periodo_fim": {
+          "anyOf": [
+            {
+              "format": "date",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Periodo Fim"
+        },
+        "periodo_inicio": {
+          "anyOf": [
+            {
+              "format": "date",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Periodo Inicio"
+        },
+        "somente_essenciais": {
+          "default": false,
+          "title": "Somente Essenciais",
+          "type": "boolean"
+        },
+        "tipo": {
+          "anyOf": [
+            {
+              "enum": [
+                "receita",
+                "despesa"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Tipo"
+        }
+      },
+      "title": "ParametrosFinanceiros",
+      "type": "object"
+    }
+  },
+  "$id": "https://github.com/anamattos2/grupo11challenge2/contracts/agentes/schemas/ChamadaFerramenta.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Uma chamada planejada. É isso que um LLM preencheria em *tool calling*.",
+  "properties": {
+    "consulta": {
+      "anyOf": [
+        {
+          "maxLength": 500,
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Consulta"
+    },
+    "ferramenta": {
+      "enum": [
+        "documentos.buscar",
+        "financeiro.consultar"
+      ],
+      "title": "Ferramenta",
+      "type": "string"
+    },
+    "operacao": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/OperacaoFinanceira"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "parametros": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ParametrosFinanceiros"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    }
+  },
+  "required": [
+    "ferramenta"
+  ],
+  "title": "ChamadaFerramenta",
+  "type": "object",
+  "x-versao-contrato": "1.0"
+}

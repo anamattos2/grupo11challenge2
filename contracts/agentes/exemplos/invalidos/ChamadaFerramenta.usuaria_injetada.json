@@ -1,0 +1,17 @@
+{
+  "schema": "ChamadaFerramenta",
+  "caso": "usuaria_injetada",
+  "motivo": "O planejador tentou escolher a usuária: campo proibido.",
+  "erro_esperado": "extra_forbidden",
+  "documento": {
+    "ferramenta": "financeiro.consultar",
+    "operacao": "resumo_transacoes",
+    "parametros": {
+      "periodo_inicio": "2026-10-01",
+      "periodo_fim": "2026-10-31",
+      "tipo": "despesa",
+      "somente_essenciais": true,
+      "usuaria_id": "usuaria-ficticia-b"
+    }
+  }
+}
