@@ -20,10 +20,13 @@ System check identified no issues (0 silenced).
 No changes detected
 
 ../../.venv-api/bin/python manage.py test
-Found 101 test(s).
-Ran 101 tests
+Found 102 test(s).
+Ran 102 tests
 OK
 ```
+
+A suíte também passou em Python 3.12.16, a versão usada pela CI, em contêiner com
+PostgreSQL 17 limpo.
 
 ## Migration
 
@@ -84,7 +87,7 @@ ser detectado.
 
 ## Limites da evidência
 
-- O job `backend` da CI e a execução com Python 3.12 dependem do push e do PR.
+- O resultado do job `backend` da CI depende do push e do PR.
 - Totais por categoria pertencem à BE-06, e o cálculo da reserva, à BE-05.
 - Categorias não são criadas automaticamente: a usuária precisa cadastrá-las antes da
   primeira transação.
