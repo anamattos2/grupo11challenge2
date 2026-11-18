@@ -20,8 +20,8 @@ System check identified no issues (0 silenced).
 No changes detected
 
 ../../.venv-api/bin/python manage.py test
-Found 157 test(s).
-Ran 157 tests
+Found 158 test(s).
+Ran 158 tests
 OK
 ```
 

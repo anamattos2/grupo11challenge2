@@ -633,6 +633,22 @@ class IsolamentoDaReservaTests(BaseReserva):
         self.assertFalse(MovimentacaoReserva.objects.filter(id=self.minha.id).exists())
 
 
+class ContratoDaReservaTests(TestCase):
+    def valores_do_tipo(self, esquema):
+        esquemas = self.client.get("/api/openapi.json").json()["components"]["schemas"]
+        referencia = esquemas[esquema]["properties"]["tipo"]["$ref"].rsplit("/", 1)[-1]
+        return set(esquemas[referencia]["enum"])
+
+    def test_tipos_de_movimentacao_e_de_conta_nao_se_misturam(self):
+        movimentacao = {"aporte", "retirada"}
+        conta = {"corrente", "poupanca", "carteira", "reserva", "outra"}
+
+        self.assertEqual(self.valores_do_tipo("MovimentacaoIn"), movimentacao)
+        self.assertEqual(self.valores_do_tipo("MovimentacaoOut"), movimentacao)
+        self.assertEqual(self.valores_do_tipo("ContaIn"), conta)
+        self.assertEqual(self.valores_do_tipo("ContaOut"), conta)
+
+
 class RelogioRealTests(TestCase):
     def test_periodo_padrao_termina_no_mes_anterior_ao_atual(self):
         usuaria = get_user_model().objects.create_user("cris.ficticia")

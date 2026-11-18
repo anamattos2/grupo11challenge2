@@ -138,10 +138,14 @@ class ReservaEmergencia(RegistroDaUsuaria):
         ]
 
 
+class TipoMovimentacao(models.TextChoices):
+    APORTE = "aporte", "Aporte"
+    RETIRADA = "retirada", "Retirada"
+
+
 class MovimentacaoReserva(RegistroDaUsuaria):
-    class Tipo(models.TextChoices):
-        APORTE = "aporte", "Aporte"
-        RETIRADA = "retirada", "Retirada"
+    # O nome próprio evita colisão com ContaManual.Tipo no contrato OpenAPI.
+    Tipo = TipoMovimentacao
 
     tipo = models.CharField(max_length=10, choices=Tipo.choices)
     valor = models.DecimalField(max_digits=14, decimal_places=2)

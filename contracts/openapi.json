@@ -337,7 +337,7 @@
           "tipo": {
             "anyOf": [
               {
-                "$ref": "#/components/schemas/Tipo"
+                "$ref": "#/components/schemas/TipoMovimentacao"
               },
               {
                 "type": "null"
@@ -501,7 +501,7 @@
             "type": "string"
           },
           "tipo": {
-            "$ref": "#/components/schemas/Tipo"
+            "$ref": "#/components/schemas/TipoMovimentacao"
           },
           "valor": {
             "examples": [
@@ -545,7 +545,7 @@
             "type": "string"
           },
           "tipo": {
-            "$ref": "#/components/schemas/Tipo"
+            "$ref": "#/components/schemas/TipoMovimentacao"
           },
           "valor": {
             "examples": [
@@ -935,8 +935,11 @@
       },
       "Tipo": {
         "enum": [
-          "aporte",
-          "retirada"
+          "corrente",
+          "poupanca",
+          "carteira",
+          "reserva",
+          "outra"
         ],
         "title": "Tipo",
         "type": "string"
@@ -947,6 +950,14 @@
           "despesa"
         ],
         "title": "TipoLancamento",
+        "type": "string"
+      },
+      "TipoMovimentacao": {
+        "enum": [
+          "aporte",
+          "retirada"
+        ],
+        "title": "TipoMovimentacao",
         "type": "string"
       },
       "TotaisOut": {
@@ -2262,7 +2273,7 @@
             "schema": {
               "anyOf": [
                 {
-                  "$ref": "#/components/schemas/Tipo"
+                  "$ref": "#/components/schemas/TipoMovimentacao"
                 },
                 {
                   "type": "null"
