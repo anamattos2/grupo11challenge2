@@ -81,14 +81,17 @@ consome essas variáveis.
 | DJANGO_SECRET_KEY | troque-esta-chave-local | Chave do Django; obrigatória |
 | DJANGO_DEBUG | true | Modo de depuração; `false` se ausente |
 | DJANGO_ALLOWED_HOSTS | localhost,127.0.0.1 | Hosts aceitos, separados por vírgula |
+| DJANGO_CSRF_TRUSTED_ORIGINS | http://localhost:5173 | Origens do frontend aceitas em escritas, separadas por vírgula; opcional |
 | POSTGRES_DB | grupo11 | Nome do banco; obrigatória |
 | POSTGRES_USER | grupo11 | Usuário do banco; obrigatória |
 | POSTGRES_PASSWORD | troque-esta-senha-local | Senha do banco; obrigatória |
 | POSTGRES_HOST | localhost | Endereço do banco; `localhost` se ausente |
 | POSTGRES_PORT | 5432 | Porta do banco; `5432` se ausente |
 
-Não adicionar credenciais reais ao exemplo. Modelos, autenticação, retenção de
-imagens e cache PWA ainda dependem das decisões registradas na arquitetura.
+Com `DJANGO_DEBUG=false`, os cookies de sessão e CSRF só trafegam por HTTPS.
+
+Não adicionar credenciais reais ao exemplo. Modelos, retenção de imagens e cache
+PWA ainda dependem das decisões registradas na arquitetura.
 
 ## Organização incremental
 
