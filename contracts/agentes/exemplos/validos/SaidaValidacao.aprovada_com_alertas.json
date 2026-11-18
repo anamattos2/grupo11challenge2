@@ -1,0 +1,44 @@
+{
+  "schema": "SaidaValidacao",
+  "caso": "aprovada_com_alertas",
+  "descricao": "Aprovada, com alerta de fonte sintética.",
+  "documento": {
+    "versao": "1.0",
+    "decisao": "aprovada_com_alertas",
+    "verificacoes": [
+      {
+        "regra": "referencias_existentes",
+        "resultado": "ok",
+        "detalhe": "Todas as evidências citadas existem na pesquisa."
+      },
+      {
+        "regra": "natureza_compativel",
+        "resultado": "ok",
+        "detalhe": "Dado pessoal cita evidência financeira; orientação cita documento."
+      },
+      {
+        "regra": "numeros_conferem",
+        "resultado": "ok",
+        "afirmacao_id": "a1",
+        "detalhe": "1850.40 consta nos valores da evidência financeira."
+      },
+      {
+        "regra": "suporte_documental",
+        "resultado": "alerta",
+        "afirmacao_id": "a2",
+        "detalhe": "Fonte sintética de protótipo; substituir por fonte do catálogo."
+      },
+      {
+        "regra": "escopo_permitido",
+        "resultado": "ok",
+        "detalhe": "Sem recomendação de ativos nem acesso a bancos."
+      }
+    ],
+    "afirmacoes_aprovadas": [
+      "a1",
+      "a2"
+    ],
+    "alegacoes_sem_suporte": [],
+    "feedback": []
+  }
+}

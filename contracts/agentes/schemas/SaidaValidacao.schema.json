@@ -1,0 +1,140 @@
+{
+  "$defs": {
+    "MotivoBloqueio": {
+      "enum": [
+        "referencia_inexistente",
+        "numero_divergente",
+        "sem_suporte",
+        "fora_do_escopo"
+      ],
+      "title": "MotivoBloqueio",
+      "type": "string"
+    },
+    "RegraValidacao": {
+      "enum": [
+        "referencias_existentes",
+        "natureza_compativel",
+        "numeros_conferem",
+        "suporte_documental",
+        "escopo_permitido"
+      ],
+      "title": "RegraValidacao",
+      "type": "string"
+    },
+    "Verificacao": {
+      "additionalProperties": false,
+      "properties": {
+        "afirmacao_id": {
+          "anyOf": [
+            {
+              "pattern": "^a[0-9]{1,3}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Afirmacao Id"
+        },
+        "detalhe": {
+          "maxLength": 300,
+          "minLength": 1,
+          "title": "Detalhe",
+          "type": "string"
+        },
+        "regra": {
+          "$ref": "#/$defs/RegraValidacao"
+        },
+        "resultado": {
+          "enum": [
+            "ok",
+            "alerta",
+            "falha"
+          ],
+          "title": "Resultado",
+          "type": "string"
+        }
+      },
+      "required": [
+        "regra",
+        "resultado",
+        "detalhe"
+      ],
+      "title": "Verificacao",
+      "type": "object"
+    }
+  },
+  "$id": "https://github.com/anamattos2/grupo11challenge2/contracts/agentes/schemas/SaidaValidacao.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "afirmacoes_aprovadas": {
+      "items": {
+        "pattern": "^a[0-9]{1,3}$",
+        "type": "string"
+      },
+      "title": "Afirmacoes Aprovadas",
+      "type": "array"
+    },
+    "alegacoes_sem_suporte": {
+      "items": {
+        "pattern": "^a[0-9]{1,3}$",
+        "type": "string"
+      },
+      "title": "Alegacoes Sem Suporte",
+      "type": "array"
+    },
+    "decisao": {
+      "enum": [
+        "aprovada",
+        "aprovada_com_alertas",
+        "reprovada"
+      ],
+      "title": "Decisao",
+      "type": "string"
+    },
+    "feedback": {
+      "description": "Orientação objetiva para uma revisão da Analysis.",
+      "items": {
+        "maxLength": 300,
+        "minLength": 1,
+        "type": "string"
+      },
+      "title": "Feedback",
+      "type": "array"
+    },
+    "motivo_bloqueio": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/MotivoBloqueio"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "verificacoes": {
+      "items": {
+        "$ref": "#/$defs/Verificacao"
+      },
+      "minItems": 1,
+      "title": "Verificacoes",
+      "type": "array"
+    },
+    "versao": {
+      "const": "1.0",
+      "default": "1.0",
+      "title": "Versao",
+      "type": "string"
+    }
+  },
+  "required": [
+    "decisao",
+    "verificacoes"
+  ],
+  "title": "SaidaValidacao",
+  "type": "object",
+  "x-versao-contrato": "1.0"
+}

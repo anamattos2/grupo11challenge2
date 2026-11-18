@@ -1,0 +1,103 @@
+{
+  "$defs": {
+    "FonteCitada": {
+      "additionalProperties": false,
+      "properties": {
+        "evidencia_id": {
+          "pattern": "^(doc:[0-9a-f]{16,64}|fin:[a-z_]{3,40}:[0-9a-f]{12})$",
+          "title": "Evidencia Id",
+          "type": "string"
+        },
+        "rotulo": {
+          "description": "Como a fonte aparece para a usuária (ex.: 'F003, p. 12').",
+          "maxLength": 300,
+          "minLength": 1,
+          "title": "Rotulo",
+          "type": "string"
+        }
+      },
+      "required": [
+        "evidencia_id",
+        "rotulo"
+      ],
+      "title": "FonteCitada",
+      "type": "object"
+    },
+    "Ligacao": {
+      "additionalProperties": false,
+      "description": "Explica qual evidência sustenta cada afirmação usada no texto.",
+      "properties": {
+        "afirmacao_id": {
+          "pattern": "^a[0-9]{1,3}$",
+          "title": "Afirmacao Id",
+          "type": "string"
+        },
+        "evidencias_ids": {
+          "items": {
+            "pattern": "^(doc:[0-9a-f]{16,64}|fin:[a-z_]{3,40}:[0-9a-f]{12})$",
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Evidencias Ids",
+          "type": "array"
+        }
+      },
+      "required": [
+        "afirmacao_id",
+        "evidencias_ids"
+      ],
+      "title": "Ligacao",
+      "type": "object"
+    }
+  },
+  "$id": "https://github.com/anamattos2/grupo11challenge2/contracts/agentes/schemas/SaidaComunicacao.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "fontes": {
+      "items": {
+        "$ref": "#/$defs/FonteCitada"
+      },
+      "minItems": 1,
+      "title": "Fontes",
+      "type": "array"
+    },
+    "ligacoes": {
+      "items": {
+        "$ref": "#/$defs/Ligacao"
+      },
+      "minItems": 1,
+      "title": "Ligacoes",
+      "type": "array"
+    },
+    "limites": {
+      "items": {
+        "maxLength": 300,
+        "minLength": 1,
+        "type": "string"
+      },
+      "title": "Limites",
+      "type": "array"
+    },
+    "texto": {
+      "maxLength": 3000,
+      "minLength": 1,
+      "title": "Texto",
+      "type": "string"
+    },
+    "versao": {
+      "const": "1.0",
+      "default": "1.0",
+      "title": "Versao",
+      "type": "string"
+    }
+  },
+  "required": [
+    "texto",
+    "fontes",
+    "ligacoes"
+  ],
+  "title": "SaidaComunicacao",
+  "type": "object",
+  "x-versao-contrato": "1.0"
+}

@@ -1,0 +1,19 @@
+{
+  "schema": "SaidaPesquisa",
+  "caso": "sem_evidencias",
+  "descricao": "Nenhum trecho acima do limiar.",
+  "documento": {
+    "versao": "1.0",
+    "status": "sem_evidencias",
+    "modo": "prototipo_fixtures",
+    "evidencias": [],
+    "chamadas": [
+      {
+        "ferramenta": "documentos.buscar",
+        "status": "sem_resultados",
+        "duracao_ms": 30
+      }
+    ],
+    "observacoes": []
+  }
+}

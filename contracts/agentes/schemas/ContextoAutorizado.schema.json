@@ -1,0 +1,68 @@
+{
+  "$defs": {
+    "Permissao": {
+      "description": "Escopos de leitura que o backend concede para a requisição.\n\nNão existe permissão de escrita: nenhum agente cria, altera ou exclui\nregistros financeiros. Escrita passa pela API com confirmação da usuária.",
+      "enum": [
+        "documentos:ler",
+        "financeiro:ler"
+      ],
+      "title": "Permissao",
+      "type": "string"
+    }
+  },
+  "$id": "https://github.com/anamattos2/grupo11challenge2/contracts/agentes/schemas/ContextoAutorizado.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Montado pelo backend a partir da sessão autenticada, nunca pelo modelo.\n\n``usuaria_ref`` é uma referência opaca. Ela é repassada às ferramentas pelo\ncódigo do agente, e não aparece em prompts nem em parâmetros que um LLM\npossa preencher. Mesmo assim, cada ferramenta revalida o acesso.",
+  "properties": {
+    "conversa_id": {
+      "pattern": "^[A-Za-z0-9_-]{4,64}$",
+      "title": "Conversa Id",
+      "type": "string"
+    },
+    "correlation_id": {
+      "pattern": "^[A-Za-z0-9_-]{8,64}$",
+      "title": "Correlation Id",
+      "type": "string"
+    },
+    "data_referencia": {
+      "description": "Data atual em America/Sao_Paulo; base para 'este mês'.",
+      "format": "date",
+      "title": "Data Referencia",
+      "type": "string"
+    },
+    "memoria": {
+      "description": "Resumo limitado da conversa, já filtrado pelo backend.",
+      "items": {
+        "maxLength": 500,
+        "type": "string"
+      },
+      "maxItems": 5,
+      "title": "Memoria",
+      "type": "array"
+    },
+    "permissoes": {
+      "items": {
+        "$ref": "#/$defs/Permissao"
+      },
+      "maxItems": 2,
+      "title": "Permissoes",
+      "type": "array"
+    },
+    "usuaria_ref": {
+      "pattern": "^[A-Za-z0-9_-]{4,64}$",
+      "title": "Usuaria Ref",
+      "type": "string"
+    }
+  },
+  "required": [
+    "correlation_id",
+    "usuaria_ref",
+    "conversa_id",
+    "permissoes",
+    "data_referencia"
+  ],
+  "title": "ContextoAutorizado",
+  "type": "object",
+  "x-versao-contrato": "1.0"
+}

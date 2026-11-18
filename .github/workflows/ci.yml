@@ -68,12 +68,13 @@ jobs:
       - name: Verify preservation of historical experiments
         run: python scripts/verificar_legado.py
 
-      - name: Test document extraction with synthetic PDFs
+      - name: Test document extraction and agent contracts with synthetic data
         shell: bash
         run: |
           python -m venv "${RUNNER_TEMP}/finance-documents-venv"
-          "${RUNNER_TEMP}/finance-documents-venv/bin/python" -m pip install --editable './packages/ai[documents]'
+          "${RUNNER_TEMP}/finance-documents-venv/bin/python" -m pip install --editable './packages/ai[documents,agents]'
           "${RUNNER_TEMP}/finance-documents-venv/bin/python" -m pip check
+          "${RUNNER_TEMP}/finance-documents-venv/bin/python" scripts/exportar_schemas_agentes.py --check
           "${RUNNER_TEMP}/finance-documents-venv/bin/python" -m unittest discover -s tests
 
       - name: Install and check the initial AI package in a clean environment
