@@ -50,3 +50,6 @@ dos revisores no PR.
 Registre no PR o nome ou login de quem revisou, o commit revisado, a data e as
 decisões sobre divergências. Congele a versão após essa revisão e antes de
 executar a comparação final.
+
+O [baseline LLM puro](baseline-llm.md) executa as perguntas e registra as
+respostas, latências e falhas para revisão posterior.
