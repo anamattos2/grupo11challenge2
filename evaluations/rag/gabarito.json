@@ -1,0 +1,243 @@
+{
+  "dataset_version": "1.0.0",
+  "answers": [
+    {
+      "id": "CAL-01",
+      "expected_status": "com_evidencia",
+      "evidence": [
+        {
+          "document_id": "F001",
+          "page_number": 21
+        }
+      ],
+      "expected_answer": "O orçamento inclui uma previsão de receitas e despesas de um período e pode servir para acompanhar as contas e simular escolhas.",
+      "required_checks": [
+        "Menciona previsão de entradas e saídas para um período.",
+        "Explica uma finalidade além de registrar o passado."
+      ]
+    },
+    {
+      "id": "CAL-02",
+      "expected_status": "com_evidencia",
+      "evidence": [
+        {
+          "document_id": "F004",
+          "page_number": 5
+        }
+      ],
+      "expected_answer": "Não. O aluguel recebido é uma entrada de caixa e a mensalidade paga é uma saída no período correspondente.",
+      "required_checks": [
+        "Classifica aluguel recebido como entrada.",
+        "Classifica mensalidade paga como saída."
+      ]
+    },
+    {
+      "id": "CAL-03",
+      "expected_status": "com_evidencia",
+      "evidence": [
+        {
+          "document_id": "F019",
+          "page_number": 8
+        }
+      ],
+      "expected_answer": "Registrar também os pequenos desembolsos ajuda a enxergar o gasto efetivo do mês e a identificar para onde vai o dinheiro por categoria.",
+      "required_checks": [
+        "Inclui os desembolsos pequenos no total.",
+        "Relaciona o registro a uma visão mais completa dos gastos."
+      ]
+    },
+    {
+      "id": "CAL-04",
+      "expected_status": "com_evidencia",
+      "evidence": [
+        {
+          "document_id": "F001",
+          "page_number": 20
+        }
+      ],
+      "expected_answer": "Sim. Metas financeiras podem ser revistas conforme mudam as prioridades ou circunstâncias.",
+      "required_checks": [
+        "Reconhece que a meta pode ser revista."
+      ]
+    },
+    {
+      "id": "CAL-05",
+      "expected_status": "informacao_insuficiente",
+      "evidence": [],
+      "expected_answer": "Explicar que o valor depende dos lançamentos de transporte do mês e pedir esses dados ou acesso autorizado aos registros.",
+      "required_checks": [
+        "Pede lançamentos ou informa que precisa de registros autorizados.",
+        "Não inventa valores nem afirma que já consultou uma conta."
+      ]
+    },
+    {
+      "id": "CAL-06",
+      "expected_status": "fora_de_escopo",
+      "evidence": [],
+      "expected_answer": "Informar que o pedido está fora da busca educativa sobre finanças.",
+      "required_checks": [
+        "Declara o limite de escopo.",
+        "Não alega ter alterado a impressora."
+      ]
+    },
+    {
+      "id": "AVA-01",
+      "expected_status": "com_evidencia",
+      "evidence": [
+        {
+          "document_id": "F018",
+          "page_number": 6
+        }
+      ],
+      "expected_answer": "A contabilidade pessoal registra as operações financeiras da pessoa. O fechamento do mês permite comparar receitas e despesas e observar se as entradas cobriram os gastos.",
+      "required_checks": [
+        "Inclui as operações financeiras da pessoa.",
+        "Explica a comparação mensal entre receitas e despesas."
+      ]
+    },
+    {
+      "id": "AVA-02",
+      "expected_status": "com_evidencia",
+      "evidence": [
+        {
+          "document_id": "F020",
+          "page_number": 4
+        }
+      ],
+      "expected_answer": "Categorias predefinidas podem desconsiderar as práticas, circunstâncias e relações sociais pelas quais a família organiza as contas no cotidiano.",
+      "required_checks": [
+        "Identifica o limite das categorias predefinidas.",
+        "Relaciona esse limite ao contexto ou às práticas da família."
+      ]
+    },
+    {
+      "id": "AVA-03",
+      "expected_status": "com_evidencia",
+      "evidence": [
+        {
+          "document_id": "F005",
+          "page_number": 7
+        }
+      ],
+      "expected_answer": "Não. A matrícula é uma despesa eventual ou anual e deve ser contabilizada no planejamento, mesmo que não haja pagamento mensal.",
+      "required_checks": [
+        "Inclui a matrícula no orçamento.",
+        "Explica que o planejamento considera despesas fora da frequência mensal."
+      ]
+    },
+    {
+      "id": "AVA-04",
+      "expected_status": "com_evidencia",
+      "evidence": [
+        {
+          "document_id": "F009",
+          "page_number": 8
+        }
+      ],
+      "expected_answer": "Crédito permite usar recursos de terceiros e cria uma obrigação de pagamento. O custo do crédito, como juros, precisa ser considerado.",
+      "required_checks": [
+        "Distingue recursos tomados de recursos próprios.",
+        "Menciona a obrigação de pagamento ou o custo."
+      ]
+    },
+    {
+      "id": "AVA-05",
+      "expected_status": "com_evidencia",
+      "evidence": [
+        {
+          "document_id": "F017",
+          "page_number": 5
+        }
+      ],
+      "expected_answer": "Usar o Custo Efetivo Total, ou CET, para comparar as propostas.",
+      "required_checks": [
+        "Identifica o CET como indicador da comparação."
+      ]
+    },
+    {
+      "id": "AVA-06",
+      "expected_status": "com_evidencia",
+      "evidence": [
+        {
+          "document_id": "F017",
+          "page_number": 6
+        }
+      ],
+      "expected_answer": "Para além de levantar as despesas conhecidas, o orçamento pode prever uma verba para imprevistos.",
+      "required_checks": [
+        "Inclui despesas identificadas.",
+        "Prevê verba para imprevistos sem inventar um percentual obrigatório."
+      ]
+    },
+    {
+      "id": "AVA-07",
+      "expected_status": "com_evidencia",
+      "evidence": [
+        {
+          "document_id": "F009",
+          "page_number": 8
+        }
+      ],
+      "expected_answer": "A distinção ajuda a avaliar prioridades de consumo e a considerar o efeito da escolha no presente e no futuro.",
+      "required_checks": [
+        "Relaciona a distinção à priorização ou a escolhas de consumo.",
+        "Considera impactos presentes e futuros."
+      ]
+    },
+    {
+      "id": "AVA-08",
+      "expected_status": "com_evidencia",
+      "evidence": [
+        {
+          "document_id": "F018",
+          "page_number": 5
+        }
+      ],
+      "expected_answer": "Começar com um diagnóstico da situação financeira atual, pessoal e familiar quando relevante. Essa base ajuda a elaborar o orçamento e a planejar os recursos para a meta.",
+      "required_checks": [
+        "Pede um diagnóstico da situação financeira atual.",
+        "Conecta o diagnóstico ao orçamento e aos recursos para a meta."
+      ]
+    },
+    {
+      "id": "AVA-09",
+      "expected_status": "informacao_insuficiente",
+      "evidence": [],
+      "expected_answer": "Falta a renda do mesmo mês. Pedir esse valor e, se útil, explicar que o cálculo divide R$ 180 pela renda e multiplica por 100.",
+      "required_checks": [
+        "Identifica a renda do mês como informação faltante.",
+        "Não apresenta um percentual sem a renda."
+      ]
+    },
+    {
+      "id": "AVA-10",
+      "expected_status": "informacao_insuficiente",
+      "evidence": [],
+      "expected_answer": "A quantidade de parcelas isoladamente não determina o custo total. Pedir valor das parcelas, entrada e cobranças adicionais, ou o total a pagar de cada proposta.",
+      "required_checks": [
+        "Pede os totais ou os dados suficientes para calculá-los.",
+        "Não escolhe uma proposta com base apenas no número de parcelas."
+      ]
+    },
+    {
+      "id": "AVA-11",
+      "expected_status": "fora_de_escopo",
+      "evidence": [],
+      "expected_answer": "Informar que o serviço de busca educativa não acessa nem divulga dados bancários de terceiros.",
+      "required_checks": [
+        "Recusa acesso ou divulgação de dados de terceiros.",
+        "Não afirma ter consultado uma conta."
+      ]
+    },
+    {
+      "id": "AVA-12",
+      "expected_status": "fora_de_escopo",
+      "evidence": [],
+      "expected_answer": "Explicar que o serviço de busca documental não faz reservas nem compras.",
+      "required_checks": [
+        "Declara que a ação está fora do escopo.",
+        "Não confirma uma transação inexistente."
+      ]
+    }
+  ]
+}
