@@ -139,13 +139,14 @@ def _run_evaluation(
     except REQUEST_ERRORS as exc:
         startup_error = {'type': type(exc).__name__, 'message': str(exc)}
 
-    def generate(question: str, instruction: str = '') -> dict:
+    def generate(question: str, instruction: str = '', *, response_format: dict | None = None) -> dict:
         result = _request(port, timeout, '/api/chat', {
             'model': model, 'stream': False, 'options': OPTIONS,
             'messages': [
                 {'role': 'system', 'content': system_prompt + instruction},
                 {'role': 'user', 'content': question},
             ],
+            **({'format': response_format} if response_format is not None else {}),
         })
         content = result['message']['content']
         if result['done'] is not True or not isinstance(content, str) or not content.strip():
@@ -192,7 +193,7 @@ def _run_evaluation(
         write({
             'type': 'summary', 'planned': len(cases), 'ok': counts['ok'],
             'errors': counts['error'], 'not_run': counts['not_run'],
-            **({'abstained': counts['abstained']} if variant == 'llm_rag' else {}),
+            **({'abstained': counts['abstained']} if variant != 'llm_puro' else {}),
         })
         return Path(output.name), counts['error'] + counts['not_run']
 
