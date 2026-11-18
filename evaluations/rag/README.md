@@ -53,3 +53,6 @@ executar a comparação final.
 
 O [baseline LLM puro](baseline-llm.md) executa as perguntas e registra as
 respostas, latências e falhas para revisão posterior.
+
+A [variante LLM com RAG](variante-rag.md) registra as evidências recuperadas
+e as abstenções para comparação com o baseline.

@@ -106,6 +106,20 @@ def run_baseline(
     timeout: float = 120,
 ) -> tuple[Path, int]:
     """Grava metadados, uma linha por caso e um resumo de execução em JSONL."""
+    return _run_evaluation(
+        dataset_path, output_dir, split=split, model=model, prompt=prompt, port=port,
+        timeout=timeout, variant='llm_puro', case_handler=_baseline_case,
+    )
+
+
+def _baseline_case(question, generate) -> dict:
+    return {'status': 'ok', **generate(question)}
+
+
+def _run_evaluation(
+    dataset_path, output_dir, *, split, model, prompt, port, timeout,
+    variant, case_handler, metadata=None,
+) -> tuple[Path, int]:
     if not 1 <= port <= 65535 or not 0 < timeout < float('inf'):
         raise ValueError('porta ou timeout inválido')
     if prompt not in PROMPTS:
@@ -125,17 +139,30 @@ def run_baseline(
     except REQUEST_ERRORS as exc:
         startup_error = {'type': type(exc).__name__, 'message': str(exc)}
 
+    def generate(question: str, instruction: str = '') -> dict:
+        result = _request(port, timeout, '/api/chat', {
+            'model': model, 'stream': False, 'options': OPTIONS,
+            'messages': [
+                {'role': 'system', 'content': system_prompt + instruction},
+                {'role': 'user', 'content': question},
+            ],
+        })
+        content = result['message']['content']
+        if result['done'] is not True or not isinstance(content, str) or not content.strip():
+            raise ValueError('geração incompleta ou resposta vazia')
+        return {'response': content, 'done_reason': result.get('done_reason')}
+
     output_dir.mkdir(parents=True, exist_ok=True)
     with NamedTemporaryFile(
         mode='w', encoding='utf-8', dir=output_dir, delete=False, suffix='.jsonl',
-        prefix=f"llm-puro-{split}-{started:%Y%m%dT%H%M%SZ}-",
+        prefix=f"{variant.replace('_', '-')}-{split}-{started:%Y%m%dT%H%M%SZ}-",
     ) as output:
         def write(record: dict) -> None:
             output.write(json.dumps(record, ensure_ascii=False) + '\n')
             output.flush()
 
         write({
-            'type': 'run', 'schema_version': 1, 'variant': 'llm_puro',
+            'type': 'run', 'schema_version': 1, 'variant': variant,
             'started_at': started.isoformat(), 'dataset': dataset,
             'code': _code_version(), 'environment': {
                 'platform': platform.platform(), 'python': platform.python_version(),
@@ -144,6 +171,7 @@ def run_baseline(
             'options': OPTIONS,
             'timeout_seconds': timeout, 'planned_cases': len(cases),
             'startup_error': startup_error,
+            **(metadata or {}),
         })
         counts = Counter()
         for case in cases:
@@ -154,17 +182,7 @@ def run_baseline(
             if startup_error is None:
                 start = perf_counter()
                 try:
-                    result = _request(port, timeout, '/api/chat', {
-                        'model': model, 'stream': False, 'options': OPTIONS,
-                        'messages': [
-                            {'role': 'system', 'content': system_prompt},
-                            {'role': 'user', 'content': case['question']},
-                        ],
-                    })
-                    content = result['message']['content']
-                    if result['done'] is not True or not isinstance(content, str) or not content.strip():
-                        raise ValueError('geração incompleta ou resposta vazia')
-                    record.update(status='ok', response=content, done_reason=result.get('done_reason'))
+                    record.update(case_handler(case['question'], generate))
                 except REQUEST_ERRORS as exc:
                     record.update(status='error', error={'type': type(exc).__name__, 'message': str(exc)})
                 record['latency_ms'] = round((perf_counter() - start) * 1000, 3)
@@ -174,12 +192,13 @@ def run_baseline(
         write({
             'type': 'summary', 'planned': len(cases), 'ok': counts['ok'],
             'errors': counts['error'], 'not_run': counts['not_run'],
+            **({'abstained': counts['abstained']} if variant == 'llm_rag' else {}),
         })
         return Path(output.name), counts['error'] + counts['not_run']
 
 
-def main() -> int:
-    parser = argparse.ArgumentParser(description=__doc__)
+def _evaluation_parser(description: str) -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description=description)
     parser.add_argument('--dataset', type=Path, default=Path('evaluations/rag/dataset.json'))
     parser.add_argument('--output-dir', type=Path, default=Path('.runtime/avaliacoes'))
     parser.add_argument('--split', choices=SPLITS, default='calibracao')
@@ -187,6 +206,11 @@ def main() -> int:
     parser.add_argument('--prompt', choices=PROMPTS, default='original-v1')
     parser.add_argument('--port', type=int, default=11434)
     parser.add_argument('--timeout', type=float, default=120)
+    return parser
+
+
+def main() -> int:
+    parser = _evaluation_parser(__doc__)
     args = parser.parse_args()
     try:
         path, failures = run_baseline(
