@@ -288,6 +288,102 @@
         "title": "FiltrosIn",
         "type": "object"
       },
+      "FiltrosMovimentacaoIn": {
+        "properties": {
+          "data_fim": {
+            "anyOf": [
+              {
+                "examples": [
+                  "2026-11-10"
+                ],
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Data Fim"
+          },
+          "data_inicio": {
+            "anyOf": [
+              {
+                "examples": [
+                  "2026-11-10"
+                ],
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Data Inicio"
+          },
+          "deslocamento": {
+            "default": 0,
+            "maximum": 1000000,
+            "minimum": 0,
+            "title": "Deslocamento",
+            "type": "integer"
+          },
+          "limite": {
+            "default": 50,
+            "maximum": 200,
+            "minimum": 1,
+            "title": "Limite",
+            "type": "integer"
+          },
+          "tipo": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Tipo"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "title": "FiltrosMovimentacaoIn",
+        "type": "object"
+      },
+      "FiltrosReservaIn": {
+        "properties": {
+          "mes_fim": {
+            "anyOf": [
+              {
+                "examples": [
+                  "2026-08"
+                ],
+                "pattern": "^[0-9]{4}-[0-9]{2}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mes Fim"
+          },
+          "mes_inicio": {
+            "anyOf": [
+              {
+                "examples": [
+                  "2026-08"
+                ],
+                "pattern": "^[0-9]{4}-[0-9]{2}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mes Inicio"
+          }
+        },
+        "title": "FiltrosReservaIn",
+        "type": "object"
+      },
       "HealthOut": {
         "properties": {
           "database": {
@@ -304,6 +400,42 @@
           "database"
         ],
         "title": "HealthOut",
+        "type": "object"
+      },
+      "ListaMovimentacoesOut": {
+        "properties": {
+          "deslocamento": {
+            "title": "Deslocamento",
+            "type": "integer"
+          },
+          "itens": {
+            "items": {
+              "$ref": "#/components/schemas/MovimentacaoOut"
+            },
+            "title": "Itens",
+            "type": "array"
+          },
+          "limite": {
+            "title": "Limite",
+            "type": "integer"
+          },
+          "moeda": {
+            "title": "Moeda",
+            "type": "string"
+          },
+          "quantidade": {
+            "title": "Quantidade",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "moeda",
+          "quantidade",
+          "limite",
+          "deslocamento",
+          "itens"
+        ],
+        "title": "ListaMovimentacoesOut",
         "type": "object"
       },
       "ListaTransacoesOut": {
@@ -348,6 +480,92 @@
           "itens"
         ],
         "title": "ListaTransacoesOut",
+        "type": "object"
+      },
+      "MovimentacaoIn": {
+        "additionalProperties": false,
+        "properties": {
+          "data": {
+            "examples": [
+              "2026-11-10"
+            ],
+            "format": "date",
+            "title": "Data",
+            "type": "string"
+          },
+          "descricao": {
+            "default": "",
+            "maxLength": 200,
+            "pattern": "^[^\\x00-\\x1f\\x7f]*$",
+            "title": "Descricao",
+            "type": "string"
+          },
+          "tipo": {
+            "$ref": "#/components/schemas/Tipo"
+          },
+          "valor": {
+            "examples": [
+              "89.90"
+            ],
+            "pattern": "^[0-9]{1,12}(\\.[0-9]{1,2})?$",
+            "title": "Valor",
+            "type": "string"
+          }
+        },
+        "required": [
+          "tipo",
+          "valor",
+          "data"
+        ],
+        "title": "MovimentacaoIn",
+        "type": "object"
+      },
+      "MovimentacaoOut": {
+        "properties": {
+          "criado_em": {
+            "format": "date-time",
+            "title": "Criado Em",
+            "type": "string"
+          },
+          "data": {
+            "format": "date",
+            "title": "Data",
+            "type": "string"
+          },
+          "descricao": {
+            "title": "Descricao",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "moeda": {
+            "title": "Moeda",
+            "type": "string"
+          },
+          "tipo": {
+            "$ref": "#/components/schemas/Tipo"
+          },
+          "valor": {
+            "examples": [
+              "1500.50"
+            ],
+            "pattern": "^-?[0-9]{1,12}(\\.[0-9]{1,2})?$",
+            "title": "Valor",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "tipo",
+          "valor",
+          "moeda",
+          "data",
+          "descricao",
+          "criado_em"
+        ],
+        "title": "MovimentacaoOut",
         "type": "object"
       },
       "PerfilIn": {
@@ -441,6 +659,34 @@
         "title": "PeriodoOut",
         "type": "object"
       },
+      "PeriodoReservaOut": {
+        "properties": {
+          "mes_fim": {
+            "title": "Mes Fim",
+            "type": "string"
+          },
+          "mes_inicio": {
+            "title": "Mes Inicio",
+            "type": "string"
+          },
+          "meses_com_registro": {
+            "title": "Meses Com Registro",
+            "type": "integer"
+          },
+          "meses_no_periodo": {
+            "title": "Meses No Periodo",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "mes_inicio",
+          "mes_fim",
+          "meses_no_periodo",
+          "meses_com_registro"
+        ],
+        "title": "PeriodoReservaOut",
+        "type": "object"
+      },
       "PrevisibilidadeRenda": {
         "enum": [
           "fixa",
@@ -451,13 +697,246 @@
         "title": "PrevisibilidadeRenda",
         "type": "string"
       },
+      "ReservaIn": {
+        "additionalProperties": false,
+        "properties": {
+          "meses_cobertura": {
+            "anyOf": [
+              {
+                "maximum": 60,
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Meses Cobertura"
+          },
+          "saldo_inicial": {
+            "examples": [
+              "500.00"
+            ],
+            "pattern": "^[0-9]{1,12}(\\.[0-9]{1,2})?$",
+            "title": "Saldo Inicial",
+            "type": "string"
+          }
+        },
+        "required": [
+          "saldo_inicial"
+        ],
+        "title": "ReservaIn",
+        "type": "object"
+      },
+      "ReservaOut": {
+        "properties": {
+          "atualizado_em": {
+            "format": "date-time",
+            "title": "Atualizado Em",
+            "type": "string"
+          },
+          "criado_em": {
+            "format": "date-time",
+            "title": "Criado Em",
+            "type": "string"
+          },
+          "meses_cobertura": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Meses Cobertura"
+          },
+          "moeda": {
+            "title": "Moeda",
+            "type": "string"
+          },
+          "saldo_inicial": {
+            "examples": [
+              "1500.50"
+            ],
+            "pattern": "^-?[0-9]{1,12}(\\.[0-9]{1,2})?$",
+            "title": "Saldo Inicial",
+            "type": "string"
+          }
+        },
+        "required": [
+          "saldo_inicial",
+          "meses_cobertura",
+          "moeda",
+          "criado_em",
+          "atualizado_em"
+        ],
+        "title": "ReservaOut",
+        "type": "object"
+      },
+      "ResumoReservaOut": {
+        "properties": {
+          "aportes": {
+            "examples": [
+              "1500.50"
+            ],
+            "pattern": "^-?[0-9]{1,12}(\\.[0-9]{1,2})?$",
+            "title": "Aportes",
+            "type": "string"
+          },
+          "despesas_essenciais_mensais": {
+            "anyOf": [
+              {
+                "examples": [
+                  "1500.50"
+                ],
+                "pattern": "^-?[0-9]{1,12}(\\.[0-9]{1,2})?$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Despesas Essenciais Mensais"
+          },
+          "despesas_essenciais_total": {
+            "examples": [
+              "1500.50"
+            ],
+            "pattern": "^-?[0-9]{1,12}(\\.[0-9]{1,2})?$",
+            "title": "Despesas Essenciais Total",
+            "type": "string"
+          },
+          "estado": {
+            "enum": [
+              "calculado",
+              "meta_zero",
+              "dados_insuficientes"
+            ],
+            "title": "Estado",
+            "type": "string"
+          },
+          "faltando": {
+            "items": {
+              "enum": [
+                "despesas_essenciais",
+                "meses_cobertura",
+                "saldo_inicial"
+              ],
+              "type": "string"
+            },
+            "title": "Faltando",
+            "type": "array"
+          },
+          "meses_cobertura": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Meses Cobertura"
+          },
+          "meta": {
+            "anyOf": [
+              {
+                "examples": [
+                  "1500.50"
+                ],
+                "pattern": "^-?[0-9]{1,12}(\\.[0-9]{1,2})?$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Meta"
+          },
+          "moeda": {
+            "title": "Moeda",
+            "type": "string"
+          },
+          "periodo": {
+            "$ref": "#/components/schemas/PeriodoReservaOut"
+          },
+          "progresso_percentual": {
+            "anyOf": [
+              {
+                "examples": [
+                  "1500.50"
+                ],
+                "pattern": "^-?[0-9]{1,12}(\\.[0-9]{1,2})?$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Progresso Percentual"
+          },
+          "retiradas": {
+            "examples": [
+              "1500.50"
+            ],
+            "pattern": "^-?[0-9]{1,12}(\\.[0-9]{1,2})?$",
+            "title": "Retiradas",
+            "type": "string"
+          },
+          "saldo_declarado": {
+            "anyOf": [
+              {
+                "examples": [
+                  "1500.50"
+                ],
+                "pattern": "^-?[0-9]{1,12}(\\.[0-9]{1,2})?$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Saldo Declarado"
+          },
+          "saldo_inicial": {
+            "anyOf": [
+              {
+                "examples": [
+                  "1500.50"
+                ],
+                "pattern": "^-?[0-9]{1,12}(\\.[0-9]{1,2})?$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Saldo Inicial"
+          }
+        },
+        "required": [
+          "estado",
+          "faltando",
+          "moeda",
+          "periodo",
+          "despesas_essenciais_total",
+          "despesas_essenciais_mensais",
+          "meses_cobertura",
+          "saldo_inicial",
+          "aportes",
+          "retiradas",
+          "saldo_declarado",
+          "meta",
+          "progresso_percentual"
+        ],
+        "title": "ResumoReservaOut",
+        "type": "object"
+      },
       "Tipo": {
         "enum": [
-          "corrente",
-          "poupanca",
-          "carteira",
-          "reserva",
-          "outra"
+          "aporte",
+          "retirada"
         ],
         "title": "Tipo",
         "type": "string"
@@ -1553,6 +2032,512 @@
         "summary": "Salvar Perfil",
         "tags": [
           "perfil financeiro"
+        ]
+      }
+    },
+    "/api/reserva": {
+      "get": {
+        "description": "Calcula meta, saldo e progresso; sem filtros, usa os 3 últimos meses completos.",
+        "operationId": "financas_api_reserva_consultar_reserva",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "mes_inicio",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "examples": [
+                    "2026-08"
+                  ],
+                  "pattern": "^[0-9]{4}-[0-9]{2}$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Mes Inicio"
+            }
+          },
+          {
+            "in": "query",
+            "name": "mes_fim",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "examples": [
+                    "2026-08"
+                  ],
+                  "pattern": "^[0-9]{4}-[0-9]{2}$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Mes Fim"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResumoReservaOut"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroOut"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroValidacaoOut"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "security": [
+          {
+            "SessionAuth": []
+          }
+        ],
+        "summary": "Consultar Reserva",
+        "tags": [
+          "reserva de emergência"
+        ]
+      },
+      "put": {
+        "description": "Cria ou substitui o saldo inicial e os meses de cobertura da reserva.",
+        "operationId": "financas_api_reserva_salvar_reserva",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReservaIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReservaOut"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReservaOut"
+                }
+              }
+            },
+            "description": "Created"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroOut"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroOut"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroOut"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroValidacaoOut"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "security": [
+          {
+            "SessionAuth": []
+          }
+        ],
+        "summary": "Salvar Reserva",
+        "tags": [
+          "reserva de emergência"
+        ]
+      }
+    },
+    "/api/reserva/movimentacoes": {
+      "get": {
+        "description": "Lista aportes e retiradas próprios, do mais recente para o mais antigo.",
+        "operationId": "financas_api_reserva_listar_movimentacoes",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "data_inicio",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "examples": [
+                    "2026-11-10"
+                  ],
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Data Inicio"
+            }
+          },
+          {
+            "in": "query",
+            "name": "data_fim",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "examples": [
+                    "2026-11-10"
+                  ],
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Data Fim"
+            }
+          },
+          {
+            "in": "query",
+            "name": "tipo",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/Tipo"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "limite",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limite",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "deslocamento",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "maximum": 1000000,
+              "minimum": 0,
+              "title": "Deslocamento",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListaMovimentacoesOut"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroOut"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroValidacaoOut"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "security": [
+          {
+            "SessionAuth": []
+          }
+        ],
+        "summary": "Listar Movimentacoes",
+        "tags": [
+          "reserva de emergência"
+        ]
+      },
+      "post": {
+        "description": "Registra um aporte ou retirada; o registro já é a confirmação da usuária.",
+        "operationId": "financas_api_reserva_registrar_movimentacao",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MovimentacaoIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MovimentacaoOut"
+                }
+              }
+            },
+            "description": "Created"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroOut"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroOut"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroOut"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroValidacaoOut"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "security": [
+          {
+            "SessionAuth": []
+          }
+        ],
+        "summary": "Registrar Movimentacao",
+        "tags": [
+          "reserva de emergência"
+        ]
+      }
+    },
+    "/api/reserva/movimentacoes/{movimentacao_id}": {
+      "delete": {
+        "description": "Exclui uma movimentação própria, sem deixar o saldo declarado negativo.",
+        "operationId": "financas_api_reserva_excluir_movimentacao",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "movimentacao_id",
+            "required": true,
+            "schema": {
+              "title": "Movimentacao Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroOut"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroOut"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroOut"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroOut"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "security": [
+          {
+            "SessionAuth": []
+          }
+        ],
+        "summary": "Excluir Movimentacao",
+        "tags": [
+          "reserva de emergência"
+        ]
+      },
+      "get": {
+        "description": "Retorna uma movimentação própria.",
+        "operationId": "financas_api_reserva_consultar_movimentacao",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "movimentacao_id",
+            "required": true,
+            "schema": {
+              "title": "Movimentacao Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MovimentacaoOut"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroOut"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroOut"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "security": [
+          {
+            "SessionAuth": []
+          }
+        ],
+        "summary": "Consultar Movimentacao",
+        "tags": [
+          "reserva de emergência"
         ]
       }
     },

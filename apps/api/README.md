@@ -7,8 +7,9 @@ sessão e isolamento por usuária, e a
 [BE-03 / #85](https://github.com/anamattos2/grupo11challenge2/issues/85), perfil
 financeiro e contas manuais. A
 [BE-04 / #86](https://github.com/anamattos2/grupo11challenge2/issues/86) adiciona
-categorias, receitas e despesas. Os demais modelos financeiros e endpoints de
-negócio pertencem às respectivas issues.
+categorias, receitas e despesas, e a
+[BE-05 / #87](https://github.com/anamattos2/grupo11challenge2/issues/87), a reserva
+de emergência. Os demais endpoints de negócio pertencem às respectivas issues.
 
 Responsabilidades: sessão, autorização, regras financeiras, persistência e
 ferramentas determinísticas para os agentes. OpenAPI é a referência das
@@ -79,6 +80,13 @@ bancos. Rotas, validações e erros estão em
 Transações são informadas pela usuária, nunca importadas de bancos, e não alteram o
 saldo declarado das contas. Rotas, validações, filtros e totais estão em
 [contracts/transacoes-categorias.md](../../contracts/transacoes-categorias.md).
+
+## Reserva de emergência
+
+`GET /api/reserva` calcula meta, saldo declarado e progresso a partir dos valores
+cadastrados no aplicativo. Os filtros `mes_inicio` e `mes_fim` definem o período das
+despesas essenciais; sem eles, a API usa os 3 últimos meses completos. Regras, decisões
+e erros estão em [contracts/reserva.md](../../contracts/reserva.md).
 
 ## Contrato OpenAPI
 
