@@ -18,6 +18,10 @@ vazias. Falhas de extração ou fontes inteiramente sem texto interrompem a
 reconstrução antes da escrita. Com zero fontes aprovadas, o comando retorna
 `no_approved_sources` sem criar um banco.
 
+Fontes com escopo `academic_local` entram apenas ao passar
+`--academic-local`. Esse índice é para o protótipo acadêmico não comercial e
+fica local, sem distribuição. Use um diretório separado para essa coleção.
+
 ## Modelo e persistência
 
 O modelo local [Multilingual E5 Small](https://huggingface.co/intfloat/multilingual-e5-small/tree/fd1525a9fd15316a2d503bf26ab031a61d056e98)

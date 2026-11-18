@@ -36,14 +36,20 @@ def _load_encoder():
     return model
 
 
-def rebuild_index(catalog_path: Path, root: Path, db_path: Path) -> dict:
+def rebuild_index(
+    catalog_path: Path, root: Path, db_path: Path, *, academic_local: bool = False,
+) -> dict:
     """Persiste uma coleção por conjunto de chunks e configuração de embeddings."""
     catalog = json.loads(catalog_path.read_text(encoding='utf-8'))
     if catalog['schema_version'] != 1:
         raise ValueError('versão do catálogo não suportada')
 
     sources = sorted(
-        (source for source in catalog['sources'] if source['approved_for_ingestion'] is True),
+        (
+            source for source in catalog['sources']
+            if source['approved_for_ingestion'] is True
+            and (academic_local or (source.get('ingestion_review') or {}).get('scope') is None)
+        ),
         key=lambda source: source['id'],
     )
     if not sources:
@@ -91,6 +97,7 @@ def rebuild_index(catalog_path: Path, root: Path, db_path: Path) -> dict:
             'parameters': segmented['parameters'],
             'issues': report['issues'],
             'approved_pages': review['pages'] if review is not None else None,
+            'scope': review.get('scope') if review is not None else None,
             'citation': citation or None,
         })
 
@@ -152,9 +159,11 @@ def main() -> None:
     parser.add_argument('--catalog', type=Path, default=Path('knowledge/catalogo.json'))
     parser.add_argument('--root', type=Path, default=Path('.'))
     parser.add_argument('--db', type=Path, required=True)
+    parser.add_argument('--academic-local', action='store_true',
+                        help='inclui fontes restritas a uso acadêmico local não comercial')
     args = parser.parse_args()
     try:
-        result = rebuild_index(args.catalog, args.root, args.db)
+        result = rebuild_index(args.catalog, args.root, args.db, academic_local=args.academic_local)
     except (OSError, ValueError, KeyError, TypeError) as exc:
         parser.error(str(exc))
     print(json.dumps(result, ensure_ascii=False, indent=2))

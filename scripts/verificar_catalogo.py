@@ -33,6 +33,8 @@ def validate(sources, read):
                 for key in ('evidence', 'citation')
             ):
                 raise ValueError(f'{sid}: aprovação exige evidência e citação')
+            if review.get('scope') not in (None, 'academic_local'):
+                raise ValueError(f'{sid}: escopo de aprovação inválido')
             pages = review.get('pages')
             page_count = source.get('pages')
             if (type(page_count) is not int or not isinstance(pages, list) or not pages

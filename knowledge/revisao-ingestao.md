@@ -9,7 +9,7 @@ citação para cada fonte aprovada.
 | F001 | Aprovada | Aviso na página 3 autoriza reprodução com citação. |
 | F002 | Pendente | O [artigo na UNIR](https://periodicos.unir.br/index.php/rara/article/view/1997) identifica a publicação. Confirmar a licença aplicável à edição de 2017 e ao uso proposto. |
 | F003 | Pendente | A [página da Contabilometria](https://revistas.fucamp.edu.br/index.php/contabilometria/article/view/2632) descreve acesso ao artigo. Confirmar permissão de reutilização. |
-| F004 | Condição de uso | A [RCiC/UFMT](https://periodicoscientificos.ufmt.br/ojs/index.php/rcic/article/view/5548/0) prevê uso educacional e não comercial com atribuição. Confirmar esse escopo para o produto e a distribuição. |
+| F004 | Aprovada para uso acadêmico local | A [RCiC/UFMT](https://periodicoscientificos.ufmt.br/ojs/index.php/rcic/article/view/5548/0) prevê uso educacional e não comercial com atribuição. A página 5 está aprovada para o protótipo acadêmico local, sem distribuição do índice. |
 | F005 | Condição de uso | O [guia oficial da CVM](https://www.gov.br/investidor/pt-br/educacional/publicacoes-educacionais/guias/guia-de-planejamento-financeiro/guia-planejamento-financeiro.pdf) declara CC BY-NC-ND 3.0 BR e exige autorização por escrito para usos fora da licença. Pedir autorização para o fluxo de extração, indexação e exibição de trechos. |
 | F008 | Pendente | A [PUC-SP](https://revistas.pucsp.br/index.php/caadm/article/view/33268) publica o artigo. Confirmar permissão de reutilização. |
 | F009 | Condição de uso | A [política do Banco Central](https://www.bcb.gov.br/content/cidadaniafinanceira/documentos_cidadania/Politica_uso_conteudo_Cidadania_Financeira.pdf) descreve restrições comerciais e de obras derivadas. Confirmar as condições da edição de 2026. |
@@ -46,7 +46,7 @@ foram autorizadas.
 > trechos, gerar embeddings localmente, armazená-los em um índice vetorial e
 > exibir trechos encontrados com citação do autor, da publicação e da página?
 >
-> O uso previsto é **[escopo, público e eventual distribuição]**. O PDF
+> O uso previsto é **um protótipo acadêmico não comercial, com uso local e sem distribuição do índice**. O PDF
 > integral ficaria no acervo local de origem. Se houver uma licença aplicável
 > a essas operações, poderiam indicar o link e a versão? Caso a autorização
 > seja específica, agradecemos a indicação das condições de uso e atribuição.

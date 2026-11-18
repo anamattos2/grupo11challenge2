@@ -47,7 +47,8 @@ A seleção atual cobre F001 (páginas 20 e 21), F018 (páginas 4 a 6),
 F019 (página 8) e F020 (páginas 3 e 4). O escopo é orçamento, planejamento
 e contexto social. F018 é um estudo com estudantes e seus resultados não
 representam o público-alvo do aplicativo. A página de contatos fica fora
-da seleção. Consulte o [registro da revisão](revisao-ingestao.md) para
+da seleção. A página 5 de F004 também está aprovada para o protótipo
+acadêmico local, com a opção `--academic-local`. Consulte o [registro da revisão](revisao-ingestao.md) para
 as fontes pendentes.
 
 ## Verificar

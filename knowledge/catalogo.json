@@ -87,7 +87,7 @@
       "year": 2018,
       "origin": {
         "description": "Silvia Helena Rocatelli / RCiC-UFMT",
-        "url": null,
+        "url": "https://periodicoscientificos.ufmt.br/ojs/index.php/rcic/article/view/5548/0",
         "evidence": "Capa e identificação bibliográfica nas duas primeiras páginas do PDF; URL é referência, não comprovação de igualdade binária."
       },
       "sha256": "9f7545c5148f2da28c6dfc165027e27fb3652a6c722002d7f3b7b33242a34696",
@@ -100,8 +100,16 @@
         "fontes/almeida-santos,+ID-5548+modificado-4.pdf"
       ],
       "status": "identificado",
-      "use_conditions": "Licença ou autorização de reutilização não identificada; requer verificação com a origem.",
-      "approved_for_ingestion": false
+      "use_conditions": "Uso educacional e não comercial com atribuição, conforme seção Licença na página oficial do artigo.",
+      "approved_for_ingestion": true,
+      "ingestion_review": {
+        "pages": [
+          5
+        ],
+        "scope": "academic_local",
+        "evidence": "A revista permite uso educacional não comercial e reprodução com atribuição. Aprovação limitada ao protótipo acadêmico local, sem distribuição do índice.",
+        "citation": "Silvia Helena Rocatelli. Planejamento financeiro pessoal: fluxo de caixa. RCiC-UFMT, 2018. https://periodicoscientificos.ufmt.br/ojs/index.php/rcic/article/view/5548/0. Trecho extraído e normalizado. Uso acadêmico local e não comercial."
+      }
     },
     {
       "id": "F005",

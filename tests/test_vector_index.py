@@ -96,11 +96,17 @@ class VectorIndexTest(unittest.TestCase):
         import numpy as np
 
         source = self.write_pdf('Pagina fora do escopo', 'Orcamento ficticio')
-        source['ingestion_review'] = {'pages': [2], 'citation': 'Referência fictícia'}
+        source['ingestion_review'] = {
+            'pages': [2], 'citation': 'Referência fictícia', 'scope': 'academic_local',
+        }
         self.write_catalog([source])
+        self.assertEqual(
+            rebuild_index(self.catalog, self.root, self.db)['status'], 'no_approved_sources',
+        )
+        self.assertFalse(self.db.exists())
         with patch('finance_ai.vector_index._load_encoder') as load:
             load.return_value.encode.return_value = np.ones((1, CONFIG['dimension']))
-            index = rebuild_index(self.catalog, self.root, self.db)
+            index = rebuild_index(self.catalog, self.root, self.db, academic_local=True)
         client = chromadb.PersistentClient(path=str(self.db))
         stored = client.get_collection(index['collection']).get()
         self.assertEqual(stored['documents'], ['Orcamento ficticio'])
