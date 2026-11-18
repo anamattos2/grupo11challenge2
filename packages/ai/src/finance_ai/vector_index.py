@@ -36,6 +36,11 @@ def _load_encoder():
     return model
 
 
+def _index_configuration() -> dict:
+    packages = ('chromadb', 'sentence-transformers', 'torch', 'transformers', 'tokenizers')
+    return {**CONFIG, 'libraries': {package: version(package) for package in packages}}
+
+
 def rebuild_index(catalog_path: Path, root: Path, db_path: Path) -> dict:
     """Persiste uma coleção por conjunto de chunks e configuração de embeddings."""
     catalog = json.loads(catalog_path.read_text(encoding='utf-8'))
@@ -82,8 +87,7 @@ def rebuild_index(catalog_path: Path, root: Path, db_path: Path) -> dict:
 
     import chromadb
 
-    packages = ('chromadb', 'sentence-transformers', 'torch', 'transformers', 'tokenizers')
-    configuration = {**CONFIG, 'libraries': {package: version(package) for package in packages}}
+    configuration = _index_configuration()
     ids = [chunk['chunk_id'] for chunk in chunks]
     snapshot = json.dumps([configuration, ids], sort_keys=True, separators=(',', ':'))
     fingerprint = hashlib.sha256(snapshot.encode('utf-8')).hexdigest()
