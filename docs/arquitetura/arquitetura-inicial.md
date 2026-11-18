@@ -156,7 +156,8 @@ seu trecho na fonte. Scores de recuperação não são probabilidades de correç
 Exemplo inteiramente fictício: despesas essenciais de R$ 2.000,00 e cobertura de
 3 meses geram meta de R$ 6.000,00. Saldo inicial de R$ 500,00, aporte de
 R$ 200,00 e retirada de R$ 100,00 geram saldo de R$ 600,00 e progresso de 10%.
-O período usado para obter as despesas essenciais ainda precisa ser definido.
+O período usado para obter as despesas essenciais está definido em
+[contracts/reserva.md](../../contracts/reserva.md).
 
 ## 5. Fluxos de referência e falhas
 
@@ -246,7 +247,7 @@ nas issues. Nenhum valor nesta tabela deve ser tratado como implementação pron
 | P02 | Versões suportadas, gerenciadores de dependências e CI | Integração + backend/frontend | Preparação do ambiente |
 | P03 | Modelo gerador, embeddings, OCR, execução local/remota e recursos | IA + RAG + imagens | Antes de fixar o baseline; decidir quais dados podem sair do ambiente |
 | P04 | Autenticação, sessão, CSRF/CORS e recuperação de acesso | Backend + frontend | Antes de expor dados pessoais |
-| P05 | Período de despesas essenciais, moeda, arredondamento e regras para retiradas | Backend + qualidade | Antes de implementar cálculo da reserva |
+| P05 | Período de despesas essenciais, moeda, arredondamento e regras para retiradas | Backend + qualidade | Proposta na BE-05 em [contracts/reserva.md](../../contracts/reserva.md), sujeita à revisão do PR |
 | P06 | Schemas executáveis, endpoints, erros e versionamento dos contratos | Produtores + consumidores | Antes de conectar componentes; liberar mocks |
 | P07 | Dimensão do índice, parâmetros de busca e critérios de avaliação | RAG + avaliação | Antes de selecionar estratégia de recuperação |
 | P08 | Provedor de implantação, HTTPS, configuração e armazenamento privado | Integração + backend | Antes de disponibilizar aplicação |
