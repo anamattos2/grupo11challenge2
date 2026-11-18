@@ -38,11 +38,18 @@ sem procedência suficientemente confirmada. A grafia “Susesp” de F007 foi
 preservada; não atribuímos esse documento à SUSEP. F011 é uma planilha auxiliar e
 também não entra na contagem. Alegações e estatísticas exigem avaliação posterior.
 
-Todos os registros têm `approved_for_ingestion: false`. Os avisos de reprodução
-com atribuição, as licenças CC BY e CC BY-NC-ND e os direitos não identificados
-estão descritos individualmente. Não presumimos que acesso público autorize
-qualquer transformação. A revisão de direitos, atualidade e qualidade precede a
-liberação de cada fonte. Esta issue entrega o catálogo, não o índice vetorial.
+A aprovação cobre páginas físicas específicas. Registre evidência de uso,
+páginas revisadas e citação em `ingestion_review`, e marque
+`approved_for_ingestion: true` no registro da fonte. A citação acompanha os
+chunks no índice e deve aparecer junto de trechos exibidos ao público.
+
+O primeiro lote cobre F001 (páginas 20 e 21) e F018 (páginas 4 a 6) para
+fundamentos de orçamento e planejamento. F018 é um estudo com estudantes e
+seus resultados não representam o público-alvo do aplicativo. A página de
+contatos fica fora da seleção. F024 permanece pendente de atualização do
+conteúdo. F005 e F017 têm condições específicas que ainda precisam ser
+verificadas para o uso proposto. Os registros sem licença ou autorização
+confirmada seguem pendentes.
 
 ## Verificar
 

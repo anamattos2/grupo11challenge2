@@ -24,7 +24,15 @@
       ],
       "status": "identificado",
       "use_conditions": "Reprodução total ou parcial autorizada com citação da fonte; aviso na página física 3.",
-      "approved_for_ingestion": false
+      "approved_for_ingestion": true,
+      "ingestion_review": {
+        "pages": [
+          20,
+          21
+        ],
+        "evidence": "Aviso de autorização de reprodução total ou parcial com citação na página física 3. Escopo revisado: fundamentos de planejamento e orçamento familiar.",
+        "citation": "Fernando Ramirez Rosal Marinho. A educação financeira para a gestão do orçamento pessoal e familiar. UNITINS, 2021. https://www.unitins.br/RepositorioDigital/Publico/VisualizarArquivo/368. Trecho extraído e normalizado."
+      }
     },
     {
       "id": "F002",
@@ -410,7 +418,16 @@
       ],
       "status": "identificado",
       "use_conditions": "CC BY 4.0; aviso na página física 1; manter atribuição e indicação das alterações.",
-      "approved_for_ingestion": false
+      "approved_for_ingestion": true,
+      "ingestion_review": {
+        "pages": [
+          4,
+          5,
+          6
+        ],
+        "evidence": "Licença CC BY 4.0 no cabeçalho da página física 1. Escopo revisado: educação e planejamento financeiro pessoal. A página com contatos dos autores fica fora da seleção.",
+        "citation": "Elvis Gomes Marques Filho et al. A contabilidade no planejamento das finanças pessoais: um estudo de caso com os acadêmicos do curso de Ciências Contábeis da UESPI de Picos. Research, Society and Development, 2021. https://doi.org/10.33448/rsd-v10i7.16879. CC BY 4.0: https://creativecommons.org/licenses/by/4.0/. Trecho extraído e normalizado."
+      }
     },
     {
       "id": "F019",

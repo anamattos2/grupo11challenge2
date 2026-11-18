@@ -21,8 +21,25 @@ def validate(sources, read):
             raise ValueError(f'{sid}: caminho canônico ausente dos aliases')
         if not source['origin']['description'] or not source['use_conditions']:
             raise ValueError(f'{sid}: origem ou condições de uso ausentes')
-        if source['approved_for_ingestion']:
-            raise ValueError(f'{sid}: este catálogo inicial não autoriza ingestão')
+        approved = source['approved_for_ingestion']
+        if type(approved) is not bool:
+            raise ValueError(f'{sid}: aprovação deve ser booleana')
+        if approved:
+            review = source.get('ingestion_review', {})
+            if source['format'] != 'pdf' or source['status'] != 'identificado':
+                raise ValueError(f'{sid}: só PDFs identificados podem ser aprovados')
+            if not isinstance(review, dict) or not all(
+                isinstance(review.get(key), str) and review[key].strip()
+                for key in ('evidence', 'citation')
+            ):
+                raise ValueError(f'{sid}: aprovação exige evidência e citação')
+            pages = review.get('pages')
+            page_count = source.get('pages')
+            if (type(page_count) is not int or not isinstance(pages, list) or not pages
+                    or any(type(page) is not int or not 1 <= page <= page_count
+                           for page in pages)
+                    or len(set(pages)) != len(pages)):
+                raise ValueError(f'{sid}: páginas aprovadas inválidas')
         for alias in source['aliases']:
             if alias in aliases or Path(alias).is_absolute() or '..' in Path(alias).parts:
                 raise ValueError(f'{sid}: alias duplicado ou inválido')
@@ -69,8 +86,9 @@ def main():
     historical = {p for p in index if p.startswith(('fontes/', 'RAG/projeto-rag/docs/'))}
     if historical - aliases:
         raise ValueError(f'Fontes históricas não catalogadas: {sorted(historical - aliases)}')
+    approved = sum(source['approved_for_ingestion'] for source in sources)
     print(f'{len(sources)} conteúdos únicos; {count} PDFs identificados; '
-          f'{len(aliases)} caminhos preservados; 0 fontes aprovadas para ingestão.')
+          f'{len(aliases)} caminhos preservados; {approved} fontes aprovadas para ingestão.')
 
 
 if __name__ == '__main__':

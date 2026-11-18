@@ -10,7 +10,9 @@ python -m finance_ai.vector_index --db .runtime/chroma
 O comando lê `knowledge/catalogo.json` por padrão. Use `--catalog` para outro
 catálogo e `--root` para a raiz dos caminhos canônicos. Só entram PDFs com
 `approved_for_ingestion: true`, cuja identidade é conferida pelo SHA-256 antes
-da extração. As janelas e os IDs são gerados pelo
+da extração. Quando o catálogo registra uma revisão de ingestão,
+só as páginas físicas selecionadas entram no índice e a citação acompanha
+cada segmento nos metadados. As janelas e os IDs são gerados pelo
 [chunking documental](chunking-documental.md). O relatório registra páginas
 vazias. Falhas de extração ou fontes inteiramente sem texto interrompem a
 reconstrução antes da escrita. Com zero fontes aprovadas, o comando retorna
@@ -27,7 +29,7 @@ com conteúdo pode baixar os pesos. A distância da coleção Chroma é cosseno.
 
 A configuração e as versões das bibliotecas de indexação e inferência aparecem
 no JSON de saída e nos metadados da coleção. A coleção
-é identificada pelo hash da configuração e da sequência de IDs dos chunks.
+é identificada pelo hash da configuração, dos IDs dos chunks e das citações.
 Reexecutar com os mesmos dados reaproveita os IDs persistidos. Se uma gravação
 em lotes for interrompida, a próxima execução completa os IDs faltantes com
 `upsert`. Mudanças nos chunks ou na configuração geram outra coleção. Use o
