@@ -20,10 +20,15 @@ System check identified no issues (0 silenced).
 No changes detected
 
 ../../.venv-api/bin/python manage.py test
-Found 56 test(s).
-Ran 56 tests
+Found 57 test(s).
+Ran 57 tests
 OK
 ```
+
+A suíte também passou em Python 3.12.16, a versão usada pela CI, em contêiner com
+PostgreSQL 17 limpo. A primeira execução do job `backend` falhou porque o texto do
+status 422 no contrato OpenAPI muda entre Python 3.12 e 3.14. O texto agora é fixado na
+exportação, e o contrato gerado é igual nas duas versões.
 
 ## Migration
 
@@ -77,7 +82,7 @@ falhou em todos os casos.
 
 ## Limites da evidência
 
-- O job `backend` da CI e a execução com Python 3.12 dependem do push e do PR.
+- A nova execução do job `backend` da CI depende do push da correção.
 - Esta entrega não inclui exclusão de contas, que depende das regras de transações
   da BE-04.
 - As regras da reserva, como saldo inicial, aportes e retiradas, pertencem à BE-05.
