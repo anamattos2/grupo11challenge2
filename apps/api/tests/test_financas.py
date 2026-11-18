@@ -4,6 +4,7 @@ from django.contrib.auth import get_user_model
 from django.core.management import call_command
 from django.test import Client, TestCase
 
+from financas.management.commands.exportar_contrato import normalizar_contrato
 from financas.models import ContaManual, PerfilFinanceiro
 
 JSON = "application/json"
@@ -293,6 +294,25 @@ class IsolamentoDeContasTests(BaseFinancas):
 class ContratoTests(TestCase):
     def test_contrato_versionado_esta_em_dia(self):
         call_command("exportar_contrato", "--check")
+
+    def test_contrato_nao_depende_da_versao_do_python(self):
+        contrato = {
+            "paths": {
+                "/api/contas": {
+                    "post": {
+                        "responses": {
+                            201: {"description": "Created"},
+                            422: {"description": "Unprocessable Entity"},
+                        }
+                    }
+                }
+            }
+        }
+
+        respostas = normalizar_contrato(contrato)["paths"]["/api/contas"]["post"]["responses"]
+
+        self.assertEqual(respostas[201]["description"], "Created")
+        self.assertEqual(respostas[422]["description"], "Unprocessable Content")
 
     def test_saldo_e_publicado_como_texto_decimal(self):
         contrato = self.client.get("/api/openapi.json").json()

@@ -8,6 +8,16 @@ from ninja.responses import NinjaJSONEncoder
 from config.api import api
 
 CAMINHO_CONTRATO = settings.BASE_DIR.parent.parent / "contracts" / "openapi.json"
+DESCRICAO_422 = "Unprocessable Content"
+
+
+def normalizar_contrato(contrato: dict) -> dict:
+    """Fixa o texto do status 422, que muda conforme a versão do Python."""
+    for operacoes in contrato["paths"].values():
+        for operacao in operacoes.values():
+            if 422 in operacao["responses"]:
+                operacao["responses"][422]["description"] = DESCRICAO_422
+    return contrato
 
 
 class Command(BaseCommand):
@@ -18,7 +28,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         contrato = json.dumps(
-            api.get_openapi_schema(),
+            normalizar_contrato(api.get_openapi_schema()),
             cls=NinjaJSONEncoder,
             ensure_ascii=False,
             indent=2,
