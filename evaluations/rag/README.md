@@ -62,3 +62,6 @@ registra o suporte e os limites de cada resposta.
 
 A [comparação de qualidade e citações](avaliacao-qualidade.md) registra a
 calibração das três variantes e os denominadores da revisão.
+
+O [relatório comparativo da semana 3](relatorio-comparativo.md) consolida
+os resultados preliminares e as pendências para a avaliação oficial.
