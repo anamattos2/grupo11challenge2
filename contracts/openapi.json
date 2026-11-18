@@ -1,0 +1,827 @@
+{
+  "components": {
+    "schemas": {
+      "ContaIn": {
+        "additionalProperties": false,
+        "properties": {
+          "nome": {
+            "examples": [
+              "Conta principal"
+            ],
+            "maxLength": 80,
+            "minLength": 1,
+            "pattern": "^[^\\x00-\\x1f\\x7f]+$",
+            "title": "Nome",
+            "type": "string"
+          },
+          "saldo_declarado": {
+            "description": "Valor informado pela usuária; não é saldo bancário verificado.",
+            "examples": [
+              "1500.50"
+            ],
+            "pattern": "^-?[0-9]{1,12}(\\.[0-9]{1,2})?$",
+            "title": "Saldo Declarado",
+            "type": "string"
+          },
+          "tipo": {
+            "$ref": "#/components/schemas/Tipo"
+          }
+        },
+        "required": [
+          "nome",
+          "tipo",
+          "saldo_declarado"
+        ],
+        "title": "ContaIn",
+        "type": "object"
+      },
+      "ContaOut": {
+        "properties": {
+          "atualizado_em": {
+            "format": "date-time",
+            "title": "Atualizado Em",
+            "type": "string"
+          },
+          "criado_em": {
+            "format": "date-time",
+            "title": "Criado Em",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "moeda": {
+            "title": "Moeda",
+            "type": "string"
+          },
+          "nome": {
+            "title": "Nome",
+            "type": "string"
+          },
+          "saldo_declarado": {
+            "examples": [
+              "1500.50"
+            ],
+            "pattern": "^-?[0-9]{1,12}(\\.[0-9]{1,2})?$",
+            "title": "Saldo Declarado",
+            "type": "string"
+          },
+          "tipo": {
+            "$ref": "#/components/schemas/Tipo"
+          }
+        },
+        "required": [
+          "id",
+          "nome",
+          "tipo",
+          "saldo_declarado",
+          "moeda",
+          "criado_em",
+          "atualizado_em"
+        ],
+        "title": "ContaOut",
+        "type": "object"
+      },
+      "CredenciaisIn": {
+        "properties": {
+          "password": {
+            "maxLength": 4096,
+            "minLength": 1,
+            "title": "Password",
+            "type": "string"
+          },
+          "username": {
+            "maxLength": 150,
+            "minLength": 1,
+            "title": "Username",
+            "type": "string"
+          }
+        },
+        "required": [
+          "username",
+          "password"
+        ],
+        "title": "CredenciaisIn",
+        "type": "object"
+      },
+      "CsrfOut": {
+        "properties": {
+          "csrf_token": {
+            "title": "Csrf Token",
+            "type": "string"
+          }
+        },
+        "required": [
+          "csrf_token"
+        ],
+        "title": "CsrfOut",
+        "type": "object"
+      },
+      "ErroOut": {
+        "properties": {
+          "detail": {
+            "title": "Detail",
+            "type": "string"
+          }
+        },
+        "required": [
+          "detail"
+        ],
+        "title": "ErroOut",
+        "type": "object"
+      },
+      "ErroValidacaoOut": {
+        "properties": {
+          "detail": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Detail",
+            "type": "array"
+          }
+        },
+        "required": [
+          "detail"
+        ],
+        "title": "ErroValidacaoOut",
+        "type": "object"
+      },
+      "HealthOut": {
+        "properties": {
+          "database": {
+            "title": "Database",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "database"
+        ],
+        "title": "HealthOut",
+        "type": "object"
+      },
+      "PerfilIn": {
+        "additionalProperties": false,
+        "properties": {
+          "nome_exibicao": {
+            "examples": [
+              "Clara Exemplo"
+            ],
+            "maxLength": 80,
+            "minLength": 1,
+            "pattern": "^[^\\x00-\\x1f\\x7f]+$",
+            "title": "Nome Exibicao",
+            "type": "string"
+          },
+          "previsibilidade_renda": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PrevisibilidadeRenda"
+              }
+            ],
+            "default": "nao_informada"
+          }
+        },
+        "required": [
+          "nome_exibicao"
+        ],
+        "title": "PerfilIn",
+        "type": "object"
+      },
+      "PerfilOut": {
+        "properties": {
+          "atualizado_em": {
+            "format": "date-time",
+            "title": "Atualizado Em",
+            "type": "string"
+          },
+          "criado_em": {
+            "format": "date-time",
+            "title": "Criado Em",
+            "type": "string"
+          },
+          "nome_exibicao": {
+            "title": "Nome Exibicao",
+            "type": "string"
+          },
+          "previsibilidade_renda": {
+            "$ref": "#/components/schemas/PrevisibilidadeRenda"
+          }
+        },
+        "required": [
+          "nome_exibicao",
+          "previsibilidade_renda",
+          "criado_em",
+          "atualizado_em"
+        ],
+        "title": "PerfilOut",
+        "type": "object"
+      },
+      "PrevisibilidadeRenda": {
+        "enum": [
+          "fixa",
+          "variavel",
+          "mista",
+          "nao_informada"
+        ],
+        "title": "PrevisibilidadeRenda",
+        "type": "string"
+      },
+      "Tipo": {
+        "enum": [
+          "corrente",
+          "poupanca",
+          "carteira",
+          "reserva",
+          "outra"
+        ],
+        "title": "Tipo",
+        "type": "string"
+      },
+      "UsuariaOut": {
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "username": {
+            "title": "Username",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "username"
+        ],
+        "title": "UsuariaOut",
+        "type": "object"
+      }
+    },
+    "securitySchemes": {
+      "SessionAuth": {
+        "in": "cookie",
+        "name": "sessionid",
+        "type": "apiKey"
+      }
+    }
+  },
+  "info": {
+    "description": "",
+    "title": "Grupo 11 - API financeira",
+    "version": "0.1.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/api/auth/csrf": {
+      "get": {
+        "description": "Entrega o token CSRF exigido no login e nas demais escritas.",
+        "operationId": "autenticacao_api_obter_csrf",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CsrfOut"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "summary": "Obter Csrf",
+        "tags": [
+          "autenticação"
+        ]
+      }
+    },
+    "/api/auth/login": {
+      "post": {
+        "description": "Abre a sessão. A resposta não revela se o usuário existe.",
+        "operationId": "autenticacao_api_entrar",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CredenciaisIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsuariaOut"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroOut"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          }
+        },
+        "summary": "Entrar",
+        "tags": [
+          "autenticação"
+        ]
+      }
+    },
+    "/api/auth/logout": {
+      "post": {
+        "description": "Encerra a sessão atual e apaga seus dados no servidor.",
+        "operationId": "autenticacao_api_sair",
+        "parameters": [],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "security": [
+          {
+            "SessionAuth": []
+          }
+        ],
+        "summary": "Sair",
+        "tags": [
+          "autenticação"
+        ]
+      }
+    },
+    "/api/auth/me": {
+      "get": {
+        "description": "Retorna a usuária identificada pela sessão.",
+        "operationId": "autenticacao_api_usuaria_atual",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsuariaOut"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "SessionAuth": []
+          }
+        ],
+        "summary": "Usuaria Atual",
+        "tags": [
+          "autenticação"
+        ]
+      }
+    },
+    "/api/contas": {
+      "get": {
+        "description": "Lista somente as contas da usuária autenticada.",
+        "operationId": "financas_api_listar_contas",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ContaOut"
+                  },
+                  "title": "Response",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroOut"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          }
+        },
+        "security": [
+          {
+            "SessionAuth": []
+          }
+        ],
+        "summary": "Listar Contas",
+        "tags": [
+          "contas manuais"
+        ]
+      },
+      "post": {
+        "description": "Cria uma conta manual; o nome é único por usuária, sem diferenciar caixa.",
+        "operationId": "financas_api_criar_conta",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ContaIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContaOut"
+                }
+              }
+            },
+            "description": "Created"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroOut"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroOut"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroOut"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroValidacaoOut"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "security": [
+          {
+            "SessionAuth": []
+          }
+        ],
+        "summary": "Criar Conta",
+        "tags": [
+          "contas manuais"
+        ]
+      }
+    },
+    "/api/contas/{conta_id}": {
+      "get": {
+        "description": "Retorna uma conta própria; a de outra usuária responde como inexistente.",
+        "operationId": "financas_api_consultar_conta",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "conta_id",
+            "required": true,
+            "schema": {
+              "title": "Conta Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContaOut"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroOut"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroOut"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "security": [
+          {
+            "SessionAuth": []
+          }
+        ],
+        "summary": "Consultar Conta",
+        "tags": [
+          "contas manuais"
+        ]
+      },
+      "put": {
+        "description": "Substitui nome, tipo e saldo declarado de uma conta própria.",
+        "operationId": "financas_api_editar_conta",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "conta_id",
+            "required": true,
+            "schema": {
+              "title": "Conta Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ContaIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContaOut"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroOut"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroOut"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroOut"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroOut"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroValidacaoOut"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "security": [
+          {
+            "SessionAuth": []
+          }
+        ],
+        "summary": "Editar Conta",
+        "tags": [
+          "contas manuais"
+        ]
+      }
+    },
+    "/api/health": {
+      "get": {
+        "description": "Informa se a API está no ar e consegue consultar o PostgreSQL.",
+        "operationId": "config_api_health",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthOut"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthOut"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Health",
+        "tags": [
+          "operação"
+        ]
+      }
+    },
+    "/api/perfil": {
+      "get": {
+        "description": "Retorna o perfil da usuária; responde 404 enquanto ele não existir.",
+        "operationId": "financas_api_consultar_perfil",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PerfilOut"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroOut"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroOut"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "security": [
+          {
+            "SessionAuth": []
+          }
+        ],
+        "summary": "Consultar Perfil",
+        "tags": [
+          "perfil financeiro"
+        ]
+      },
+      "put": {
+        "description": "Cria o perfil (201) ou substitui os dados do perfil existente (200).",
+        "operationId": "financas_api_salvar_perfil",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PerfilIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PerfilOut"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PerfilOut"
+                }
+              }
+            },
+            "description": "Created"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroOut"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroOut"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroValidacaoOut"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "security": [
+          {
+            "SessionAuth": []
+          }
+        ],
+        "summary": "Salvar Perfil",
+        "tags": [
+          "perfil financeiro"
+        ]
+      }
+    }
+  },
+  "servers": []
+}

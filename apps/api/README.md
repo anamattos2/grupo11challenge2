@@ -1,10 +1,12 @@
 # Backend financeiro
 
 Servidor Django / Django Ninja com persistência em PostgreSQL, inicializado na
-[BE-01 / #83](https://github.com/anamattos2/grupo11challenge2/issues/83). Esta
-etapa entrega a base executável: configuração, conexão, migrations nativas do
-Django e verificação de saúde. Modelos financeiros, autenticação e endpoints de
-negócio pertencem às respectivas issues.
+[BE-01 / #83](https://github.com/anamattos2/grupo11challenge2/issues/83). A
+[BE-02 / #84](https://github.com/anamattos2/grupo11challenge2/issues/84) adiciona
+sessão e isolamento por usuária, e a
+[BE-03 / #85](https://github.com/anamattos2/grupo11challenge2/issues/85), perfil
+financeiro e contas manuais. Os demais modelos financeiros e endpoints de negócio
+pertencem às respectivas issues.
 
 Responsabilidades: sessão, autorização, regras financeiras, persistência e
 ferramentas determinísticas para os agentes. OpenAPI é a referência das
@@ -34,6 +36,49 @@ docker compose --env-file .env -f infra/compose.yaml up -d --wait
 
 `/api/health` responde 200 com o banco acessível e 503 quando ele está
 indisponível. A página `/api/docs` carrega seus recursos visuais de uma CDN.
+
+## Autenticação
+
+A autenticação é interna ao aplicativo, usa a sessão do Django em cookie e não
+envolve login bancário. Não há cadastro público nesta etapa. Crie uma usuária
+com dados fictícios pelo terminal, em `apps/api`:
+
+```bash
+../../.venv-api/bin/python manage.py criar_usuaria ana.ficticia
+```
+
+| Rota | Acesso | Resultado |
+|---|---|---|
+| `GET /api/auth/csrf` | Pública | 200 com o token CSRF e o cookie `csrftoken` |
+| `POST /api/auth/login` | Pública, com CSRF | 200 com a usuária; 401 para credenciais inválidas |
+| `GET /api/auth/me` | Sessão | 200 com a usuária atual |
+| `POST /api/auth/logout` | Sessão, com CSRF | 204 e sessão apagada no servidor |
+
+Requisições de escrita enviam o token no cabeçalho `X-CSRFToken`. O login renova
+o token, portanto leia novamente o cookie `csrftoken` depois de entrar. Sem sessão,
+as rotas protegidas respondem 401; sem token CSRF, as escritas respondem 403. A
+sessão expira em 8 horas.
+
+### Regras para novas rotas
+
+- Toda rota exige sessão por padrão. Uma rota pública precisa de `auth=None` e de
+  inclusão explícita na lista verificada em `tests/test_autenticacao.py`.
+- Modelos com dados pessoais herdam de `RegistroDaUsuaria`.
+- Listagens usam `Modelo.objects.da_usuaria(request.auth)`.
+- Consultas e mutações por ID usam `obter_da_usuaria_ou_404`. O registro de outra
+  usuária responde 404, igual a um ID inexistente.
+- A dona do registro vem de `request.auth`, nunca do corpo ou da URL.
+
+## Perfil e contas manuais
+
+Perfis, nomes e saldos são declarados pela usuária e não são sincronizados com
+bancos. Rotas, validações e erros estão em
+[contracts/perfil-contas.md](../../contracts/perfil-contas.md). Ao alterar uma rota
+ou schema, atualize o contrato versionado em `apps/api`:
+
+```bash
+../../.venv-api/bin/python manage.py exportar_contrato
+```
 
 ## Testar
 
