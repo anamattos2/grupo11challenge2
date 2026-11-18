@@ -11,9 +11,10 @@ O comando `finance-ai` verifica que o pacote de IA está instalado. Ele informa
 `estrutura_inicial` e uma lista vazia de componentes implementados. Não inicia
 servidores, não importa o RAG antigo, não consulta bancos e não baixa modelos.
 
-Frontend React/PWA, Django/PostgreSQL, RAG, OCR e agentes serão implementados
-nas respectivas issues. Não existe um comando de execução completa da aplicação
-nesta etapa. A preparação reproduzível aqui é a base Python do monorepositório.
+O backend Django/PostgreSQL tem instruções próprias em
+[apps/api](../../apps/api/README.md). Frontend React/PWA, RAG, OCR e agentes serão
+implementados nas respectivas issues. Ainda não existe um comando de execução
+completa da aplicação.
 
 ## Pré-requisitos e dependências
 
@@ -22,7 +23,8 @@ nesta etapa. A preparação reproduzível aqui é a base Python do monorepositó
 - Acesso ao índice de pacotes Python na primeira instalação: o build utiliza
   `setuptools==80.9.0`, fixado em `packages/ai/pyproject.toml`.
 - Nenhuma dependência de execução de terceiros, chave de API, Docker, Node,
-  PostgreSQL ou Ollama é necessária para a verificação inicial.
+  PostgreSQL ou Ollama é necessária para verificar o pacote de IA.
+- O backend exige Docker com Compose para executar o PostgreSQL local.
 
 Dependências do produto serão declaradas junto à implementação de cada frente.
 Os dois `requirements.txt` históricos permanecem intactos e são específicos dos
@@ -67,25 +69,33 @@ existente como parte de uma tarefa de documentação.
 ## Configuração de exemplo
 
 `.env.example` contém apenas valores locais ilustrativos. Se necessário, copie-o
-para `.env`; o arquivo local é ignorado. O pacote base não carrega `.env` nem
-consome essas variáveis ainda: o carregamento será implementado pelos serviços.
+para `.env`; o arquivo local é ignorado. O backend carrega esse arquivo, e
+variáveis já definidas no ambiente têm prioridade. O pacote de IA ainda não
+consome essas variáveis.
 
-| Variável | Valor de exemplo | Uso reservado |
+| Variável | Valor de exemplo | Uso |
 |---|---|---|
-| FINANCE_ENV | development | Identificar ambiente de execução |
-| FINANCE_RUNTIME_DIR | .runtime | Diretório de artefatos locais gerados |
-| OLLAMA_BASE_URL | http://localhost:11434 | Endereço local se Ollama for adotado |
+| FINANCE_ENV | development | Reservada para identificar o ambiente de execução |
+| FINANCE_RUNTIME_DIR | .runtime | Reservada para artefatos locais gerados |
+| OLLAMA_BASE_URL | http://localhost:11434 | Reservada para o endereço local, se Ollama for adotado |
+| DJANGO_SECRET_KEY | troque-esta-chave-local | Chave do Django; obrigatória |
+| DJANGO_DEBUG | true | Modo de depuração; `false` se ausente |
+| DJANGO_ALLOWED_HOSTS | localhost,127.0.0.1 | Hosts aceitos, separados por vírgula |
+| POSTGRES_DB | grupo11 | Nome do banco; obrigatória |
+| POSTGRES_USER | grupo11 | Usuário do banco; obrigatória |
+| POSTGRES_PASSWORD | troque-esta-senha-local | Senha do banco; obrigatória |
+| POSTGRES_HOST | localhost | Endereço do banco; `localhost` se ausente |
+| POSTGRES_PORT | 5432 | Porta do banco; `5432` se ausente |
 
-Não adicionar credenciais reais ao exemplo. Modelos, autenticação, configuração
-PostgreSQL, retenção de imagens e cache PWA ainda dependem das decisões
-registradas na arquitetura.
+Não adicionar credenciais reais ao exemplo. Modelos, autenticação, retenção de
+imagens e cache PWA ainda dependem das decisões registradas na arquitetura.
 
 ## Organização incremental
 
 | Diretório | Responsabilidade |
 |---|---|
 | apps/web | Frontend React/PWA; somente orientação nesta etapa |
-| apps/api | Backend financeiro; somente orientação nesta etapa |
+| apps/api | Backend financeiro Django / Django Ninja |
 | packages/ai | Pacote Python instalável para a futura implementação de IA |
 | contracts | Schemas e exemplos compartilhados |
 | knowledge | Catálogo e acervo canônico futuros |
@@ -96,7 +106,7 @@ registradas na arquitetura.
 | docs | Definição, arquitetura e instruções da equipe |
 
 Os READMEs tornam as fronteiras visíveis sem declarar funcionalidades prontas.
-Não foram criados servidores vazios ou cópias das fontes.
+Não foram criadas cópias das fontes.
 
 ## Preservação e rastreabilidade
 
@@ -125,3 +135,6 @@ própria, preservação e comprovação de reconstrução.
 Além da validação de Python e notebooks existente, o CI instala o pacote em
 ambiente temporário, executa `pip check`, os dois comandos de entrada e a
 verificação do inventário. Não executa os experimentos nem depende de modelos.
+
+O job `backend` inicia um PostgreSQL temporário com credenciais fictícias, aplica
+as migrations em banco limpo e executa os testes de `apps/api`.
