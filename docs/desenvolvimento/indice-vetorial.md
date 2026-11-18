@@ -22,6 +22,36 @@ Fontes com escopo `academic_local` entram apenas ao passar
 `--academic-local`. Esse índice é para o protótipo acadêmico não comercial e
 fica local, sem distribuição. Use um diretório separado para essa coleção.
 
+## Reconstruir o protótipo acadêmico
+
+Depois de clonar o repositório, rode na raiz com Python 3.12 a 3.14.
+
+```bash
+python3 scripts/preparar_indice_academico.py
+```
+
+O comando instala o extra `vector` em um ambiente virtual local na primeira
+execução e reconstrói a seleção de páginas dos 20 PDFs do protótipo. A
+primeira execução com conteúdo pode precisar de internet para baixar os
+pesos. Os PDFs originais permanecem nos caminhos do catálogo. Use essa
+seleção apenas no protótipo acadêmico local, não comercial.
+
+O Chroma gerado fica em `.runtime/chroma-academico-local`. O relatório
+`.runtime/indice-academico-local.json` guarda o nome da coleção para consultar
+com a CLI `finance_ai.retrieval`, quando o módulo estiver disponível na
+branch. O catálogo gerado e o banco ficam em `.runtime/`, ignorado pelo Git.
+Execute o mesmo comando para reconstruir a coleção em outra máquina.
+
+Com o módulo de recuperação disponível, consulte o índice local. Este exemplo
+usa o interpretador do ambiente criado no macOS ou Linux.
+
+```bash
+colecao=$(python3 -c 'import json; print(json.load(open(".runtime/indice-academico-local.json"))["collection"])')
+.runtime/venv-indice/bin/python -m finance_ai.retrieval \
+  --db .runtime/chroma-academico-local --collection "$colecao" \
+  'Como organizar as receitas e despesas no orçamento familiar?'
+```
+
 ## Modelo e persistência
 
 O modelo local [Multilingual E5 Small](https://huggingface.co/intfloat/multilingual-e5-small/tree/fd1525a9fd15316a2d503bf26ab031a61d056e98)

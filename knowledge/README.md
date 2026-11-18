@@ -49,7 +49,8 @@ e contexto social. F018 é um estudo com estudantes e seus resultados não
 representam o público-alvo do aplicativo. A página de contatos fica fora
 da seleção. A página 5 de F004 também está aprovada para o protótipo
 acadêmico local, com a opção `--academic-local`. Consulte o [registro da revisão](revisao-ingestao.md) para
-as fontes pendentes.
+as fontes pendentes. O [guia do índice](../docs/desenvolvimento/indice-vetorial.md#reconstruir-o-protótipo-acadêmico)
+descreve como reconstruir localmente a seleção acadêmica de 20 PDFs.
 
 ## Verificar
 
