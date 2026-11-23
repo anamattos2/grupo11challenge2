@@ -36,14 +36,20 @@ def _load_encoder():
     return model
 
 
-def rebuild_index(catalog_path: Path, root: Path, db_path: Path) -> dict:
+def rebuild_index(
+    catalog_path: Path, root: Path, db_path: Path, *, academic_local: bool = False,
+) -> dict:
     """Persiste uma coleção por conjunto de chunks e configuração de embeddings."""
     catalog = json.loads(catalog_path.read_text(encoding='utf-8'))
     if catalog['schema_version'] != 1:
         raise ValueError('versão do catálogo não suportada')
 
     sources = sorted(
-        (source for source in catalog['sources'] if source['approved_for_ingestion'] is True),
+        (
+            source for source in catalog['sources']
+            if source['approved_for_ingestion'] is True
+            and (academic_local or (source.get('ingestion_review') or {}).get('scope') is None)
+        ),
         key=lambda source: source['id'],
     )
     if not sources:
@@ -63,6 +69,17 @@ def rebuild_index(catalog_path: Path, root: Path, db_path: Path) -> dict:
         if not isinstance(digest, str) or len(digest) != 64:
             raise ValueError(f'{source_id}: SHA-256 ausente ou inválido')
         report = extract_pdf(path, source_id, digest)
+        review = source.get('ingestion_review')
+        if review is not None and report['status'] != 'error':
+            pages = review['pages']
+            if (not isinstance(pages, list) or not pages
+                    or any(type(page) is not int or not 1 <= page <= report['page_count']
+                           for page in pages)):
+                raise ValueError(f'{source_id}: páginas aprovadas inválidas')
+            selected = set(pages)
+            report['pages'] = [page for page in report['pages'] if page['page_number'] in selected]
+            report['issues'] = [issue for issue in report['issues']
+                                if issue.get('page_number') in selected]
         if report['status'] == 'error' or any(
             issue['code'] != 'no_text' for issue in report['issues']
         ):
@@ -70,7 +87,8 @@ def rebuild_index(catalog_path: Path, root: Path, db_path: Path) -> dict:
         segmented = chunk_report(report)
         if not segmented['chunks']:
             raise ValueError(f'{source_id}: PDF sem texto segmentável')
-        chunks.extend(segmented['chunks'])
+        citation = review['citation'] if review is not None else ''
+        chunks.extend({**chunk, 'citation': citation} for chunk in segmented['chunks'])
         source_reports.append({
             'document_id': source_id,
             'source_sha256': digest,
@@ -78,6 +96,9 @@ def rebuild_index(catalog_path: Path, root: Path, db_path: Path) -> dict:
             'cleaning_version': report['cleaning_version'],
             'parameters': segmented['parameters'],
             'issues': report['issues'],
+            'approved_pages': review['pages'] if review is not None else None,
+            'scope': review.get('scope') if review is not None else None,
+            'citation': citation or None,
         })
 
     import chromadb
@@ -119,7 +140,7 @@ def rebuild_index(catalog_path: Path, root: Path, db_path: Path) -> dict:
                 embeddings=embeddings.tolist(),
                 metadatas=[
                     {key: chunk[key] for key in ('document_id', 'source_sha256',
-                                                'page_number', 'start', 'end')}
+                                                'page_number', 'start', 'end', 'citation')}
                     for chunk in batch
                 ],
             )
@@ -138,9 +159,11 @@ def main() -> None:
     parser.add_argument('--catalog', type=Path, default=Path('knowledge/catalogo.json'))
     parser.add_argument('--root', type=Path, default=Path('.'))
     parser.add_argument('--db', type=Path, required=True)
+    parser.add_argument('--academic-local', action='store_true',
+                        help='inclui fontes restritas a uso acadêmico local não comercial')
     args = parser.parse_args()
     try:
-        result = rebuild_index(args.catalog, args.root, args.db)
+        result = rebuild_index(args.catalog, args.root, args.db, academic_local=args.academic_local)
     except (OSError, ValueError, KeyError, TypeError) as exc:
         parser.error(str(exc))
     print(json.dumps(result, ensure_ascii=False, indent=2))
