@@ -89,3 +89,23 @@ python -m unittest discover -s tests              → Ran 68 tests ... OK
 
 Mesmo resultado em Python 3.12 (versão da CI) e 3.14. Em 3.14 o
 `langchain-core` emite um aviso sobre a camada `pydantic.v1`, sem efeito nos testes.
+
+## Correção após a segunda revisão (23/11/2026)
+
+O PR #135 foi mesclado em `59c6a19`. A segunda revisão encontrou um bloqueante
+(`KeyError` quando a Validation aprova um id que não existe na análise) e
+quatro sugestões. As correções estão na branch `fix-75-referencias-entre-etapas`,
+a partir da `main` em `7683484`; o mapa ponto → mudança → teste está no fim de
+`docs/arquitetura/agentes/contratos-agentes.md`.
+
+```text
+python -m pip install --editable './packages/ai[documents,agents]'   # ambiente limpo
+python scripts/exportar_schemas_agentes.py --check → OK
+python -m unittest discover -s tests              → OK
+python -m unittest tests.test_grafo_exaustivo     → 2 testes, 2.688 combinações do grafo, ~5 s
+```
+
+Prova de que os testes exaustivos detectam o problema: rodados contra o
+código da `main` antes da correção, falham com
+`('concluida', 'ok', 'aprova_id_fantasma', 'fiel'): exceção escapou do fluxo: KeyError('a9')`
+e nos 8 casos de `negada` + `sem_resultados` classificados como `sem_evidencias`.

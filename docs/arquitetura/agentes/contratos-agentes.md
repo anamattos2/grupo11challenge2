@@ -139,11 +139,12 @@ chamadas, e o contrato recusa qualquer outro valor.
 | sim | todas ok / sem resultados | `concluida` | Analysis |
 | sim | alguma negada ou com erro | `parcial` | Analysis, com observação |
 | não | alguma com erro | `falha` | Falha (`falha_pesquisa`) |
-| não | nenhum erro, alguma busca sem resultados | `sem_evidencias` | Abstenção (`sem_evidencias`) |
-| não | todas negadas | `sem_permissao` | Abstenção (`sem_permissao`) |
+| não | nenhum erro, alguma negada | `sem_permissao` | Abstenção (`sem_permissao`) |
+| não | só buscas sem resultados | `sem_evidencias` | Abstenção (`sem_evidencias`) |
 
-Erro de ferramenta nunca vira "não encontrei": só uma ferramenta que respondeu
-de fato "sem resultados" autoriza a abstenção por busca vazia. Toda pesquisa
+Erro de ferramenta nunca vira "não encontrei", e uma fonte negada nunca fica
+escondida atrás de "não encontrei": a abstenção por busca vazia só acontece
+quando todas as ferramentas responderam de fato "sem resultados". Toda pesquisa
 registra ao menos uma chamada.
 
 Os campos documentais vêm do contrato v1 da
@@ -203,6 +204,25 @@ aprovado, uma falha dela não derruba a resposta, que sai com o texto literal.
 | `pedido_complemento` | Falta dado que só a usuária informa | Mensagem fixa + perguntas das lacunas | Nenhuma |
 | `falha` | Um componente quebrou | Mensagem fixa: nenhum dado foi alterado | Nenhuma |
 
+### Referências entre etapas
+
+Cada contrato valida a saída de um agente isoladamente; ids que passam de
+uma etapa para outra são conferidos pelo fluxo:
+
+| Checagem | Onde | Se falhar |
+|---|---|---|
+| Evidências citadas pela Analysis existem na pesquisa | `inconsistencias_analise`, em `apos_analise` | Falha `contrato_invalido`; etapa `referencia_inexistente` no rastro |
+| Afirmações aprovadas, marcadas sem suporte ou verificadas pela Validation existem na análise | `inconsistencias_validacao`, em `apos_validacao` | Falha `contrato_invalido`; etapa `referencia_inexistente` |
+| As duas checagens de novo, antes de montar a resposta | início de `montar_resposta` | `ValueError` (nunca `KeyError`), que o grafo transforma em falha |
+
+Além disso, nenhum nó do grafo deixa exceção escapar (`_protegido`), e
+`executar_fluxo` sempre devolve uma `RespostaFinal`: um erro inesperado do
+próprio orquestrador termina em falha com motivo `erro_interno`.
+
+O feedback de uma reprovação fica no estado do grafo (`feedback_validacao`),
+e não na transição, para chegar à Analysis mesmo quando há um pedido de
+cálculo entre a reprovação e a nova análise.
+
 Regras de segurança do fluxo:
 
 1. A análise reprovada **nunca** chega à Communication; o contrato
@@ -226,7 +246,7 @@ Regras de segurança do fluxo:
 
 `sem_evidencias`, `sem_permissao`, `dados_insuficientes`, `calculo_indisponivel`,
 `validacao_reprovada`, `falha_pesquisa`, `falha_analise`, `falha_validacao`,
-`falha_comunicacao`, `contrato_invalido`, `tempo_esgotado`. Quando a redação da
+`falha_comunicacao`, `contrato_invalido`, `tempo_esgotado`, `erro_interno`. Quando a redação da
 Communication é substituída pela literal, a resposta continua `respondida` e
 o rastro ganha uma etapa do orquestrador com código `redacao_substituida`.
 O frontend pode escolher ícones e textos pelo código; o `texto` já é seguro
@@ -280,3 +300,28 @@ diagrama estiverem desatualizados em relação ao código.
 | Como a Analysis pede cálculo determinístico | `PedidoCalculo`, status `precisa_calculo`, `chamadas_solicitadas`, aresta `analise → pesquisa` com uma rodada | `PedidoDeCalculoTest`; `test_pedido_de_calculo_volta_a_research_e_completa_a_analise`, `test_segundo_pedido_de_calculo_abstem` |
 | Falha ou negação aceitas como `sem_evidencias` | Status derivado por `status_da_pesquisa`; novo `sem_permissao`; erro sempre vira `falha` | `PesquisaTest`; `test_busca_vazia_sem_permissao_e_falha_terminam_de_formas_diferentes` |
 | `frozen=True` permite alterar listas e dicionários | Tuplas e `MappingProxyType` em todos os contratos; cópia na passagem entre agentes | `test_nenhum_contrato_guarda_lista_ou_dicionario_mutavel`, `test_copia_e_independente_e_igual`, `test_agente_nao_consegue_alterar_o_que_recebeu_nem_o_estado` |
+
+### Segunda revisão do PR #135 e testes exaustivos
+
+A segunda revisão encontrou um `KeyError` quando a Validation aprovava um id
+inexistente na análise. Ele foi corrigido numa branch de correção, porque o
+PR já tinha sido mesclado.
+
+| Ponto da revisão | Mudança | Testes |
+|---|---|---|
+| Bloqueante: Validation aprova id que não existe → `KeyError` escapa do fluxo | `inconsistencias_validacao` em `apos_validacao` e em `montar_resposta`; `no_respondida` captura qualquer exceção; nós protegidos; `executar_fluxo` nunca lança | `ReferenciasCruzadasTest`; `test_validation_aprovando_id_inexistente_vira_falha_e_nao_excecao`; `test_erro_dentro_do_orquestrador_nunca_escapa` |
+| Feedback perdido quando a revisão passa por pedido de cálculo | `feedback_validacao` guardado no estado | `test_feedback_da_reprovacao_sobrevive_a_um_pedido_de_calculo` |
+| `negada` + `sem_resultados` escondia a negação | Vira `sem_permissao` | `PesquisaTest`; `StatusDaPesquisaExaustivoTest` |
+| Evidências da Analysis não conferidas contra a pesquisa | `inconsistencias_analise` em `apos_analise` | `test_analysis_citando_evidencia_inexistente_vira_falha_e_nao_chega_a_validation` |
+
+`tests/test_grafo_exaustivo.py` roda o grafo com todas as combinações de um
+cardápio de comportamentos dos quatro agentes: 8 da Research, 8 da Analysis,
+7 da Validation e 6 da Communication, 2.688 execuções em cerca de 5 s. O
+cardápio inclui saídas corretas, ids fantasmas, número inventado, exceção,
+timeout e contrato inválido. Em cada execução, o teste confere as
+invariantes: nenhuma exceção escapa; resposta aprovada só com afirmações
+aprovadas e existentes, evidências existentes, cobertura completa e nenhum
+número novo; demais desfechos com texto fixo e sem fontes; limites de
+chamadas respeitados; falha de pesquisa nunca vira "não encontrei". Rodado
+contra o código anterior à correção, o teste falha exatamente no bug da
+revisão: `KeyError('a9')` com a Validation aprovando um id fantasma.

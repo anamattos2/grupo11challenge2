@@ -154,6 +154,47 @@ class GrafoTest(unittest.TestCase):
         self.assertEqual(recebida, pesquisa)
         self.assertIsNot(recebida, pesquisa)
 
+    # Revisão 2 do #135 ------------------------------------------------------
+
+    def test_validation_aprovando_id_inexistente_vira_falha_e_nao_excecao(self):
+        fantasma = exemplo("SaidaValidacao.aprovada").model_copy(update={"afirmacoes_aprovadas": ("a1", "a9")})
+        communication = Roteiro()
+        resposta = self.rodar(validation=Roteiro(fantasma), communication=communication)
+        self.assertEqual((resposta.estado, resposta.motivo), ("falha", c.MotivoEncerramento.CONTRATO_INVALIDO))
+        self.assertEqual(resposta.etapas[-1].codigo, "referencia_inexistente")
+        self.assertEqual(communication.entradas, [])
+
+    def test_analysis_citando_evidencia_inexistente_vira_falha_e_nao_chega_a_validation(self):
+        analise = exemplo("SaidaAnalise.analisada")
+        a1 = analise.afirmacoes[0].model_copy(update={"evidencias_ids": ("doc:" + "f" * 16,)})
+        validation = Roteiro()
+        resposta = self.rodar(analysis=Roteiro(analise.model_copy(update={"afirmacoes": (a1,)})),
+                              validation=validation)
+        self.assertEqual((resposta.estado, resposta.motivo), ("falha", c.MotivoEncerramento.CONTRATO_INVALIDO))
+        self.assertEqual(validation.entradas, [])
+
+    def test_feedback_da_reprovacao_sobrevive_a_um_pedido_de_calculo(self):
+        reprovada = exemplo("SaidaValidacao.reprovada")
+        analysis = Roteiro(exemplo("SaidaAnalise.analisada"), exemplo("SaidaAnalise.precisa_calculo"),
+                           exemplo("SaidaAnalise.analisada"))
+        resposta = self.rodar(
+            research=Roteiro(exemplo("SaidaPesquisa.concluida"), pesquisa_de_setembro()),
+            analysis=analysis,
+            validation=Roteiro(reprovada, exemplo("SaidaValidacao.aprovada")))
+        self.assertEqual(resposta.estado, "respondida")
+        self.assertEqual([e.feedback_validacao for e in analysis.entradas],
+                         [(), reprovada.feedback, reprovada.feedback])
+
+    def test_erro_dentro_do_orquestrador_nunca_escapa(self):
+        from unittest import mock
+        with mock.patch("finance_ai.agents.grafo.montar_resposta", side_effect=KeyError("a9")):
+            resposta = self.rodar()
+        self.assertEqual((resposta.estado, resposta.motivo), ("falha", c.MotivoEncerramento.CONTRATO_INVALIDO))
+        with mock.patch("finance_ai.agents.grafo.apos_pesquisa", side_effect=RuntimeError("bug")):
+            resposta = self.rodar()
+        self.assertEqual((resposta.estado, resposta.motivo), ("falha", c.MotivoEncerramento.ERRO_INTERNO))
+        self.assertNotIn("bug", resposta.texto)
+
     # Demais caminhos ---------------------------------------------------------
 
     def test_dados_insuficientes_pedem_complemento(self):
