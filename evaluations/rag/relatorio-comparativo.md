@@ -1,6 +1,36 @@
 # Relatório comparativo de LLM e RAG
 
-**Semana 3 · Calibração de 18/11/2026 · Revisão humana pendente**
+**Semana 3 · Rodada oficial de 23/11/2026 · Validação humana pendente**
+
+## Resultados oficiais
+
+O LLM puro atendeu integralmente a **3 de 12 casos**, o RAG comum a
+**1 de 12** e o RAG com explicação estruturada a **0 de 12**. As duas
+variantes RAG encontraram cinco das oito páginas esperadas no top 5.
+A variante estruturada preservou a localização e o texto das passagens
+selecionadas. As respostas entregues ainda ficaram aquém do gabarito.
+
+| Indicador | LLM puro | RAG | RAG com explicação estruturada |
+| --- | ---: | ---: | ---: |
+| Aprovação integral | 3/12 | 1/12 | 0/12 |
+| Correção integral nos casos respondíveis | 2/8 | 1/8 | 0/8 |
+| Respostas adequadas a dados faltantes ou fora de escopo | 1/4 | 0/4 | 0/4 |
+| Referências com localização verificada | N/A | 8/8 | 13/13 |
+| M05 · Pares afirmação–citação sustentados | N/A | 2/8 | 13/13 |
+| M06 · Afirmações com suporte identificável | 9/12 | 8/12 | 9/9 |
+| Página esperada no top 5 | N/A | 5/8 | 5/8 |
+| Abstenções do executor | 0/12 | 4/12 | 3/12 |
+| Falhas técnicas | 0/12 | 0/12 | 0/12 |
+| Mediana / p95 de latência total | 906 / 2.936 ms | 4.281 / 8.788 ms | 2.259 / 6.496 ms |
+
+Os 12 casos oficiais usaram o mesmo código, modelo, prompt, parâmetros
+e coleção registrados para a calibração. Nenhum caso foi excluído.
+A [revisão caso a caso](revisao-avaliacao-oficial.md) documenta as
+contagens e os critérios. No estruturado, M05 e M06 refletem a
+fidelidade das passagens reproduzidas. A aprovação integral também
+exige que as passagens escolhidas respondam à pergunta.
+
+## Resultados de calibração de 18/11/2026
 
 O RAG com explicação estruturada aprovou **2 de 6 casos**, ante **1 de 6**
 no LLM puro e **1 de 6** no RAG comum. A explicação estruturada aumentou a
@@ -86,13 +116,12 @@ saídas e os trechos recuperados permanecem em `.runtime/avaliacoes/` e
 
 ## Limitações e revisão humana
 
-O resultado é de uma execução curta por variante, com seleção de páginas
-do acervo e sem a triagem experimental. As contagens não permitem estimar
-a qualidade no conjunto oficial. Codex fez a revisão preliminar. A equipe
-ainda precisa indicar quem revisará o gabarito, a pertinência das citações
-e os casos de abstenção. [PR de calibração](https://github.com/anamattos2/grupo11challenge2/pull/133)
+A calibração tem seis casos e a avaliação oficial tem 12. Cada variante
+teve uma execução por partição na configuração comparável. A seleção
+acadêmica de páginas limita a generalização, e as contagens descrevem
+esta rodada. A triagem experimental ficou fora da rodada oficial.
 
-Após resolver as divergências, registre os revisores e congele dataset,
-gabarito, código, modelo, prompts e coleção. Execute os 12 casos oficiais
-nas três variantes e complemente este relatório com os resultados e
-denominadores da avaliação.
+Codex fez a revisão assistida. A equipe ainda precisa validar os
+julgamentos e registrar os revisores humanos. Os JSONL brutos da rodada
+oficial permanecem em `.runtime/avaliacoes/issue-73/oficial-2026-11-23/`.
+Veja o [relatório de qualidade](avaliacao-qualidade.md) para as evidências.
