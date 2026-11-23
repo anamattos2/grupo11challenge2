@@ -94,3 +94,30 @@ Os JSONL contêm respostas, fontes e latências por caso. Eles permanecem
 em `.runtime/`. Antes da execução oficial, registre os revisores, resolva as
 divergências e congele a configuração. Para a avaliação final, registre
 também M06 por afirmação, incluindo aquelas sem citação.
+
+
+## Rodada oficial de 23/11/2026
+
+Os 12 casos reservados foram executados nas três variantes com a mesma
+configuração da calibração. O relatório da [revisão assistida oficial](revisao-avaliacao-oficial.md)
+registra os 36 julgamentos, a verificação das 21 referências nos PDFs e a
+contagem de cobertura de suporte por afirmação.
+
+| Indicador | LLM puro | RAG | RAG com explicação |
+| --- | ---: | ---: | ---: |
+| Aprovação integral | 3/12 | 1/12 | 0/12 |
+| Correção integral nos casos respondíveis | 2/8 | 1/8 | 0/8 |
+| Comportamento adequado nos quatro casos sem suporte | 1/4 | 0/4 | 0/4 |
+| Página esperada no top 5 | N/A | 5/8 | 5/8 |
+| Referências com localização verificada | N/A | 8/8 | 13/13 |
+| M05 · Pares sustentados | N/A | 2/8 | 13/13 |
+| M06 · Afirmações com suporte identificável | 9/12 | 8/12 | 9/9 |
+| Abstenções do executor | 0/12 | 4/12 | 3/12 |
+| Falhas técnicas | 0/12 | 0/12 | 0/12 |
+| Mediana / p95 de latência total | 906 / 2.936 ms | 4.281 / 8.788 ms | 2.259 / 6.496 ms |
+
+As oito páginas de referência estavam presentes na coleção. O RAG
+estruturado reproduziu os trechos citados, mas a seleção de passagens
+não satisfez integralmente o gabarito em nenhum caso desta rodada.
+A revisão foi assistida por Codex e aguarda validação humana.
+Os JSONL brutos permanecem em `.runtime/avaliacoes/issue-73/oficial-2026-11-23/`.

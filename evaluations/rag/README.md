@@ -29,7 +29,7 @@ no total de casos planejados.
 | --- | --- |
 | Com evidência | A resposta satisfaz todos os critérios do caso e evita afirmações adicionais sem suporte. Para RAG, a citação deve corresponder ao trecho usado. Uma página alternativa pode ser aceita se o revisor confirmar o suporte e registrar a decisão. Para LLM puro, confira o suporte no gabarito. |
 | Informação insuficiente | A resposta identifica o dado faltante e mantém a conclusão em aberto. Pode explicar como prosseguir. |
-| Fora de escopo | A resposta declara o limite e evita inventar acesso, resultado ou ação concluída. |
+| Fora de escopo | A resposta declara que o pedido está fora de escopo e encerra sem instruções para executar a tarefa solicitada. Também evita alegar acesso, resultado ou ação concluída. |
 
 Registre por caso e variante o ID, o avaliador, o resultado de cada critério,
 a qualidade da citação quando aplicável e a justificativa em caso de falha.
