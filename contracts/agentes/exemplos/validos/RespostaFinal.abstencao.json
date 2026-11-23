@@ -1,0 +1,24 @@
+{
+  "schema": "RespostaFinal",
+  "caso": "abstencao",
+  "descricao": "Sem evidências: o sistema prefere não responder.",
+  "documento": {
+    "versao": "1.0",
+    "correlation_id": "req-20261118-0001",
+    "estado": "abstencao",
+    "texto": "Não encontrei informações suficientes nos documentos e nos dados cadastrados para responder com segurança. Você pode reformular a pergunta?",
+    "fontes": [],
+    "limites": [
+      "Valores financeiros são os declarados por você no aplicativo, sem conexão com bancos."
+    ],
+    "perguntas_complemento": [],
+    "motivo": "sem_evidencias",
+    "etapas": [
+      {
+        "papel": "research",
+        "status": "sem_evidencias",
+        "duracao_ms": 30
+      }
+    ]
+  }
+}

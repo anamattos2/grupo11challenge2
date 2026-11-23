@@ -1,0 +1,21 @@
+{
+  "schema": "SaidaPesquisa",
+  "caso": "sem_evidencias_com_erro",
+  "motivo": "Erro de ferramenta não pode virar busca vazia.",
+  "erro_esperado": "value_error",
+  "documento": {
+    "versao": "1.0",
+    "status": "sem_evidencias",
+    "modo": "prototipo_fixtures",
+    "evidencias": [],
+    "chamadas": [
+      {
+        "ferramenta": "documentos.buscar",
+        "status": "erro",
+        "codigo_erro": "index_not_found",
+        "duracao_ms": 12
+      }
+    ],
+    "observacoes": []
+  }
+}
