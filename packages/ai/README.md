@@ -13,3 +13,12 @@ Consulte [extração documental](../../docs/desenvolvimento/extracao-documental.
 para instalação, execução, contrato do relatório e limites da limpeza.
 
 Consulte [o guia do ambiente](../../docs/desenvolvimento/ambiente.md).
+
+Consulte [chunking documental](../../docs/desenvolvimento/chunking-documental.md)
+para segmentar relatórios de extração com metadados reproduzíveis.
+
+Consulte [índice vetorial educativo](../../docs/desenvolvimento/indice-vetorial.md)
+para instalar o extra `vector` e reconstruir coleções Chroma a partir do catálogo.
+
+Consulte [recuperação documental](../../docs/desenvolvimento/recuperacao-documental.md)
+para consultar uma coleção e obter evidências com proveniência e score.

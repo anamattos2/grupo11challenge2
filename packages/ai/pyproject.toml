@@ -12,6 +12,7 @@ dependencies = []
 
 [project.optional-dependencies]
 documents = ["PyMuPDF==1.26.6"]
+vector = ["PyMuPDF==1.26.6", "chromadb==1.5.5", "sentence-transformers==5.2.3"]
 
 [project.scripts]
 finance-ai = "finance_ai.__main__:main"
