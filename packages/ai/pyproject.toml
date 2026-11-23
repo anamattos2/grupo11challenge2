@@ -14,9 +14,13 @@ dependencies = []
 documents = ["PyMuPDF==1.26.6"]
 vector = ["PyMuPDF==1.26.6", "chromadb==1.5.5", "sentence-transformers==5.2.3"]
 agents = ["pydantic==2.12.4", "langchain-core==1.8.3", "langgraph==1.2.22"]
+llm = ["langchain-ollama==1.1.0"]
 
 [project.scripts]
 finance-ai = "finance_ai.__main__:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+"finance_ai.agents" = ["fixtures/*.json"]
