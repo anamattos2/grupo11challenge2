@@ -1,0 +1,14 @@
+{
+  "schema": "SaidaPesquisa",
+  "caso": "sem_chamadas",
+  "motivo": "Toda pesquisa registra ao menos uma chamada.",
+  "erro_esperado": "too_short",
+  "documento": {
+    "versao": "1.0",
+    "status": "sem_evidencias",
+    "modo": "prototipo_fixtures",
+    "evidencias": [],
+    "chamadas": [],
+    "observacoes": []
+  }
+}

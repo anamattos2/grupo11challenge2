@@ -35,8 +35,20 @@ class CatalogTest(unittest.TestCase):
 
     def test_ingestion_requires_separate_review(self):
         self.sources[0]['approved_for_ingestion'] = True
-        with self.assertRaisesRegex(ValueError, 'não autoriza'):
+        with self.assertRaisesRegex(ValueError, 'evidência e citação'):
             module.validate(self.sources, self.files.__getitem__)
+
+    def test_approval_requires_valid_reviewed_pages(self):
+        source = self.sources[0]
+        source.update(approved_for_ingestion=True, pages=2, ingestion_review={
+            'evidence': 'Autorização fictícia', 'citation': 'Fonte fictícia', 'pages': [2],
+        })
+        self.assertEqual(module.validate(self.sources, self.files.__getitem__)[0], 20)
+        for pages in ([], [0], [3], [True], [2, 2]):
+            with self.subTest(pages=pages):
+                source['ingestion_review']['pages'] = pages
+                with self.assertRaisesRegex(ValueError, 'páginas aprovadas'):
+                    module.validate(self.sources, self.files.__getitem__)
 
 
 if __name__ == '__main__':

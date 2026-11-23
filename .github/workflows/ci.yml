@@ -68,12 +68,13 @@ jobs:
       - name: Verify preservation of historical experiments
         run: python scripts/verificar_legado.py
 
-      - name: Test document extraction with synthetic PDFs
+      - name: Test document extraction and agent contracts with synthetic data
         shell: bash
         run: |
           python -m venv "${RUNNER_TEMP}/finance-documents-venv"
-          "${RUNNER_TEMP}/finance-documents-venv/bin/python" -m pip install --editable './packages/ai[documents]'
+          "${RUNNER_TEMP}/finance-documents-venv/bin/python" -m pip install --editable './packages/ai[documents,agents]'
           "${RUNNER_TEMP}/finance-documents-venv/bin/python" -m pip check
+          "${RUNNER_TEMP}/finance-documents-venv/bin/python" scripts/exportar_schemas_agentes.py --check
           "${RUNNER_TEMP}/finance-documents-venv/bin/python" -m unittest discover -s tests
 
       - name: Install and check the initial AI package in a clean environment
@@ -84,3 +85,62 @@ jobs:
           "${RUNNER_TEMP}/finance-base-venv/bin/python" -m pip check
           "${RUNNER_TEMP}/finance-base-venv/bin/python" -m finance_ai
           "${RUNNER_TEMP}/finance-base-venv/bin/finance-ai"
+
+  backend:
+    name: backend
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: grupo11_ci
+          POSTGRES_USER: grupo11_ci
+          POSTGRES_PASSWORD: senha-ficticia-ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U grupo11_ci -d grupo11_ci"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+
+    env:
+      DJANGO_SECRET_KEY: chave-ficticia-ci
+      DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1
+      POSTGRES_DB: grupo11_ci
+      POSTGRES_USER: grupo11_ci
+      POSTGRES_PASSWORD: senha-ficticia-ci
+      POSTGRES_HOST: localhost
+      POSTGRES_PORT: '5432'
+
+    defaults:
+      run:
+        working-directory: apps/api
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install backend dependencies
+        run: |
+          python -m pip install -r requirements.txt
+          python -m pip check
+
+      - name: Check Django configuration and pending model changes
+        run: |
+          python manage.py check
+          python manage.py makemigrations --check --dry-run
+
+      - name: Apply migrations on a clean database
+        run: |
+          python manage.py migrate --noinput
+          python manage.py migrate --check
+
+      - name: Run backend tests
+        run: python manage.py test

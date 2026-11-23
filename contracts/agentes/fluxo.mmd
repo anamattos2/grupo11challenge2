@@ -1,0 +1,37 @@
+---
+config:
+  flowchart:
+    curve: linear
+---
+graph TD;
+	__start__([<p>__start__</p>]):::first
+	pesquisa(pesquisa)
+	analise(analise)
+	validacao(validacao)
+	comunicacao(comunicacao)
+	respondida(respondida)
+	abstencao(abstencao)
+	pedido_complemento(pedido_complemento)
+	falha(falha)
+	__end__([<p>__end__</p>]):::last
+	__start__ --> pesquisa;
+	analise -.-> abstencao;
+	analise -.-> falha;
+	analise -.-> pedido_complemento;
+	analise -.-> pesquisa;
+	analise -.-> validacao;
+	comunicacao -.-> respondida;
+	pesquisa -.-> abstencao;
+	pesquisa -.-> analise;
+	pesquisa -.-> falha;
+	validacao -.-> abstencao;
+	validacao -.-> analise;
+	validacao -.-> comunicacao;
+	validacao -.-> falha;
+	abstencao --> __end__;
+	falha --> __end__;
+	pedido_complemento --> __end__;
+	respondida --> __end__;
+	classDef default fill:#f2f0ff,line-height:1.2
+	classDef first fill-opacity:0
+	classDef last fill:#bfb6fc

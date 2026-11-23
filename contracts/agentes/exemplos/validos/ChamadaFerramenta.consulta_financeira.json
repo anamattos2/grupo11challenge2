@@ -1,0 +1,15 @@
+{
+  "schema": "ChamadaFerramenta",
+  "caso": "consulta_financeira",
+  "descricao": "Resumo de despesas essenciais de outubro.",
+  "documento": {
+    "ferramenta": "financeiro.consultar",
+    "operacao": "resumo_transacoes",
+    "parametros": {
+      "periodo_inicio": "2026-10-01",
+      "periodo_fim": "2026-10-31",
+      "tipo": "despesa",
+      "somente_essenciais": true
+    }
+  }
+}

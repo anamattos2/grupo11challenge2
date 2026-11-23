@@ -1,0 +1,568 @@
+{
+  "$defs": {
+    "ContextoAutorizado": {
+      "additionalProperties": false,
+      "description": "Montado pelo backend a partir da sessão autenticada, nunca pelo modelo.\n\n``usuaria_ref`` é uma referência opaca. Ela é repassada às ferramentas pelo\ncódigo do agente, e não aparece em prompts nem em parâmetros que um LLM\npossa preencher. Mesmo assim, cada ferramenta revalida o acesso.",
+      "properties": {
+        "conversa_id": {
+          "pattern": "^[A-Za-z0-9_-]{4,64}$",
+          "title": "Conversa Id",
+          "type": "string"
+        },
+        "correlation_id": {
+          "pattern": "^[A-Za-z0-9_-]{8,64}$",
+          "title": "Correlation Id",
+          "type": "string"
+        },
+        "data_referencia": {
+          "description": "Data atual em America/Sao_Paulo; base para 'este mês'.",
+          "format": "date",
+          "title": "Data Referencia",
+          "type": "string"
+        },
+        "memoria": {
+          "default": [],
+          "description": "Resumo limitado da conversa, já filtrado pelo backend.",
+          "items": {
+            "maxLength": 500,
+            "type": "string"
+          },
+          "maxItems": 5,
+          "title": "Memoria",
+          "type": "array"
+        },
+        "permissoes": {
+          "items": {
+            "$ref": "#/$defs/Permissao"
+          },
+          "maxItems": 2,
+          "title": "Permissoes",
+          "type": "array"
+        },
+        "usuaria_ref": {
+          "pattern": "^[A-Za-z0-9_-]{4,64}$",
+          "title": "Usuaria Ref",
+          "type": "string"
+        }
+      },
+      "required": [
+        "correlation_id",
+        "usuaria_ref",
+        "conversa_id",
+        "permissoes",
+        "data_referencia"
+      ],
+      "title": "ContextoAutorizado",
+      "type": "object"
+    },
+    "EvidenciaDocumental": {
+      "additionalProperties": false,
+      "description": "Trecho do corpus educativo. Nunca representa dado pessoal da usuária.",
+      "properties": {
+        "consulta": {
+          "description": "Texto de busca que recuperou o trecho.",
+          "maxLength": 500,
+          "minLength": 1,
+          "title": "Consulta",
+          "type": "string"
+        },
+        "id": {
+          "pattern": "^doc:[0-9a-f]{16,64}$",
+          "title": "Id",
+          "type": "string"
+        },
+        "localizacao": {
+          "$ref": "#/$defs/LocalizacaoDocumental"
+        },
+        "origem": {
+          "$ref": "#/$defs/OrigemDocumental"
+        },
+        "score": {
+          "description": "Similaridade de cosseno da busca. Não é probabilidade de correção.",
+          "maximum": 1,
+          "minimum": -1,
+          "title": "Score",
+          "type": "number"
+        },
+        "tipo": {
+          "const": "documental",
+          "default": "documental",
+          "title": "Tipo",
+          "type": "string"
+        },
+        "trecho": {
+          "maxLength": 4000,
+          "minLength": 1,
+          "title": "Trecho",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "origem",
+        "localizacao",
+        "trecho",
+        "score",
+        "consulta"
+      ],
+      "title": "EvidenciaDocumental",
+      "type": "object"
+    },
+    "EvidenciaFinanceira": {
+      "additionalProperties": false,
+      "description": "Resultado determinístico de uma ferramenta do backend, já autorizado.",
+      "properties": {
+        "id": {
+          "pattern": "^fin:[a-z_]{3,40}:[0-9a-f]{12}$",
+          "title": "Id",
+          "type": "string"
+        },
+        "localizacao": {
+          "$ref": "#/$defs/LocalizacaoFinanceira"
+        },
+        "moeda": {
+          "const": "BRL",
+          "default": "BRL",
+          "title": "Moeda",
+          "type": "string"
+        },
+        "origem": {
+          "$ref": "#/$defs/OrigemFinanceira"
+        },
+        "resumo": {
+          "description": "Descrição gerada pela ferramenta (não pelo LLM) do que os valores significam.",
+          "maxLength": 500,
+          "minLength": 1,
+          "title": "Resumo",
+          "type": "string"
+        },
+        "tipo": {
+          "const": "financeira",
+          "default": "financeira",
+          "title": "Tipo",
+          "type": "string"
+        },
+        "valores": {
+          "description": "Valores calculados pelo backend. None quando não se aplica (ex.: progresso com meta zero).",
+          "patternProperties": {
+            "^[a-z][a-z0-9_]{1,39}$": {
+              "anyOf": [
+                {
+                  "pattern": "^-?\\d{1,12}\\.\\d{2}$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "title": "Valores",
+          "type": "object"
+        }
+      },
+      "required": [
+        "id",
+        "origem",
+        "localizacao",
+        "valores",
+        "resumo"
+      ],
+      "title": "EvidenciaFinanceira",
+      "type": "object"
+    },
+    "LocalizacaoDocumental": {
+      "additionalProperties": false,
+      "properties": {
+        "chunk_id": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Chunk Id",
+          "type": "string"
+        },
+        "fim": {
+          "description": "Offset final (exclusivo) no texto limpo da página.",
+          "minimum": 1,
+          "title": "Fim",
+          "type": "integer"
+        },
+        "inicio": {
+          "description": "Offset inicial (inclusivo) no texto limpo da página.",
+          "minimum": 0,
+          "title": "Inicio",
+          "type": "integer"
+        },
+        "pagina": {
+          "description": "Página física do PDF, começando em 1.",
+          "minimum": 1,
+          "title": "Pagina",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "pagina",
+        "inicio",
+        "fim",
+        "chunk_id"
+      ],
+      "title": "LocalizacaoDocumental",
+      "type": "object"
+    },
+    "LocalizacaoFinanceira": {
+      "additionalProperties": false,
+      "properties": {
+        "filtros": {
+          "patternProperties": {
+            "^[a-z][a-z0-9_]{1,39}$": {
+              "maxLength": 100,
+              "type": "string"
+            }
+          },
+          "title": "Filtros",
+          "type": "object"
+        },
+        "periodo_fim": {
+          "anyOf": [
+            {
+              "format": "date",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Periodo Fim"
+        },
+        "periodo_inicio": {
+          "anyOf": [
+            {
+              "format": "date",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Periodo Inicio"
+        },
+        "registros": {
+          "default": [],
+          "description": "IDs dos registros considerados, quando aplicável.",
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 200,
+          "title": "Registros",
+          "type": "array"
+        }
+      },
+      "title": "LocalizacaoFinanceira",
+      "type": "object"
+    },
+    "OperacaoFinanceira": {
+      "description": "Lista fechada de consultas financeiras. Não há SQL livre nem escrita.",
+      "enum": [
+        "resumo_transacoes",
+        "listar_contas",
+        "situacao_reserva"
+      ],
+      "title": "OperacaoFinanceira",
+      "type": "string"
+    },
+    "OrigemDocumental": {
+      "additionalProperties": false,
+      "properties": {
+        "document_id": {
+          "description": "ID do catálogo de fontes (ex.: F001) ou de fixture sintética (ex.: SYN001).",
+          "pattern": "^[A-Z]{1,4}[0-9]{3}$",
+          "title": "Document Id",
+          "type": "string"
+        },
+        "sintetica": {
+          "description": "true quando vem de fixture de teste, não do acervo real.",
+          "title": "Sintetica",
+          "type": "boolean"
+        },
+        "source_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Source Sha256",
+          "type": "string"
+        },
+        "tipo_origem": {
+          "const": "corpus_educativo",
+          "default": "corpus_educativo",
+          "title": "Tipo Origem",
+          "type": "string"
+        },
+        "titulo": {
+          "anyOf": [
+            {
+              "maxLength": 300,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Titulo"
+        }
+      },
+      "required": [
+        "document_id",
+        "source_sha256",
+        "sintetica"
+      ],
+      "title": "OrigemDocumental",
+      "type": "object"
+    },
+    "OrigemFinanceira": {
+      "additionalProperties": false,
+      "properties": {
+        "operacao": {
+          "$ref": "#/$defs/OperacaoFinanceira"
+        },
+        "referencia_api": {
+          "description": "Rota ou serviço do backend equivalente, para rastreio (ex.: GET /api/transacoes).",
+          "maxLength": 120,
+          "title": "Referencia Api",
+          "type": "string"
+        },
+        "sintetica": {
+          "title": "Sintetica",
+          "type": "boolean"
+        },
+        "tipo_origem": {
+          "const": "dados_declarados",
+          "default": "dados_declarados",
+          "title": "Tipo Origem",
+          "type": "string"
+        }
+      },
+      "required": [
+        "operacao",
+        "referencia_api",
+        "sintetica"
+      ],
+      "title": "OrigemFinanceira",
+      "type": "object"
+    },
+    "Permissao": {
+      "description": "Escopos de leitura que o backend concede para a requisição.\n\nNão existe permissão de escrita: nenhum agente cria, altera ou exclui\nregistros financeiros. Escrita passa pela API com confirmação da usuária.",
+      "enum": [
+        "documentos:ler",
+        "financeiro:ler"
+      ],
+      "title": "Permissao",
+      "type": "string"
+    },
+    "RegistroChamada": {
+      "additionalProperties": false,
+      "description": "Rastro de cada chamada executada; vai para logs e para a avaliação.",
+      "properties": {
+        "codigo_erro": {
+          "anyOf": [
+            {
+              "pattern": "^[a-z_]{3,40}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Codigo Erro"
+        },
+        "duracao_ms": {
+          "minimum": 0,
+          "title": "Duracao Ms",
+          "type": "integer"
+        },
+        "evidencias_ids": {
+          "default": [],
+          "items": {
+            "pattern": "^(doc:[0-9a-f]{16,64}|fin:[a-z_]{3,40}:[0-9a-f]{12})$",
+            "type": "string"
+          },
+          "title": "Evidencias Ids",
+          "type": "array"
+        },
+        "ferramenta": {
+          "enum": [
+            "documentos.buscar",
+            "financeiro.consultar"
+          ],
+          "title": "Ferramenta",
+          "type": "string"
+        },
+        "operacao": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/OperacaoFinanceira"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "pedido_id": {
+          "anyOf": [
+            {
+              "pattern": "^c[0-9]{1,2}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Pedido Id"
+        },
+        "status": {
+          "enum": [
+            "ok",
+            "sem_resultados",
+            "negada",
+            "erro"
+          ],
+          "title": "Status",
+          "type": "string"
+        }
+      },
+      "required": [
+        "ferramenta",
+        "status",
+        "duracao_ms"
+      ],
+      "title": "RegistroChamada",
+      "type": "object"
+    },
+    "SaidaPesquisa": {
+      "additionalProperties": false,
+      "properties": {
+        "chamadas": {
+          "items": {
+            "$ref": "#/$defs/RegistroChamada"
+          },
+          "minItems": 1,
+          "title": "Chamadas",
+          "type": "array"
+        },
+        "evidencias": {
+          "default": [],
+          "items": {
+            "discriminator": {
+              "mapping": {
+                "documental": "#/$defs/EvidenciaDocumental",
+                "financeira": "#/$defs/EvidenciaFinanceira"
+              },
+              "propertyName": "tipo"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/EvidenciaDocumental"
+              },
+              {
+                "$ref": "#/$defs/EvidenciaFinanceira"
+              }
+            ]
+          },
+          "title": "Evidencias",
+          "type": "array"
+        },
+        "modo": {
+          "description": "prototipo_fixtures quando alguma ferramenta usa dados sintéticos.",
+          "enum": [
+            "prototipo_fixtures",
+            "integrado"
+          ],
+          "title": "Modo",
+          "type": "string"
+        },
+        "observacoes": {
+          "default": [],
+          "items": {
+            "maxLength": 300,
+            "minLength": 1,
+            "type": "string"
+          },
+          "title": "Observacoes",
+          "type": "array"
+        },
+        "status": {
+          "enum": [
+            "concluida",
+            "parcial",
+            "sem_evidencias",
+            "sem_permissao",
+            "falha"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "versao": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Versao",
+          "type": "string"
+        }
+      },
+      "required": [
+        "status",
+        "modo",
+        "chamadas"
+      ],
+      "title": "SaidaPesquisa",
+      "type": "object"
+    }
+  },
+  "$id": "https://github.com/anamattos2/grupo11challenge2/contracts/agentes/schemas/EntradaAnalise.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "calculos_ja_pedidos": {
+      "default": [],
+      "description": "Pedidos já atendidos ou tentados; não podem ser repetidos.",
+      "items": {
+        "pattern": "^c[0-9]{1,2}$",
+        "type": "string"
+      },
+      "title": "Calculos Ja Pedidos",
+      "type": "array"
+    },
+    "contexto": {
+      "$ref": "#/$defs/ContextoAutorizado"
+    },
+    "feedback_validacao": {
+      "default": [],
+      "description": "Preenchido somente na revisão após uma reprovação.",
+      "items": {
+        "maxLength": 300,
+        "minLength": 1,
+        "type": "string"
+      },
+      "title": "Feedback Validacao",
+      "type": "array"
+    },
+    "pergunta": {
+      "maxLength": 1000,
+      "minLength": 1,
+      "title": "Pergunta",
+      "type": "string"
+    },
+    "pesquisa": {
+      "$ref": "#/$defs/SaidaPesquisa"
+    }
+  },
+  "required": [
+    "contexto",
+    "pergunta",
+    "pesquisa"
+  ],
+  "title": "EntradaAnalise",
+  "type": "object",
+  "x-versao-contrato": "1.0"
+}

@@ -22,13 +22,15 @@ class VectorIndexTest(unittest.TestCase):
     def write_catalog(self, sources):
         self.catalog.write_text(json.dumps({'schema_version': 1, 'sources': sources}))
 
-    def write_pdf(self, text):
+    def write_pdf(self, text, second_page=None):
         import pymupdf
 
         path = self.root / 'ficticio.pdf'
         with pymupdf.open() as pdf:
             pdf.new_page().insert_text((72, 72), text)
-            pdf.new_page()
+            second = pdf.new_page()
+            if second_page:
+                second.insert_text((72, 72), second_page)
             pdf.save(path)
         return {'id': 'SYN001', 'format': 'pdf', 'canonical_path': path.name,
                 'sha256': hashlib.sha256(path.read_bytes()).hexdigest(),
@@ -84,3 +86,29 @@ class VectorIndexTest(unittest.TestCase):
         self.assertEqual(stored['embeddings'].shape, (1, 384))
         self.assertEqual(json.loads(old.metadata['configuration']), first['configuration'])
         self.assertEqual(first['configuration']['revision'], CONFIG['revision'])
+
+
+    @unittest.skipUnless(
+        find_spec('chromadb') and find_spec('sentence_transformers'), 'requer o extra vector',
+    )
+    def test_review_indexes_only_selected_page_and_keeps_citation(self):
+        import chromadb
+        import numpy as np
+
+        source = self.write_pdf('Pagina fora do escopo', 'Orcamento ficticio')
+        source['ingestion_review'] = {
+            'pages': [2], 'citation': 'Referência fictícia', 'scope': 'academic_local',
+        }
+        self.write_catalog([source])
+        self.assertEqual(
+            rebuild_index(self.catalog, self.root, self.db)['status'], 'no_approved_sources',
+        )
+        self.assertFalse(self.db.exists())
+        with patch('finance_ai.vector_index._load_encoder') as load:
+            load.return_value.encode.return_value = np.ones((1, CONFIG['dimension']))
+            index = rebuild_index(self.catalog, self.root, self.db, academic_local=True)
+        client = chromadb.PersistentClient(path=str(self.db))
+        stored = client.get_collection(index['collection']).get()
+        self.assertEqual(stored['documents'], ['Orcamento ficticio'])
+        self.assertEqual(stored['metadatas'][0]['page_number'], 2)
+        self.assertEqual(stored['metadatas'][0]['citation'], 'Referência fictícia')

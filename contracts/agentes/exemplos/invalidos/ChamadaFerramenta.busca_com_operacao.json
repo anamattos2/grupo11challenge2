@@ -1,0 +1,11 @@
+{
+  "schema": "ChamadaFerramenta",
+  "caso": "busca_com_operacao",
+  "motivo": "Busca documental não aceita operação financeira.",
+  "erro_esperado": "value_error",
+  "documento": {
+    "ferramenta": "documentos.buscar",
+    "consulta": "por que ter uma reserva de emergência",
+    "operacao": "listar_contas"
+  }
+}
