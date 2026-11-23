@@ -112,3 +112,32 @@ class VectorIndexTest(unittest.TestCase):
         self.assertEqual(stored['documents'], ['Orcamento ficticio'])
         self.assertEqual(stored['metadatas'][0]['page_number'], 2)
         self.assertEqual(stored['metadatas'][0]['citation'], 'Referência fictícia')
+
+    @unittest.skipUnless(
+        find_spec('chromadb') and find_spec('sentence_transformers'), 'requer o extra vector',
+    )
+    def test_citation_change_updates_stored_metadata_without_reembedding(self):
+        import chromadb
+        import numpy as np
+
+        source = self.write_pdf('Reserva ficticia')
+        source['ingestion_review'] = {'pages': [1], 'citation': 'Citação antiga'}
+        self.write_catalog([source])
+        with patch('finance_ai.vector_index._load_encoder') as load:
+            load.return_value.encode.return_value = np.ones((1, CONFIG['dimension']))
+            first = rebuild_index(self.catalog, self.root, self.db)
+            source['ingestion_review']['citation'] = 'Citação revisada'
+            self.write_catalog([source])
+            second = rebuild_index(self.catalog, self.root, self.db)
+            self.assertEqual(load.return_value.encode.call_count, 1)
+
+        self.assertEqual(first['collection'], second['collection'])
+        self.assertEqual(second['written_chunks'], 0)
+        self.assertEqual(second['updated_metadata'], 1)
+        self.assertEqual(second['sources'][0]['citation'], 'Citação revisada')
+        client = chromadb.PersistentClient(path=str(self.db))
+        stored = client.get_collection(second['collection'], embedding_function=None).get(
+            include=['metadatas', 'embeddings'],
+        )
+        self.assertEqual(stored['metadatas'][0]['citation'], 'Citação revisada')
+        self.assertEqual(stored['embeddings'].shape, (1, CONFIG['dimension']))

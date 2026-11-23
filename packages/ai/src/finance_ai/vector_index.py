@@ -41,6 +41,13 @@ def _index_configuration() -> dict:
     return {**CONFIG, 'libraries': {package: version(package) for package in packages}}
 
 
+METADATA_KEYS = ('document_id', 'source_sha256', 'page_number', 'start', 'end', 'citation')
+
+
+def _chunk_metadata(chunk: dict) -> dict:
+    return {key: chunk[key] for key in METADATA_KEYS}
+
+
 def rebuild_index(
     catalog_path: Path, root: Path, db_path: Path, *, academic_local: bool = False,
 ) -> dict:
@@ -121,8 +128,18 @@ def rebuild_index(
                   'fingerprint': fingerprint},
         configuration={'hnsw': {'space': CONFIG['distance']}},
     )
-    existing = set(collection.get(include=[])['ids'])
+    stored = collection.get(include=['metadatas'])
+    existing = dict(zip(stored['ids'], stored['metadatas']))
     missing = [chunk for chunk in chunks if chunk['chunk_id'] not in existing]
+    # Trechos já gravados mantêm o embedding, mas recebem os metadados atuais:
+    # uma citação revisada no catálogo não muda os IDs nem reaproveita a antiga.
+    stale = [chunk for chunk in chunks if chunk['chunk_id'] in existing
+             and existing[chunk['chunk_id']] != _chunk_metadata(chunk)]
+    if stale:
+        collection.update(
+            ids=[chunk['chunk_id'] for chunk in stale],
+            metadatas=[_chunk_metadata(chunk) for chunk in stale],
+        )
     if missing:
         model = _load_encoder()
         batch_size = CONFIG['batch_size']
@@ -142,11 +159,7 @@ def rebuild_index(
                 ids=[chunk['chunk_id'] for chunk in batch],
                 documents=documents,
                 embeddings=embeddings.tolist(),
-                metadatas=[
-                    {key: chunk[key] for key in ('document_id', 'source_sha256',
-                                                'page_number', 'start', 'end', 'citation')}
-                    for chunk in batch
-                ],
+                metadatas=[_chunk_metadata(chunk) for chunk in batch],
             )
     return {
         'status': 'ok',
@@ -155,6 +168,7 @@ def rebuild_index(
         'sources': source_reports,
         'chunks': len(chunks),
         'written_chunks': len(missing),
+        'updated_metadata': len(stale),
     }
 
 

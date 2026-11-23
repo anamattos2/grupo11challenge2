@@ -63,8 +63,11 @@ com conteúdo pode baixar os pesos. A distância da coleção Chroma é cosseno.
 
 A configuração e as versões das bibliotecas de indexação e inferência aparecem
 no JSON de saída e nos metadados da coleção. A coleção
-é identificada pelo hash da configuração, dos IDs dos chunks e das citações.
-Reexecutar com os mesmos dados reaproveita os IDs persistidos. Se uma gravação
+é identificada pelo hash da configuração e dos IDs dos chunks.
+Reexecutar com os mesmos dados reaproveita os IDs persistidos. Se só a citação
+de uma fonte mudar no catálogo, os embeddings são mantidos e os metadados dos
+trechos já gravados são atualizados; o JSON de saída informa quantos em
+`updated_metadata`. Se uma gravação
 em lotes for interrompida, a próxima execução completa os IDs faltantes com
 `upsert`. Mudanças nos chunks ou na configuração geram outra coleção. Use o
 nome retornado após uma execução bem-sucedida para acessar a versão
