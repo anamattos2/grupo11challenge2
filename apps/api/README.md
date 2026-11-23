@@ -35,6 +35,18 @@ docker compose --env-file .env -f infra/compose.yaml up -d --wait
 `/api/health` responde 200 com o banco acessível e 503 quando ele está
 indisponível. A página `/api/docs` carrega seus recursos visuais de uma CDN.
 
+## Comprovantes por imagem
+
+Upload autenticado de comprovantes (S5-01 / #95): JPEG, PNG ou WebP até 5 MB,
+validados pelo conteúdo, guardados sem metadados numa pasta privada e apagados
+depois de 72 horas. Rotas, validações, retenção e logs estão em
+[comprovantes](../../docs/arquitetura/comprovantes.md). A limpeza dos vencidos
+roda com:
+
+```bash
+.venv-api/bin/python apps/api/manage.py limpar_comprovantes
+```
+
 ## Testar
 
 Execute os testes dentro de `apps/api`, pois a raiz tem outra pasta `tests`:

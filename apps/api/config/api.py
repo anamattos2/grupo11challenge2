@@ -2,7 +2,10 @@
 from django.db import DatabaseError, connection
 from ninja import NinjaAPI, Schema
 
+from comprovantes.api import router as comprovantes_router
+
 api = NinjaAPI(title="Grupo 11 - API financeira", version="0.1.0")
+api.add_router("/comprovantes", comprovantes_router)
 
 
 class HealthOut(Schema):
