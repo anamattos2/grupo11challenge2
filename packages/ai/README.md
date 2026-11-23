@@ -22,3 +22,6 @@ para instalar o extra `vector` e reconstruir coleções Chroma a partir do catá
 
 Consulte [recuperação documental](../../docs/desenvolvimento/recuperacao-documental.md)
 para consultar uma coleção e obter evidências com proveniência e score.
+
+O [guia do pipeline RAG](../../docs/desenvolvimento/pipeline-rag.md) reúne
+a arquitetura, os parâmetros e a demonstração de ponta a ponta.
