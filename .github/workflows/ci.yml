@@ -77,6 +77,21 @@ jobs:
           "${RUNNER_TEMP}/finance-documents-venv/bin/python" scripts/exportar_schemas_agentes.py --check
           "${RUNNER_TEMP}/finance-documents-venv/bin/python" -m unittest discover -s tests
 
+      - name: Test Chroma persistence with the vector extra
+        shell: bash
+        run: |
+          python -m venv "${RUNNER_TEMP}/finance-vector-venv"
+          VENV_PY="${RUNNER_TEMP}/finance-vector-venv/bin/python"
+          # torch só para CPU: os testes simulam o encoder e não baixam pesos.
+          "$VENV_PY" -m pip install torch --index-url https://download.pytorch.org/whl/cpu
+          "$VENV_PY" -m pip install --editable './packages/ai[vector]'
+          "$VENV_PY" -m pip check
+          "$VENV_PY" -m unittest discover -s tests -p 'test_vector_index.py' -v 2>&1 | tee "${RUNNER_TEMP}/vector-tests.log"
+          if grep -q "skipped" "${RUNNER_TEMP}/vector-tests.log"; then
+            echo "Testes de persistência Chroma foram pulados." >&2
+            exit 1
+          fi
+
       - name: Install and check the initial AI package in a clean environment
         shell: bash
         run: |
