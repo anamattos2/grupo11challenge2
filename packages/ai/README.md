@@ -23,5 +23,11 @@ para segmentar relatórios de extração com metadados reproduzíveis.
 Consulte [índice vetorial educativo](../../docs/desenvolvimento/indice-vetorial.md)
 para instalar o extra `vector` e reconstruir coleções Chroma a partir do catálogo.
 
+Consulte [recuperação documental](../../docs/desenvolvimento/recuperacao-documental.md)
+para consultar uma coleção e obter evidências com proveniência e score.
+
+O [guia do pipeline RAG](../../docs/desenvolvimento/pipeline-rag.md) reúne
+a arquitetura, os parâmetros e a demonstração de ponta a ponta.
+
 Consulte [contratos dos agentes](../../docs/arquitetura/agentes/contratos-agentes.md)
 para papéis, schemas, exemplos e fluxo.
