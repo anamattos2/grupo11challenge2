@@ -24,7 +24,8 @@ Desfechos que não são "respondida", com significados diferentes:
 - **pedido de complemento**: falta um dado que só a usuária pode informar
   (ex.: nenhuma categoria marcada como essencial).
 - **falha**: algum componente quebrou (erro de ferramenta, exceção, tempo
-  esgotado, contrato inválido). Falha nunca é apresentada como "não encontrei".
+  esgotado, contrato inválido, referência entre etapas que não bate).
+  Falha nunca é apresentada como "não encontrei".
 """
 
 from __future__ import annotations
@@ -83,6 +84,8 @@ class Transicao(Contrato):
     motivo: MotivoEncerramento | None = None
     feedback: Lista[str] = ()
     calculos: Lista[PedidoCalculo] = ()
+    problemas: Lista[str] = ()
+    """Inconsistências entre etapas que levaram a uma falha de contrato (para o rastro)."""
 
 
 # --------------------------------------------------------------------------
@@ -160,13 +163,44 @@ def mesclar_pesquisas(base: SaidaPesquisa, complemento: SaidaPesquisa) -> SaidaP
     )
 
 
+def inconsistencias_analise(pesquisa: SaidaPesquisa, analise: SaidaAnalise) -> list[str]:
+    """A Analysis só pode citar evidências que existem na pesquisa desta pergunta.
+
+    Os contratos validam cada saída isoladamente; esta checagem cruza duas
+    etapas. Uma referência quebrada aqui é falha de contrato da Analysis.
+    """
+    existentes = {e.id for e in pesquisa.evidencias}
+    return [f"afirmação {a.id} cita a evidência {i}, que não está na pesquisa"
+            for a in analise.afirmacoes for i in a.evidencias_ids if i not in existentes]
+
+
+def inconsistencias_validacao(analise: SaidaAnalise, validacao: SaidaValidacao) -> list[str]:
+    """A Validation só pode aprovar, reprovar ou comentar afirmações que existem."""
+    existentes = {a.id for a in analise.afirmacoes}
+    citadas = [("aprovou", i) for i in validacao.afirmacoes_aprovadas]
+    citadas += [("marcou sem suporte", i) for i in validacao.alegacoes_sem_suporte]
+    citadas += [("verificou", v.afirmacao_id) for v in validacao.verificacoes if v.afirmacao_id]
+    return [f"a Validation {acao} a afirmação {i}, que não está na análise"
+            for acao, i in citadas if i not in existentes]
+
+
 def apos_analise(
     saida: SaidaAnalise,
     rodadas_calculo: int = 0,
     max_rodadas: int = MAX_RODADAS_CALCULO,
     ja_pedidos: Lista[str] = (),
+    pesquisa: SaidaPesquisa | None = None,
 ) -> Transicao:
-    """Pedido de cálculo volta à Research uma vez; repetido ou além do limite, abstenção."""
+    """Pedido de cálculo volta à Research uma vez; repetido ou além do limite, abstenção.
+
+    Com ``pesquisa``, confere antes as referências da Analysis
+    (``inconsistencias_analise``); referência quebrada é falha de contrato.
+    """
+    if pesquisa is not None:
+        problemas = inconsistencias_analise(pesquisa, saida)
+        if problemas:
+            return Transicao(proxima=Etapa.FALHA, motivo=MotivoEncerramento.CONTRATO_INVALIDO,
+                             problemas=problemas)
     if saida.status == "falha":
         return Transicao(proxima=Etapa.FALHA, motivo=MotivoEncerramento.FALHA_ANALISE)
     if saida.status == "dados_insuficientes":
@@ -185,12 +219,22 @@ def apos_analise(
 
 
 def apos_validacao(
-    saida: SaidaValidacao, revisoes_realizadas: int, max_revisoes: int = MAX_REVISOES_PADRAO
+    saida: SaidaValidacao,
+    revisoes_realizadas: int,
+    max_revisoes: int = MAX_REVISOES_PADRAO,
+    analise: SaidaAnalise | None = None,
 ) -> Transicao:
     """Reprovação devolve à Analysis uma vez com feedback; depois, abstenção.
 
-    A análise reprovada nunca segue para a Communication.
+    A análise reprovada nunca segue para a Communication. Com ``analise``,
+    confere antes se a Validation só citou afirmações que existem
+    (``inconsistencias_validacao``); se não, é falha de contrato.
     """
+    if analise is not None:
+        problemas = inconsistencias_validacao(analise, saida)
+        if problemas:
+            return Transicao(proxima=Etapa.FALHA, motivo=MotivoEncerramento.CONTRATO_INVALIDO,
+                             problemas=problemas)
     if saida.decisao == "reprovada":
         if revisoes_realizadas < max_revisoes:
             return Transicao(proxima=Etapa.ANALISE, feedback=saida.feedback)
@@ -284,7 +328,15 @@ def montar_resposta(
     Usa os parágrafos da Communication quando passam na checagem; senão (ou
     se a Communication falhou), usa o texto literal das afirmações aprovadas.
     Devolve a resposta e a lista de problemas encontrados na redação.
+
+    Lança ``ValueError`` (nunca ``KeyError``) se as etapas anteriores não
+    baterem entre si; o grafo transforma isso em falha de contrato.
     """
+    quebradas = inconsistencias_analise(pesquisa, analise) + inconsistencias_validacao(analise, validacao)
+    if validacao.decisao == "reprovada" or not validacao.afirmacoes_aprovadas:
+        quebradas.append("não há afirmações aprovadas para responder")
+    if quebradas:
+        raise ValueError("; ".join(quebradas))
     por_id = {a.id: a for a in analise.afirmacoes}
     evidencias = {e.id: e for e in pesquisa.evidencias}
     problemas = (inconsistencias_comunicacao(analise, validacao, comunicacao)
@@ -357,8 +409,8 @@ MENSAGENS_SEGURAS: dict[MotivoEncerramento, str] = {
         "para responder com segurança. Você pode reformular a pergunta?"
     ),
     MotivoEncerramento.SEM_PERMISSAO: (
-        "Esta conversa não tem permissão para consultar as informações necessárias "
-        "para responder. Nenhum dado foi acessado."
+        "Esta conversa não tem permissão para consultar todas as informações necessárias "
+        "para responder, e o que pude consultar não foi suficiente."
     ),
     MotivoEncerramento.CALCULO_INDISPONIVEL: (
         "Não consegui obter, a partir dos dados cadastrados, os cálculos necessários "

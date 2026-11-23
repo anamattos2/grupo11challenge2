@@ -376,20 +376,21 @@ def status_da_pesquisa(tem_evidencias: bool, chamadas) -> StatusPesquisa:
     | sim        | todas ok/sem_resultados                    | concluida      |
     | sim        | alguma negada ou com erro                  | parcial        |
     | não        | alguma com erro                            | falha          |
-    | não        | nenhum erro, alguma busca sem resultados   | sem_evidencias |
-    | não        | todas negadas                              | sem_permissao  |
+    | não        | nenhum erro, alguma negada                 | sem_permissao  |
+    | não        | só buscas sem resultados                   | sem_evidencias |
 
-    Uma busca vazia só é afirmada quando alguma ferramenta respondeu de fato
-    "não encontrei". Erro de ferramenta nunca vira "não há informação".
+    Uma busca vazia só é afirmada quando todas as ferramentas responderam de
+    fato "não encontrei". Erro de ferramenta nunca vira "não há informação",
+    e uma fonte negada nunca fica escondida atrás de "não encontrei".
     """
     situacoes = {c.status for c in chamadas}
     if tem_evidencias:
         return "parcial" if situacoes & {"negada", "erro"} else "concluida"
     if "erro" in situacoes:
         return "falha"
-    if "sem_resultados" in situacoes:
-        return "sem_evidencias"
-    return "sem_permissao"
+    if "negada" in situacoes:
+        return "sem_permissao"
+    return "sem_evidencias"
 
 
 class SaidaPesquisa(Contrato):
@@ -647,6 +648,7 @@ class MotivoEncerramento(StrEnum):
     FALHA_COMUNICACAO = "falha_comunicacao"
     CONTRATO_INVALIDO = "contrato_invalido"
     TEMPO_ESGOTADO = "tempo_esgotado"
+    ERRO_INTERNO = "erro_interno"
 
 
 class EtapaRastro(Contrato):

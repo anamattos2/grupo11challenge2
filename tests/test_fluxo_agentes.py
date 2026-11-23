@@ -49,7 +49,8 @@ class PesquisaTest(unittest.TestCase):
             (True, ["ok", "negada"], "parcial"),
             (True, ["ok", "erro"], "parcial"),
             (False, ["sem_resultados"], "sem_evidencias"),
-            (False, ["sem_resultados", "negada"], "sem_evidencias"),
+            # Revisão 2 do #135: fonte negada não fica escondida atrás de "não encontrei".
+            (False, ["sem_resultados", "negada"], "sem_permissao"),
             (False, ["negada"], "sem_permissao"),
             (False, ["negada", "negada"], "sem_permissao"),
             (False, ["erro"], "falha"),
@@ -137,6 +138,47 @@ class PedidoDeCalculoTest(unittest.TestCase):
             c.RegistroChamada(ferramenta="financeiro.consultar", operacao="resumo_transacoes", pedido_id="c1",
                               status="erro", codigo_erro="banco_indisponivel", duracao_ms=1)])
         self.assertEqual(mesclar_pesquisas(base, falhou).status, "parcial")
+
+
+class ReferenciasCruzadasTest(unittest.TestCase):
+    """Revisão 2 do #135: ids que não batem entre etapas viram falha de contrato."""
+
+    def setUp(self):
+        self.contexto = exemplo("ContextoAutorizado.requisicao_chat")
+        self.pesquisa = exemplo("SaidaPesquisa.concluida")
+        self.analise = exemplo("SaidaAnalise.analisada")
+        self.aprovada = exemplo("SaidaValidacao.aprovada")
+
+    def test_validation_que_aprova_afirmacao_inexistente_e_falha_de_contrato(self):
+        fantasma = self.aprovada.model_copy(update={"afirmacoes_aprovadas": ("a1", "a9")})
+        t = apos_validacao(fantasma, 0, analise=self.analise)
+        self.assertEqual((t.proxima, t.motivo), (Etapa.FALHA, c.MotivoEncerramento.CONTRATO_INVALIDO))
+        self.assertIn("a Validation aprovou a afirmação a9, que não está na análise", t.problemas)
+
+    def test_validation_que_comenta_afirmacao_inexistente_tambem_e_barrada(self):
+        reprovada = exemplo("SaidaValidacao.reprovada").model_copy(update={"alegacoes_sem_suporte": ("a7",)})
+        t = apos_validacao(reprovada, 0, analise=self.analise)
+        self.assertEqual(t.proxima, Etapa.FALHA)
+
+    def test_analysis_que_cita_evidencia_inexistente_e_falha_de_contrato(self):
+        a1 = self.analise.afirmacoes[0].model_copy(update={"evidencias_ids": ("doc:" + "f" * 16,)})
+        quebrada = self.analise.model_copy(update={"afirmacoes": (a1,) + self.analise.afirmacoes[1:]})
+        t = apos_analise(quebrada, pesquisa=self.pesquisa)
+        self.assertEqual((t.proxima, t.motivo), (Etapa.FALHA, c.MotivoEncerramento.CONTRATO_INVALIDO))
+        self.assertTrue(t.problemas)
+        self.assertIs(apos_analise(self.analise, pesquisa=self.pesquisa).proxima, Etapa.VALIDACAO)
+
+    def test_montar_resposta_nunca_lanca_keyerror(self):
+        fantasma = self.aprovada.model_copy(update={"afirmacoes_aprovadas": ("a9",)})
+        with self.assertRaises(ValueError) as ctx:
+            montar_resposta(self.contexto, self.pesquisa, self.analise, fantasma, None, ())
+        self.assertNotIsInstance(ctx.exception, KeyError)
+        self.assertIn("a9", str(ctx.exception))
+
+    def test_montar_resposta_recusa_validacao_reprovada(self):
+        with self.assertRaises(ValueError):
+            montar_resposta(self.contexto, self.pesquisa, self.analise, exemplo("SaidaValidacao.reprovada"),
+                            None, ())
 
 
 class ValidacaoTest(unittest.TestCase):

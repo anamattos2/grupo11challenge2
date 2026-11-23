@@ -27,6 +27,7 @@ from langgraph.graph import END, START, StateGraph
 from pydantic import ValidationError
 
 from .contratos import (
+    MotivoEncerramento,
     ContextoAutorizado,
     EntradaAnalise,
     EntradaComunicacao,
@@ -82,6 +83,7 @@ class EstadoFluxo(TypedDict, total=False):
     validacao: SaidaValidacao
     comunicacao: SaidaComunicacao | None
     revisoes: int
+    feedback_validacao: tuple[str, ...]
     rodadas_calculo: int
     calculos_pedidos: tuple[str, ...]
     transicao: Transicao
@@ -115,6 +117,32 @@ def _executar_agente(papel: Papel, chamada: Callable[[], object], modelo, status
     return saida, etapa, falha
 
 
+def _etapas_da_transicao(etapa: EtapaRastro, transicao: Transicao) -> tuple[EtapaRastro, ...]:
+    """Etapa do agente + uma etapa do orquestrador quando houve referência quebrada."""
+    if not transicao.problemas:
+        return (etapa,)
+    return (etapa, EtapaRastro(papel=Papel.ORQUESTRADOR, status="inconsistente", duracao_ms=0,
+                               codigo="referencia_inexistente"))
+
+
+def _protegido(papel: Papel, no: Callable[[EstadoFluxo], dict]) -> Callable[[EstadoFluxo], dict]:
+    """Nenhuma exceção sai de um nó: erro inesperado vira falha controlada.
+
+    Os agentes já são protegidos em ``_executar_agente``; isto cobre o próprio
+    orquestrador (estado inesperado, bug numa transição). Sem esta camada, um
+    erro escaparia de ``executar_fluxo`` sem resposta segura.
+    """
+    def envolvido(estado: EstadoFluxo) -> dict:
+        try:
+            return no(estado)
+        except Exception:  # noqa: BLE001
+            etapa = EtapaRastro(papel=Papel.ORQUESTRADOR, status="erro", duracao_ms=0, codigo="erro_interno")
+            return {"etapas": (etapa,),
+                    "transicao": Transicao(proxima=Etapa.FALHA, motivo=MotivoEncerramento.ERRO_INTERNO)}
+    envolvido.__name__ = getattr(no, "__name__", "no")
+    return envolvido
+
+
 def construir_grafo(agentes: Agentes, *, max_revisoes: int = MAX_REVISOES_PADRAO,
                     max_rodadas_calculo: int = MAX_RODADAS_CALCULO):
     # Cada agente recebe CÓPIAS (``.copia()``) do que está no estado. Mesmo que
@@ -138,8 +166,9 @@ def construir_grafo(agentes: Agentes, *, max_revisoes: int = MAX_REVISOES_PADRAO
                 "calculos_pedidos": estado.get("calculos_pedidos", ()) + tuple(p.id for p in calculos)}
 
     def no_analise(estado: EstadoFluxo) -> dict:
-        transicao = estado["transicao"]
-        feedback = transicao.feedback if estado.get("validacao") else ()
+        # O feedback fica no estado (não na transição) para sobreviver a uma
+        # rodada de cálculo entre a reprovação e a nova análise.
+        feedback = estado.get("feedback_validacao", ())
         entrada = EntradaAnalise(contexto=estado["contexto"].copia(), pergunta=estado["pergunta"],
                                  pesquisa=estado["pesquisa"].copia(), feedback_validacao=feedback,
                                  calculos_ja_pedidos=estado.get("calculos_pedidos", ()))
@@ -148,8 +177,8 @@ def construir_grafo(agentes: Agentes, *, max_revisoes: int = MAX_REVISOES_PADRAO
         if falha:
             return {"etapas": (etapa,), "transicao": falha}
         proxima = apos_analise(saida, estado.get("rodadas_calculo", 0), max_rodadas_calculo,
-                               estado.get("calculos_pedidos", ()))
-        return {"analise": saida, "etapas": (etapa,), "transicao": proxima}
+                               estado.get("calculos_pedidos", ()), pesquisa=estado["pesquisa"])
+        return {"analise": saida, "etapas": _etapas_da_transicao(etapa, proxima), "transicao": proxima}
 
     def no_validacao(estado: EstadoFluxo) -> dict:
         entrada = EntradaValidacao(contexto=estado["contexto"].copia(), pergunta=estado["pergunta"],
@@ -159,10 +188,13 @@ def construir_grafo(agentes: Agentes, *, max_revisoes: int = MAX_REVISOES_PADRAO
         if falha:
             return {"etapas": (etapa,), "transicao": falha}
         revisoes = estado.get("revisoes", 0)
-        transicao = apos_validacao(saida, revisoes, max_revisoes)
+        transicao = apos_validacao(saida, revisoes, max_revisoes, analise=estado["analise"])
+        atualizacao = {"validacao": saida, "etapas": _etapas_da_transicao(etapa, transicao),
+                       "transicao": transicao, "revisoes": revisoes}
         if transicao.proxima is Etapa.ANALISE:
-            revisoes += 1
-        return {"validacao": saida, "etapas": (etapa,), "transicao": transicao, "revisoes": revisoes}
+            atualizacao["revisoes"] = revisoes + 1
+            atualizacao["feedback_validacao"] = transicao.feedback
+        return atualizacao
 
     def no_comunicacao(estado: EstadoFluxo) -> dict:
         entrada = EntradaComunicacao(contexto=estado["contexto"].copia(), pergunta=estado["pergunta"],
@@ -178,9 +210,12 @@ def construir_grafo(agentes: Agentes, *, max_revisoes: int = MAX_REVISOES_PADRAO
         try:
             resposta, problemas = montar_resposta(estado["contexto"], estado["pesquisa"], estado["analise"],
                                                   estado["validacao"], estado.get("comunicacao"), estado["etapas"])
-        except ValueError:
+        except Exception:  # noqa: BLE001 - referência quebrada ou erro inesperado
+            etapa = EtapaRastro(papel=Papel.ORQUESTRADOR, status="erro", duracao_ms=0,
+                                codigo="resposta_inconsistente")
             return {"resposta": resposta_segura(estado["contexto"], Etapa.FALHA,
-                                                falha_de_etapa(Papel.ORQUESTRADOR).motivo, estado["etapas"])}
+                                                MotivoEncerramento.CONTRATO_INVALIDO,
+                                                tuple(estado["etapas"]) + (etapa,))}
         if problemas:
             etapa = EtapaRastro(papel=Papel.ORQUESTRADOR, status="redacao_literal", duracao_ms=0,
                                 codigo="redacao_substituida")
@@ -189,19 +224,23 @@ def construir_grafo(agentes: Agentes, *, max_revisoes: int = MAX_REVISOES_PADRAO
 
     def encerrar(final: Etapa):
         def no(estado: EstadoFluxo) -> dict:
-            lacunas = estado["analise"].lacunas if final is Etapa.PEDIDO_COMPLEMENTO else ()
-            return {"resposta": resposta_segura(estado["contexto"], final, estado["transicao"].motivo,
-                                                estado["etapas"], lacunas)}
+            try:
+                lacunas = estado["analise"].lacunas if final is Etapa.PEDIDO_COMPLEMENTO else ()
+                return {"resposta": resposta_segura(estado["contexto"], final, estado["transicao"].motivo,
+                                                    estado["etapas"], lacunas)}
+            except Exception:  # noqa: BLE001 - último recurso: falha genérica
+                return {"resposta": resposta_segura(estado["contexto"], Etapa.FALHA,
+                                                    MotivoEncerramento.ERRO_INTERNO, estado.get("etapas", ()))}
         return no
 
     def rota(estado: EstadoFluxo) -> str:
         return estado["transicao"].proxima.value
 
     grafo = StateGraph(EstadoFluxo)
-    grafo.add_node(Etapa.PESQUISA.value, no_pesquisa)
-    grafo.add_node(Etapa.ANALISE.value, no_analise)
-    grafo.add_node(Etapa.VALIDACAO.value, no_validacao)
-    grafo.add_node(Etapa.COMUNICACAO.value, no_comunicacao)
+    grafo.add_node(Etapa.PESQUISA.value, _protegido(Papel.RESEARCH, no_pesquisa))
+    grafo.add_node(Etapa.ANALISE.value, _protegido(Papel.ANALYSIS, no_analise))
+    grafo.add_node(Etapa.VALIDACAO.value, _protegido(Papel.VALIDATION, no_validacao))
+    grafo.add_node(Etapa.COMUNICACAO.value, _protegido(Papel.COMMUNICATION, no_comunicacao))
     grafo.add_node(Etapa.RESPONDIDA.value, no_respondida)
     for final in (Etapa.ABSTENCAO, Etapa.PEDIDO_COMPLEMENTO, Etapa.FALHA):
         grafo.add_node(final.value, encerrar(final))
@@ -221,9 +260,15 @@ def construir_grafo(agentes: Agentes, *, max_revisoes: int = MAX_REVISOES_PADRAO
 
 
 def executar_fluxo(grafo, contexto: ContextoAutorizado, pergunta: str) -> RespostaFinal:
-    estado = grafo.invoke({"contexto": contexto, "pergunta": pergunta, "revisoes": 0,
-                           "rodadas_calculo": 0, "calculos_pedidos": (), "etapas": ()})
-    return estado["resposta"]
+    """Sempre devolve uma ``RespostaFinal`` válida; nunca deixa exceção escapar."""
+    try:
+        estado = grafo.invoke({"contexto": contexto, "pergunta": pergunta, "revisoes": 0,
+                               "feedback_validacao": (), "rodadas_calculo": 0, "calculos_pedidos": (),
+                               "etapas": ()})
+        return estado["resposta"]
+    except Exception:  # noqa: BLE001 - rede de segurança final
+        etapa = EtapaRastro(papel=Papel.ORQUESTRADOR, status="erro", duracao_ms=0, codigo="erro_interno")
+        return resposta_segura(contexto, Etapa.FALHA, MotivoEncerramento.ERRO_INTERNO, (etapa,))
 
 
 def diagrama_mermaid() -> str:

@@ -99,7 +99,8 @@
         "falha_validacao",
         "falha_comunicacao",
         "contrato_invalido",
-        "tempo_esgotado"
+        "tempo_esgotado",
+        "erro_interno"
       ],
       "title": "MotivoEncerramento",
       "type": "string"
