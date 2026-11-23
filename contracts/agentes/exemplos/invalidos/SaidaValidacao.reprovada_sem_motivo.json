@@ -1,0 +1,30 @@
+{
+  "schema": "SaidaValidacao",
+  "caso": "reprovada_sem_motivo",
+  "motivo": "Reprovação exige motivo de bloqueio.",
+  "erro_esperado": "value_error",
+  "documento": {
+    "versao": "1.0",
+    "decisao": "reprovada",
+    "verificacoes": [
+      {
+        "regra": "referencias_existentes",
+        "resultado": "ok",
+        "detalhe": "Todas as evidências citadas existem na pesquisa."
+      },
+      {
+        "regra": "numeros_conferem",
+        "resultado": "falha",
+        "afirmacao_id": "a1",
+        "detalhe": "Texto informa 1950.40, evidência informa 1850.40."
+      }
+    ],
+    "afirmacoes_aprovadas": [],
+    "alegacoes_sem_suporte": [
+      "a1"
+    ],
+    "feedback": [
+      "Use exatamente o valor retornado pela ferramenta financeira em a1."
+    ]
+  }
+}

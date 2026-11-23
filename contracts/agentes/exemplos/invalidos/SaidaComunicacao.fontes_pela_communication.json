@@ -1,0 +1,36 @@
+{
+  "schema": "SaidaComunicacao",
+  "caso": "fontes_pela_communication",
+  "motivo": "Fontes e ligações são montadas pelo orquestrador.",
+  "erro_esperado": "extra_forbidden",
+  "documento": {
+    "versao": "1.0",
+    "paragrafos": [
+      {
+        "afirmacoes_ids": [
+          "a1"
+        ],
+        "texto": "Em outubro de 2026 você registrou R$ 1.850,40 em despesas que marcou como essenciais."
+      },
+      {
+        "afirmacoes_ids": [
+          "a2"
+        ],
+        "texto": "Ter uma reserva de emergência ajuda a cobrir esse tipo de gasto se a sua renda for interrompida ou surgir um imprevisto."
+      }
+    ],
+    "limites": [
+      "Valores declarados por você no aplicativo, sem conexão com bancos."
+    ],
+    "fontes": [
+      {
+        "evidencia_id": "fin:resumo_transacoes:53dd2d27e384",
+        "rotulo": "[1] Despesas em categorias essenciais de 01/10/2026 a 31/10/2026: 3 registros, total 1850.40 BRL."
+      },
+      {
+        "evidencia_id": "doc:4ca5959e85ae1899",
+        "rotulo": "[2] Guia fictício de reserva de emergência, p. 1"
+      }
+    ]
+  }
+}

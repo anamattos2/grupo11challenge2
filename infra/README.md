@@ -1,8 +1,19 @@
 # Execução e implantação
 
-A BASE-02 prepara um ambiente Python mínimo, sem serviços externos.
-O [guia local](../docs/desenvolvimento/ambiente.md) documenta sua instalação.
+O [guia de instalação do backend](../docs/desenvolvimento/instalacao-backend.md) explica
+como instalar e verificar o Docker e como configurar o PostgreSQL.
 
-Compose, PostgreSQL, backend, frontend e serviços de modelos serão adicionados
-nas respectivas issues. Não há servidor de aplicação disponível nesta etapa.
+`compose.yaml` inicia o PostgreSQL local usado pelo
+[backend](../apps/api/README.md). A porta fica acessível somente em `127.0.0.1`.
+Execute os comandos na raiz do repositório, depois de criar o `.env`:
+
+```bash
+docker compose --env-file .env -f infra/compose.yaml up -d --wait
+docker compose --env-file .env -f infra/compose.yaml down
+```
+
+Para recomeçar com um banco vazio, use `down -v`. Esse comando apaga
+definitivamente os dados locais do volume deste projeto.
+
+Frontend e serviços de modelos serão adicionados nas respectivas issues.
 Credenciais reais ficam em variáveis de ambiente ou em arquivos locais ignorados.

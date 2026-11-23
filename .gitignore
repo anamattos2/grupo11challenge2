@@ -4,6 +4,7 @@
 !.env.example
 .venv/
 .venv-docs/
+.venv-api/
 venv/
 __pycache__/
 *.py[cod]

@@ -2,6 +2,9 @@
 
 Base instalável para RAG, quatro agentes, orquestração e processamento de imagens.
 Inclui extração e limpeza local de texto de PDFs com rastreabilidade por página.
+Os contratos dos quatro agentes e a política de fluxo (aprovação, abstenção e
+falha) ficam em `finance_ai.agents` e exigem o extra `agents` (Pydantic,
+LangChain Core e LangGraph).
 RAG, agentes, orquestração e OCR ainda não estão implementados neste pacote.
 
 A instalação não importa os experimentos nem baixa modelos. O pacote não possui
@@ -19,3 +22,6 @@ para segmentar relatórios de extração com metadados reproduzíveis.
 
 Consulte [índice vetorial educativo](../../docs/desenvolvimento/indice-vetorial.md)
 para instalar o extra `vector` e reconstruir coleções Chroma a partir do catálogo.
+
+Consulte [contratos dos agentes](../../docs/arquitetura/agentes/contratos-agentes.md)
+para papéis, schemas, exemplos e fluxo.

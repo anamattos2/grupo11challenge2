@@ -1,0 +1,119 @@
+{
+  "schema": "EntradaValidacao",
+  "caso": "apos_analise",
+  "descricao": "Entrada da Validation.",
+  "documento": {
+    "contexto": {
+      "correlation_id": "req-20261118-0001",
+      "usuaria_ref": "usuaria-ficticia-a",
+      "conversa_id": "conv-ficticia-01",
+      "permissoes": [
+        "documentos:ler",
+        "financeiro:ler"
+      ],
+      "data_referencia": "2026-11-18",
+      "memoria": []
+    },
+    "pergunta": "Quanto gastei com despesas essenciais em outubro e por que devo ter uma reserva de emergência?",
+    "pesquisa": {
+      "versao": "1.0",
+      "status": "concluida",
+      "modo": "prototipo_fixtures",
+      "evidencias": [
+        {
+          "tipo": "financeira",
+          "id": "fin:resumo_transacoes:53dd2d27e384",
+          "origem": {
+            "tipo_origem": "dados_declarados",
+            "operacao": "resumo_transacoes",
+            "referencia_api": "GET /api/transacoes",
+            "sintetica": true
+          },
+          "localizacao": {
+            "periodo_inicio": "2026-10-01",
+            "periodo_fim": "2026-10-31",
+            "filtros": {
+              "tipo": "despesa",
+              "somente_essenciais": "true"
+            },
+            "registros": [
+              "101",
+              "102",
+              "104"
+            ]
+          },
+          "moeda": "BRL",
+          "valores": {
+            "receitas": "0.00",
+            "despesas": "1850.40",
+            "resultado": "-1850.40"
+          },
+          "resumo": "Despesas em categorias essenciais de 01/10/2026 a 31/10/2026: 3 registros, total 1850.40 BRL."
+        },
+        {
+          "tipo": "documental",
+          "id": "doc:4ca5959e85ae1899",
+          "origem": {
+            "tipo_origem": "corpus_educativo",
+            "document_id": "SYN001",
+            "source_sha256": "ff51f5e637dc69f8dbe255d4f6125b9e85b5fff07003aabb2530b06557404b5a",
+            "titulo": "Guia fictício de reserva de emergência",
+            "sintetica": true
+          },
+          "localizacao": {
+            "pagina": 1,
+            "inicio": 0,
+            "fim": 182,
+            "chunk_id": "4ca5959e85ae189968361c8a0be54a0f37b3adb5024f83361dd44ba5d5292826"
+          },
+          "trecho": "A reserva de emergência é um valor guardado para cobrir despesas essenciais, como moradia, alimentação e transporte, quando a renda é interrompida ou surge um imprevisto.",
+          "score": 0.91,
+          "consulta": "por que ter uma reserva de emergência"
+        }
+      ],
+      "chamadas": [
+        {
+          "ferramenta": "financeiro.consultar",
+          "operacao": "resumo_transacoes",
+          "status": "ok",
+          "evidencias_ids": [
+            "fin:resumo_transacoes:53dd2d27e384"
+          ],
+          "duracao_ms": 4
+        },
+        {
+          "ferramenta": "documentos.buscar",
+          "status": "ok",
+          "evidencias_ids": [
+            "doc:4ca5959e85ae1899"
+          ],
+          "duracao_ms": 38
+        }
+      ],
+      "observacoes": []
+    },
+    "analise": {
+      "versao": "1.0",
+      "status": "analisada",
+      "afirmacoes": [
+        {
+          "id": "a1",
+          "natureza": "dado_pessoal",
+          "evidencias_ids": [
+            "fin:resumo_transacoes:53dd2d27e384"
+          ],
+          "texto": "Em outubro de 2026 você registrou R$ 1.850,40 em despesas de categorias essenciais."
+        },
+        {
+          "id": "a2",
+          "natureza": "orientacao_educativa",
+          "evidencias_ids": [
+            "doc:4ca5959e85ae1899"
+          ],
+          "texto": "A reserva de emergência serve para cobrir despesas essenciais quando a renda é interrompida ou surge um imprevisto."
+        }
+      ],
+      "lacunas": []
+    }
+  }
+}

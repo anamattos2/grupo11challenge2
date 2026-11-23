@@ -1,0 +1,45 @@
+{
+  "schema": "SaidaValidacao",
+  "caso": "aprovada_com_falha",
+  "motivo": "Não se aprova com verificação em falha.",
+  "erro_esperado": "value_error",
+  "documento": {
+    "versao": "1.0",
+    "decisao": "aprovada",
+    "verificacoes": [
+      {
+        "regra": "referencias_existentes",
+        "resultado": "ok",
+        "detalhe": "Todas as evidências citadas existem na pesquisa."
+      },
+      {
+        "regra": "natureza_compativel",
+        "resultado": "ok",
+        "detalhe": "Dado pessoal cita evidência financeira; orientação cita documento."
+      },
+      {
+        "regra": "numeros_conferem",
+        "resultado": "falha",
+        "afirmacao_id": "a1",
+        "detalhe": "1850.40 consta nos valores da evidência financeira."
+      },
+      {
+        "regra": "suporte_documental",
+        "resultado": "ok",
+        "afirmacao_id": "a2",
+        "detalhe": "Trecho sustenta a finalidade da reserva."
+      },
+      {
+        "regra": "escopo_permitido",
+        "resultado": "ok",
+        "detalhe": "Sem recomendação de ativos nem acesso a bancos."
+      }
+    ],
+    "afirmacoes_aprovadas": [
+      "a1",
+      "a2"
+    ],
+    "alegacoes_sem_suporte": [],
+    "feedback": []
+  }
+}
