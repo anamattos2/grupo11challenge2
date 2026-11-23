@@ -47,6 +47,11 @@ roda com:
 .venv-api/bin/python apps/api/manage.py limpar_comprovantes
 ```
 
+`POST /api/comprovantes/{id}/extracao` lê valor total, data e estabelecimento
+com o Tesseract (local), marcando cada campo como presente, ausente ou ambíguo
+(S5-02 / #96). Sem o Tesseract instalado, a rota responde 503. Detalhes em
+[extração de comprovantes](../../docs/arquitetura/extracao-comprovantes.md).
+
 ## Testar
 
 Execute os testes dentro de `apps/api`, pois a raiz tem outra pasta `tests`:

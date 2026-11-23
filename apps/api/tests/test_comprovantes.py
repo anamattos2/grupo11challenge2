@@ -212,7 +212,7 @@ class IsolamentoTests(BaseComprovantes):
     def test_todas_as_rotas_de_comprovantes_exigem_autenticacao_no_openapi(self):
         contrato = self.cliente_ana.get("/api/openapi.json").json()
         rotas = {caminho: operacoes for caminho, operacoes in contrato["paths"].items() if "comprovantes" in caminho}
-        self.assertEqual(len(rotas), 3)
+        self.assertEqual(len(rotas), 4)  # inclui /{id}/extracao (S5-02)
         for caminho, operacoes in rotas.items():
             for metodo, operacao in operacoes.items():
                 with self.subTest(rota=f"{metodo.upper()} {caminho}"):
