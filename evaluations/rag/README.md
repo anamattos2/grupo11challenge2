@@ -56,3 +56,9 @@ respostas, latências e falhas para revisão posterior.
 
 A [variante LLM com RAG](variante-rag.md) registra as evidências recuperadas
 e as abstenções para comparação com o baseline.
+
+A [variante RAG com explicação estruturada](explicacao-estruturada.md)
+registra o suporte e os limites de cada resposta.
+
+A [comparação de qualidade e citações](avaliacao-qualidade.md) registra a
+calibração das três variantes e os denominadores da revisão.
