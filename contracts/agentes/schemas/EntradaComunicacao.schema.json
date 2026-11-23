@@ -225,7 +225,9 @@
             "sem_dados_financeiros",
             "sem_categoria_essencial",
             "sem_fonte_documental",
-            "pergunta_ambigua"
+            "pergunta_ambigua",
+            "periodo_excedido",
+            "dados_pessoais_sem_suporte"
           ],
           "title": "Codigo",
           "type": "string"
@@ -590,6 +592,18 @@
             }
           ],
           "default": null
+        },
+        "parametros": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ParametrosFinanceiros"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Parâmetros da consulta financeira; permite saber qual período falhou."
         },
         "pedido_id": {
           "anyOf": [

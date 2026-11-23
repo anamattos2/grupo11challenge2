@@ -133,6 +133,7 @@ class ResearchAgent:
                 evidencias.setdefault(evidencia.id, evidencia)
             registros.append(RegistroChamada(
                 ferramenta=chamada.ferramenta, operacao=chamada.operacao, pedido_id=chamada.pedido_id,
+                parametros=chamada.parametros,
                 status=status,
                 codigo_erro=codigo, evidencias_ids=[e.id for e in novas],
                 duracao_ms=max(0, round((self._relogio() - inicio) * 1000)),

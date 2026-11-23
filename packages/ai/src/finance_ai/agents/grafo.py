@@ -50,6 +50,7 @@ from .fluxo import (
     apos_analise,
     apos_pesquisa,
     apos_validacao,
+    feedback_para_revisao,
     chamadas_para_calculos,
     falha_de_etapa,
     ler_contrato,
@@ -193,7 +194,7 @@ def construir_grafo(agentes: Agentes, *, max_revisoes: int = MAX_REVISOES_PADRAO
                        "transicao": transicao, "revisoes": revisoes}
         if transicao.proxima is Etapa.ANALISE:
             atualizacao["revisoes"] = revisoes + 1
-            atualizacao["feedback_validacao"] = transicao.feedback
+            atualizacao["feedback_validacao"] = feedback_para_revisao(saida, estado["analise"])
         return atualizacao
 
     def no_comunicacao(estado: EstadoFluxo) -> dict:

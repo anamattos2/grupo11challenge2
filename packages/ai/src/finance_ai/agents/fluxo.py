@@ -174,6 +174,19 @@ def inconsistencias_analise(pesquisa: SaidaPesquisa, analise: SaidaAnalise) -> l
             for a in analise.afirmacoes for i in a.evidencias_ids if i not in existentes]
 
 
+def feedback_para_revisao(validacao: SaidaValidacao, analise: SaidaAnalise) -> Lista[str]:
+    """Feedback da Validation mais o texto de cada afirmação reprovada.
+
+    Os ids de afirmação são renumerados a cada análise; o texto não. Com ele, a
+    Analysis remove a afirmação certa mesmo que a numeração mude entre rodadas.
+    """
+    aprovadas = set(validacao.afirmacoes_aprovadas)
+    reprovadas = list(validacao.alegacoes_sem_suporte) or [a.id for a in analise.afirmacoes if a.id not in aprovadas]
+    por_id = {a.id: a for a in analise.afirmacoes}
+    textos = tuple(f'{i} reprovada: "{por_id[i].texto[:270]}"' for i in dict.fromkeys(reprovadas) if i in por_id)
+    return tuple(validacao.feedback) + textos
+
+
 def inconsistencias_validacao(analise: SaidaAnalise, validacao: SaidaValidacao) -> list[str]:
     """A Validation só pode aprovar, reprovar ou comentar afirmações que existem."""
     existentes = {a.id for a in analise.afirmacoes}
@@ -347,6 +360,8 @@ def montar_resposta(
         redigidos = [(p.afirmacoes_ids, p.texto) for p in comunicacao.paragrafos]
         tentativas.insert(0, ("communication", redigidos, comunicacao.limites))
 
+    # Lacunas de uma análise parcial viram avisos explícitos na resposta (S4-03).
+    avisos = tuple(dict.fromkeys(l.descricao for l in analise.lacunas))
     for redacao, paragrafos, limites in tentativas:
         numero: dict[str, int] = {}
         blocos: list[str] = []
@@ -370,7 +385,7 @@ def montar_resposta(
             resposta = RespostaFinal(
                 correlation_id=contexto.correlation_id, estado="respondida", texto="\n\n".join(blocos),
                 redacao=redacao, fontes=fontes, ligacoes=ligacoes,
-                limites=tuple(limites) or (LIMITE_PADRAO,), etapas=etapas,
+                limites=(*avisos, *(tuple(limites) or (LIMITE_PADRAO,))), etapas=etapas,
             )
         except ValidationError:
             problemas = problemas + [f"redação {redacao} não cabe na resposta final"]

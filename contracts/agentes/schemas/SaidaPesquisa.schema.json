@@ -294,6 +294,61 @@
       "title": "OrigemFinanceira",
       "type": "object"
     },
+    "ParametrosFinanceiros": {
+      "additionalProperties": false,
+      "description": "Parâmetros que o planejador (regra ou LLM) pode preencher.\n\nRepare que não existe campo de usuária: quem é a dona dos dados vem do\n``ContextoAutorizado``, e ``extra=\"forbid\"`` recusa qualquer tentativa.",
+      "properties": {
+        "periodo_fim": {
+          "anyOf": [
+            {
+              "format": "date",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Periodo Fim"
+        },
+        "periodo_inicio": {
+          "anyOf": [
+            {
+              "format": "date",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Periodo Inicio"
+        },
+        "somente_essenciais": {
+          "default": false,
+          "title": "Somente Essenciais",
+          "type": "boolean"
+        },
+        "tipo": {
+          "anyOf": [
+            {
+              "enum": [
+                "receita",
+                "despesa"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Tipo"
+        }
+      },
+      "title": "ParametrosFinanceiros",
+      "type": "object"
+    },
     "RegistroChamada": {
       "additionalProperties": false,
       "description": "Rastro de cada chamada executada; vai para logs e para a avaliação.",
@@ -343,6 +398,18 @@
             }
           ],
           "default": null
+        },
+        "parametros": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ParametrosFinanceiros"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Parâmetros da consulta financeira; permite saber qual período falhou."
         },
         "pedido_id": {
           "anyOf": [

@@ -348,6 +348,10 @@ class RegistroChamada(Contrato):
 
     ferramenta: Literal["documentos.buscar", "financeiro.consultar"]
     operacao: OperacaoFinanceira | None = None
+    parametros: ParametrosFinanceiros | None = Field(
+        default=None,
+        description="Parâmetros da consulta financeira; permite saber qual período falhou.",
+    )
     pedido_id: IdPedidoCalculo | None = None
     status: Literal["ok", "sem_resultados", "negada", "erro"]
     codigo_erro: Annotated[str, StringConstraints(pattern=r"^[a-z_]{3,40}$")] | None = None
@@ -441,6 +445,8 @@ class Lacuna(Contrato):
         "sem_categoria_essencial",
         "sem_fonte_documental",
         "pergunta_ambigua",
+        "periodo_excedido",
+        "dados_pessoais_sem_suporte",
     ]
     descricao: TextoCurto
     pergunta_complemento: TextoCurto | None = None
