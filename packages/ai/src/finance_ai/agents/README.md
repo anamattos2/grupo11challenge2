@@ -30,9 +30,20 @@ resposta.
 | `backend.py` | Liga a Research às ferramentas financeiras reais do backend | S4-02 / #76 + BE-06 / #88 |
 | `fixtures.py`, `fixtures/` | Dados fictícios para desenvolver e testar sem banco | S4-02 / #76 |
 | `avaliacao.py` | Mede se o planejador escolhe as ferramentas certas | S4-02 / #76 |
+| `analysis.py` | Analysis Agent: diagnostica o que a pergunta precisa, pede cálculo ou aponta lacuna, redige afirmações | S4-03 / #77 |
+| `redacao.py` | Números só por referência: marcadores `{{id|chave}}` trocados pelos valores do backend | S4-03 / #77 |
+| `avaliacao_analysis.py` | Mede status, lacunas, valores e números sem origem da Analysis | S4-03 / #77 |
 
-Analysis, Validation e Communication ainda não estão implementados; os
-contratos deles já existem, e o fluxo é testado com agentes falsos.
+Validation e Communication ainda não estão implementados; os contratos deles
+já existem, e o fluxo é testado com agentes falsos.
+
+## Como a Analysis evita conta inventada
+
+Quem redige (regras ou LLM) não escreve valores. Escreve um marcador, como
+`{{fin:resumo_transacoes:cad0c2b2ac81|despesas}}`, e o código troca pelo valor
+que o backend calculou (`R$ 1.850,40`). Qualquer algarismo fora de marcador
+numa afirmação sobre dados pessoais é recusado. Se falta um número, a Analysis
+pede ao backend; se o dado não existe, diz o que falta.
 
 ## Protótipo ou real?
 
@@ -60,9 +71,12 @@ python -m pip install --editable './packages/ai[documents,agents]'
 python -m finance_ai.agents.research "Quanto gastei com despesas essenciais em outubro?"
 python -m unittest discover -s tests
 python scripts/avaliar_research.py
+python -m finance_ai.agents.analysis "Gastei mais em outubro ou em setembro?"
+python scripts/avaliar_analysis.py
 ```
 
 Documentação completa:
 [contratos e fluxo](../../../../../docs/arquitetura/agentes/contratos-agentes.md) ·
 [Research Agent](../../../../../docs/arquitetura/agentes/research-agent.md) ·
+[Analysis Agent](../../../../../docs/arquitetura/agentes/analysis-agent.md) ·
 [avaliação](../../../../../evaluations/research-agent/README.md).

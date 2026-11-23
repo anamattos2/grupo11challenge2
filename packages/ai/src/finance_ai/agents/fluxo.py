@@ -347,6 +347,8 @@ def montar_resposta(
         redigidos = [(p.afirmacoes_ids, p.texto) for p in comunicacao.paragrafos]
         tentativas.insert(0, ("communication", redigidos, comunicacao.limites))
 
+    # Lacunas de uma análise parcial viram avisos explícitos na resposta (S4-03).
+    avisos = tuple(dict.fromkeys(l.descricao for l in analise.lacunas))
     for redacao, paragrafos, limites in tentativas:
         numero: dict[str, int] = {}
         blocos: list[str] = []
@@ -370,7 +372,7 @@ def montar_resposta(
             resposta = RespostaFinal(
                 correlation_id=contexto.correlation_id, estado="respondida", texto="\n\n".join(blocos),
                 redacao=redacao, fontes=fontes, ligacoes=ligacoes,
-                limites=tuple(limites) or (LIMITE_PADRAO,), etapas=etapas,
+                limites=(*avisos, *(tuple(limites) or (LIMITE_PADRAO,))), etapas=etapas,
             )
         except ValidationError:
             problemas = problemas + [f"redação {redacao} não cabe na resposta final"]

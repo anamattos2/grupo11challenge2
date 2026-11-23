@@ -8,6 +8,9 @@
   fixtures sintéticas (``fixtures``). O LLM local exige o extra ``llm``
   (``langchain-ollama``).
 - ``backend``: adaptador para as ferramentas financeiras reais da BE-06 (#88).
+- ``analysis``: Analysis Agent (S4-03 / #77), subgrafo LangGraph que diagnostica
+  a pergunta, pede cálculos ao backend ou aponta lacunas e redige afirmações
+  com números só por referência (``redacao``).
 
 Visão geral curta da pasta: ``README.md``.
 

@@ -81,7 +81,10 @@ tem `decisao` e só a Communication tem `paragrafos`.
 | `orientacao_educativa` | Evidência `doc:` | "A reserva cobre despesas essenciais em imprevistos." |
 
 A Analysis não calcula: números vêm prontos das ferramentas (decisão D05 da
-arquitetura). A regra `numeros_conferem` da Validation verifica se cada valor
+arquitetura). Na implementação (S4-03), o redator nem digita valores: escreve
+marcadores que o código troca pelos valores do backend; comparar dois valores
+("maiores", "menores") é feito por código, sem número novo. Ver
+[Analysis Agent](analysis-agent.md). A regra `numeros_conferem` da Validation verifica se cada valor
 citado no texto aparece nos `valores` da evidência financeira indicada.
 
 ### Pedido de cálculo (Analysis → Research)
@@ -279,6 +282,7 @@ diagrama estiverem desatualizados em relação ao código.
 | Valores de timeout por etapa, tempo total, checkpointer e rastros (LangSmith ou equivalente) | S4-06 / #80 (P09 da arquitetura) |
 | Prompt e LLM de Analysis e Communication (LangChain + Ollama, como na S4-02) | Issues dos agentes + P03 |
 | Implementação da Validation (regras acima) | Issue da Validation |
+| Lacunas de uma análise parcial já entram em `RespostaFinal.limites`; a redação delas | S4-05 (Communication) |
 | Operação `situacao_reserva` no backend | BE-05 (cálculo da reserva) |
 | Limiar de score e alertas de fonte | Avaliação RAG (P07) |
 | Avaliação do texto da Communication além da checagem por regra | S4-05 (Communication) |
