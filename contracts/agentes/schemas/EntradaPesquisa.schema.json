@@ -1,5 +1,73 @@
 {
   "$defs": {
+    "ChamadaFerramenta": {
+      "additionalProperties": false,
+      "description": "Uma chamada planejada. É isso que um LLM preencheria em *tool calling*.\n\n``pedido_id`` só é preenchido quando a chamada atende a um ``PedidoCalculo``\nda Analysis; assim a Analysis sabe qual resultado responde a qual pedido.",
+      "properties": {
+        "consulta": {
+          "anyOf": [
+            {
+              "maxLength": 500,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Consulta"
+        },
+        "ferramenta": {
+          "enum": [
+            "documentos.buscar",
+            "financeiro.consultar"
+          ],
+          "title": "Ferramenta",
+          "type": "string"
+        },
+        "operacao": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/OperacaoFinanceira"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "parametros": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ParametrosFinanceiros"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "pedido_id": {
+          "anyOf": [
+            {
+              "pattern": "^c[0-9]{1,2}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Pedido Id"
+        }
+      },
+      "required": [
+        "ferramenta"
+      ],
+      "title": "ChamadaFerramenta",
+      "type": "object"
+    },
     "ContextoAutorizado": {
       "additionalProperties": false,
       "description": "Montado pelo backend a partir da sessão autenticada, nunca pelo modelo.\n\n``usuaria_ref`` é uma referência opaca. Ela é repassada às ferramentas pelo\ncódigo do agente, e não aparece em prompts nem em parâmetros que um LLM\npossa preencher. Mesmo assim, cada ferramenta revalida o acesso.",
@@ -21,6 +89,7 @@
           "type": "string"
         },
         "memoria": {
+          "default": [],
           "description": "Resumo limitado da conversa, já filtrado pelo backend.",
           "items": {
             "maxLength": 500,
@@ -75,6 +144,71 @@
       "title": "LimitesPesquisa",
       "type": "object"
     },
+    "OperacaoFinanceira": {
+      "description": "Lista fechada de consultas financeiras. Não há SQL livre nem escrita.",
+      "enum": [
+        "resumo_transacoes",
+        "listar_contas",
+        "situacao_reserva"
+      ],
+      "title": "OperacaoFinanceira",
+      "type": "string"
+    },
+    "ParametrosFinanceiros": {
+      "additionalProperties": false,
+      "description": "Parâmetros que o planejador (regra ou LLM) pode preencher.\n\nRepare que não existe campo de usuária: quem é a dona dos dados vem do\n``ContextoAutorizado``, e ``extra=\"forbid\"`` recusa qualquer tentativa.",
+      "properties": {
+        "periodo_fim": {
+          "anyOf": [
+            {
+              "format": "date",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Periodo Fim"
+        },
+        "periodo_inicio": {
+          "anyOf": [
+            {
+              "format": "date",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Periodo Inicio"
+        },
+        "somente_essenciais": {
+          "default": false,
+          "title": "Somente Essenciais",
+          "type": "boolean"
+        },
+        "tipo": {
+          "anyOf": [
+            {
+              "enum": [
+                "receita",
+                "despesa"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Tipo"
+        }
+      },
+      "title": "ParametrosFinanceiros",
+      "type": "object"
+    },
     "Permissao": {
       "description": "Escopos de leitura que o backend concede para a requisição.\n\nNão existe permissão de escrita: nenhum agente cria, altera ou exclui\nregistros financeiros. Escrita passa pela API com confirmação da usuária.",
       "enum": [
@@ -88,7 +222,17 @@
   "$id": "https://github.com/anamattos2/grupo11challenge2/contracts/agentes/schemas/EntradaPesquisa.schema.json",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "additionalProperties": false,
+  "description": "Entrada da Research.\n\nSem ``chamadas_solicitadas``, a Research planeja a partir da pergunta.\nCom elas, executa exatamente essas chamadas, sem planejar: é como a\nAnalysis obtém um cálculo determinístico que ainda não estava nas\nevidências (ver ``PedidoCalculo``).",
   "properties": {
+    "chamadas_solicitadas": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/ChamadaFerramenta"
+      },
+      "maxItems": 3,
+      "title": "Chamadas Solicitadas",
+      "type": "array"
+    },
     "contexto": {
       "$ref": "#/$defs/ContextoAutorizado"
     },

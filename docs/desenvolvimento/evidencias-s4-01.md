@@ -60,3 +60,32 @@ implementados; os testes do grafo usam agentes falsos que devolvem os exemplos.
 Timeouts reais, checkpointer e rastros completos ficam para a S4-06 (#80).
 O merge com `feat-67-recuperacao-documental` exigirá juntar as linhas de
 `[project.optional-dependencies]` do `pyproject.toml` (conflito trivial).
+
+## Ajustes da revisão do PR #135 (23/11/2026)
+
+A revisão pediu quatro ajustes; o mapa pedido → mudança → teste está na seção
+9 de `docs/arquitetura/agentes/contratos-agentes.md`. Resumo:
+
+1. **Texto final**: a Communication devolve `paragrafos` ligados a afirmações
+   aprovadas. O orquestrador confere afirmações, números e cobertura e monta
+   texto, citações, fontes e ligações; se a redação não passar, usa o texto
+   literal das afirmações aprovadas.
+2. **Cálculo pela Analysis**: `PedidoCalculo` e status `precisa_calculo`; a
+   Research executa `chamadas_solicitadas` com `pedido_id`; uma rodada, depois
+   abstenção `calculo_indisponivel`.
+3. **Falha × busca vazia**: status derivado por `status_da_pesquisa`; novo
+   `sem_permissao`; erro de ferramenta sempre vira `falha`.
+4. **Isolamento**: tuplas e `MappingProxyType` em todos os contratos; o grafo
+   copia cada objeto entre agentes.
+
+Exemplos: 25 válidos e 25 inválidos (antes 20 e 18).
+
+```text
+python -m pip install --editable './packages/ai[documents,agents]'   # ambiente limpo
+python -m pip check                               → No broken requirements found.
+python scripts/exportar_schemas_agentes.py --check → OK: 11 schemas e o diagrama do fluxo atualizados.
+python -m unittest discover -s tests              → Ran 68 tests ... OK
+```
+
+Mesmo resultado em Python 3.12 (versão da CI) e 3.14. Em 3.14 o
+`langchain-core` emite um aviso sobre a camada `pydantic.v1`, sem efeito nos testes.

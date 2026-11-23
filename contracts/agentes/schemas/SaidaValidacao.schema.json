@@ -70,6 +70,7 @@
   "additionalProperties": false,
   "properties": {
     "afirmacoes_aprovadas": {
+      "default": [],
       "items": {
         "pattern": "^a[0-9]{1,3}$",
         "type": "string"
@@ -78,6 +79,7 @@
       "type": "array"
     },
     "alegacoes_sem_suporte": {
+      "default": [],
       "items": {
         "pattern": "^a[0-9]{1,3}$",
         "type": "string"
@@ -95,6 +97,7 @@
       "type": "string"
     },
     "feedback": {
+      "default": [],
       "description": "Orientação objetiva para uma revisão da Analysis.",
       "items": {
         "maxLength": 300,

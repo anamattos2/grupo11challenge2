@@ -69,7 +69,7 @@
   "$id": "https://github.com/anamattos2/grupo11challenge2/contracts/agentes/schemas/ChamadaFerramenta.schema.json",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "additionalProperties": false,
-  "description": "Uma chamada planejada. É isso que um LLM preencheria em *tool calling*.",
+  "description": "Uma chamada planejada. É isso que um LLM preencheria em *tool calling*.\n\n``pedido_id`` só é preenchido quando a chamada atende a um ``PedidoCalculo``\nda Analysis; assim a Analysis sabe qual resultado responde a qual pedido.",
   "properties": {
     "consulta": {
       "anyOf": [
@@ -114,6 +114,19 @@
         }
       ],
       "default": null
+    },
+    "pedido_id": {
+      "anyOf": [
+        {
+          "pattern": "^c[0-9]{1,2}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Pedido Id"
     }
   },
   "required": [

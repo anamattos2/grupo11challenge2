@@ -15,10 +15,11 @@ graph TD;
 	falha(falha)
 	__end__([<p>__end__</p>]):::last
 	__start__ --> pesquisa;
+	analise -.-> abstencao;
 	analise -.-> falha;
 	analise -.-> pedido_complemento;
+	analise -.-> pesquisa;
 	analise -.-> validacao;
-	comunicacao -.-> falha;
 	comunicacao -.-> respondida;
 	pesquisa -.-> abstencao;
 	pesquisa -.-> analise;

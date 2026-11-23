@@ -10,7 +10,12 @@ Convenções usadas em todos os modelos:
 - ``extra="forbid"``: campos desconhecidos são recusados. Assim, um modelo de
   linguagem não consegue "inventar" um ``usuaria_id`` ou um parâmetro de
   ferramenta fora do previsto.
-- ``frozen=True``: objetos imutáveis; uma etapa não altera a saída da anterior.
+- ``frozen=True`` + coleções imutáveis: listas viram tuplas (``Lista``) e
+  dicionários viram ``MappingProxyType`` (``Mapa``). ``frozen`` sozinho só
+  impede trocar o atributo; sem isso, ``saida.evidencias.append(...)`` ainda
+  alteraria a saída de outra etapa. No JSON nada muda: tuplas saem como
+  listas e mapas como objetos. O grafo ainda copia cada objeto na passagem
+  entre agentes (``Contrato.copia``).
 - Valores monetários trafegam como texto decimal (``"1234.56"``), igual à API
   financeira (BE-03/BE-04), para não perder precisão com ``float``.
 - IDs de evidência carregam o tipo no prefixo: ``doc:`` para trechos do corpus
@@ -23,13 +28,44 @@ manualmente: altere o modelo, regenere e revise o diff.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from datetime import date
+from decimal import Decimal, InvalidOperation
 from enum import StrEnum
-from typing import Annotated, Literal, Union
+import re
+from types import MappingProxyType
+from typing import Annotated, Literal, TypeVar, Union
 
-from pydantic import BaseModel, ConfigDict, Field, StringConstraints, model_validator
+from pydantic import (
+    AfterValidator,
+    BaseModel,
+    ConfigDict,
+    Field,
+    PlainSerializer,
+    StringConstraints,
+    model_validator,
+)
 
 VERSAO_CONTRATOS = "1.0"
+
+# --------------------------------------------------------------------------
+# Coleções imutáveis
+# --------------------------------------------------------------------------
+
+T = TypeVar("T")
+Lista = tuple[T, ...]
+"""Sequência imutável. ``Lista[str]`` é ``tuple[str, ...]``; no JSON, uma lista."""
+
+
+def _congelar(mapa: Mapping) -> MappingProxyType:
+    return MappingProxyType(dict(mapa))
+
+
+def _descongelar(mapa: Mapping) -> dict:
+    return dict(mapa)
+
+
+ChaveValor = Annotated[str, StringConstraints(pattern=r"^[a-z][a-z0-9_]{1,39}$")]
 
 # --------------------------------------------------------------------------
 # Tipos básicos reutilizados
@@ -54,11 +90,29 @@ IdAfirmacao = Annotated[str, StringConstraints(pattern=r"^a[0-9]{1,3}$")]
 
 TextoCurto = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=300)]
 
+IdPedidoCalculo = Annotated[str, StringConstraints(pattern=r"^c[0-9]{1,2}$")]
+"""Pedidos de cálculo são numerados pela Analysis: ``c1``, ``c2``..."""
+
+MapaTexto = Annotated[
+    Mapping[ChaveValor, Annotated[str, StringConstraints(max_length=100)]],
+    AfterValidator(_congelar),
+    PlainSerializer(_descongelar),
+]
+MapaValores = Annotated[
+    Mapping[ChaveValor, ValorDecimal | None],
+    AfterValidator(_congelar),
+    PlainSerializer(_descongelar),
+]
+
 
 class Contrato(BaseModel):
     """Base de todos os contratos: imutável e sem campos extras."""
 
     model_config = ConfigDict(extra="forbid", frozen=True)
+
+    def copia(self):
+        """Cópia independente, revalidada. Usada na passagem entre agentes."""
+        return type(self).model_validate(self.model_dump())
 
 
 # --------------------------------------------------------------------------
@@ -96,11 +150,11 @@ class ContextoAutorizado(Contrato):
     correlation_id: CorrelationId
     usuaria_ref: Annotated[str, StringConstraints(pattern=r"^[A-Za-z0-9_-]{4,64}$")]
     conversa_id: Annotated[str, StringConstraints(pattern=r"^[A-Za-z0-9_-]{4,64}$")]
-    permissoes: Annotated[list[Permissao], Field(max_length=2)]
+    permissoes: Annotated[Lista[Permissao], Field(max_length=2)]
     data_referencia: date = Field(description="Data atual em America/Sao_Paulo; base para 'este mês'.")
     memoria: Annotated[
-        list[Annotated[str, StringConstraints(max_length=500)]], Field(max_length=5)
-    ] = Field(default_factory=list, description="Resumo limitado da conversa, já filtrado pelo backend.")
+        Lista[Annotated[str, StringConstraints(max_length=500)]], Field(max_length=5)
+    ] = Field(default=(), description="Resumo limitado da conversa, já filtrado pelo backend.")
 
     @model_validator(mode="after")
     def _permissoes_unicas(self) -> "ContextoAutorizado":
@@ -198,9 +252,9 @@ class OrigemFinanceira(Contrato):
 class LocalizacaoFinanceira(Contrato):
     periodo_inicio: date | None = None
     periodo_fim: date | None = None
-    filtros: dict[str, str] = Field(default_factory=dict)
-    registros: Annotated[list[str], Field(max_length=200)] = Field(
-        default_factory=list, description="IDs dos registros considerados, quando aplicável."
+    filtros: MapaTexto = Field(default_factory=dict, validate_default=True)
+    registros: Annotated[Lista[str], Field(max_length=200)] = Field(
+        default=(), description="IDs dos registros considerados, quando aplicável."
     )
 
 
@@ -212,7 +266,7 @@ class EvidenciaFinanceira(Contrato):
     origem: OrigemFinanceira
     localizacao: LocalizacaoFinanceira
     moeda: Literal["BRL"] = "BRL"
-    valores: dict[Annotated[str, StringConstraints(pattern=r"^[a-z][a-z0-9_]{1,39}$")], ValorDecimal | None] = Field(
+    valores: MapaValores = Field(
         description="Valores calculados pelo backend. None quando não se aplica (ex.: progresso com meta zero)."
     )
     resumo: Annotated[str, StringConstraints(min_length=1, max_length=500)] = Field(
@@ -229,7 +283,7 @@ class EvidenciaFinanceira(Contrato):
 Evidencia = Annotated[Union[EvidenciaDocumental, EvidenciaFinanceira], Field(discriminator="tipo")]
 
 
-def _ids_unicos(ids: list[str], nome: str) -> None:
+def _ids_unicos(ids, nome: str) -> None:
     if len(set(ids)) != len(ids):
         raise ValueError(f"{nome} com IDs repetidos")
 
@@ -244,27 +298,48 @@ class LimitesPesquisa(Contrato):
     max_chamadas: Annotated[int, Field(ge=1, le=6)] = 4
 
 
-class EntradaPesquisa(Contrato):
-    contexto: ContextoAutorizado
-    pergunta: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=1000)]
-    limites: LimitesPesquisa = Field(default_factory=LimitesPesquisa)
-
-
 class ChamadaFerramenta(Contrato):
-    """Uma chamada planejada. É isso que um LLM preencheria em *tool calling*."""
+    """Uma chamada planejada. É isso que um LLM preencheria em *tool calling*.
+
+    ``pedido_id`` só é preenchido quando a chamada atende a um ``PedidoCalculo``
+    da Analysis; assim a Analysis sabe qual resultado responde a qual pedido.
+    """
 
     ferramenta: Literal["documentos.buscar", "financeiro.consultar"]
     consulta: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=500)] | None = None
     operacao: OperacaoFinanceira | None = None
     parametros: ParametrosFinanceiros | None = None
+    pedido_id: IdPedidoCalculo | None = None
 
     @model_validator(mode="after")
     def _forma(self) -> "ChamadaFerramenta":
         if self.ferramenta == "documentos.buscar":
-            if not self.consulta or self.operacao or self.parametros:
+            if not self.consulta or self.operacao or self.parametros or self.pedido_id:
                 raise ValueError("documentos.buscar exige somente 'consulta'")
         elif self.consulta or not self.operacao:
             raise ValueError("financeiro.consultar exige 'operacao' e não aceita 'consulta'")
+        return self
+
+
+class EntradaPesquisa(Contrato):
+    """Entrada da Research.
+
+    Sem ``chamadas_solicitadas``, a Research planeja a partir da pergunta.
+    Com elas, executa exatamente essas chamadas, sem planejar: é como a
+    Analysis obtém um cálculo determinístico que ainda não estava nas
+    evidências (ver ``PedidoCalculo``).
+    """
+
+    contexto: ContextoAutorizado
+    pergunta: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=1000)]
+    limites: LimitesPesquisa = Field(default_factory=LimitesPesquisa)
+    chamadas_solicitadas: Annotated[Lista[ChamadaFerramenta], Field(max_length=3)] = Field(default=())
+
+    @model_validator(mode="after")
+    def _solicitadas(self) -> "EntradaPesquisa":
+        for chamada in self.chamadas_solicitadas:
+            if chamada.ferramenta != "financeiro.consultar" or not chamada.pedido_id:
+                raise ValueError("chamadas solicitadas são cálculos financeiros com pedido_id")
         return self
 
 
@@ -273,9 +348,10 @@ class RegistroChamada(Contrato):
 
     ferramenta: Literal["documentos.buscar", "financeiro.consultar"]
     operacao: OperacaoFinanceira | None = None
+    pedido_id: IdPedidoCalculo | None = None
     status: Literal["ok", "sem_resultados", "negada", "erro"]
     codigo_erro: Annotated[str, StringConstraints(pattern=r"^[a-z_]{3,40}$")] | None = None
-    evidencias_ids: list[IdEvidencia] = Field(default_factory=list)
+    evidencias_ids: Lista[IdEvidencia] = Field(default=())
     duracao_ms: Annotated[int, Field(ge=0)]
 
     @model_validator(mode="after")
@@ -289,15 +365,42 @@ class RegistroChamada(Contrato):
         return self
 
 
+StatusPesquisa = Literal["concluida", "parcial", "sem_evidencias", "sem_permissao", "falha"]
+
+
+def status_da_pesquisa(tem_evidencias: bool, chamadas) -> StatusPesquisa:
+    """Único jeito de decidir o status: a partir do que aconteceu nas chamadas.
+
+    | Evidências | Chamadas                                   | Status         |
+    |------------|--------------------------------------------|----------------|
+    | sim        | todas ok/sem_resultados                    | concluida      |
+    | sim        | alguma negada ou com erro                  | parcial        |
+    | não        | alguma com erro                            | falha          |
+    | não        | nenhum erro, alguma busca sem resultados   | sem_evidencias |
+    | não        | todas negadas                              | sem_permissao  |
+
+    Uma busca vazia só é afirmada quando alguma ferramenta respondeu de fato
+    "não encontrei". Erro de ferramenta nunca vira "não há informação".
+    """
+    situacoes = {c.status for c in chamadas}
+    if tem_evidencias:
+        return "parcial" if situacoes & {"negada", "erro"} else "concluida"
+    if "erro" in situacoes:
+        return "falha"
+    if "sem_resultados" in situacoes:
+        return "sem_evidencias"
+    return "sem_permissao"
+
+
 class SaidaPesquisa(Contrato):
     versao: Literal["1.0"] = VERSAO_CONTRATOS
-    status: Literal["concluida", "parcial", "sem_evidencias", "falha"]
+    status: StatusPesquisa
     modo: Literal["prototipo_fixtures", "integrado"] = Field(
         description="prototipo_fixtures quando alguma ferramenta usa dados sintéticos."
     )
-    evidencias: list[Evidencia] = Field(default_factory=list)
-    chamadas: list[RegistroChamada] = Field(default_factory=list)
-    observacoes: list[TextoCurto] = Field(default_factory=list)
+    evidencias: Lista[Evidencia] = Field(default=())
+    chamadas: Annotated[Lista[RegistroChamada], Field(min_length=1)]
+    observacoes: Lista[TextoCurto] = Field(default=())
 
     @model_validator(mode="after")
     def _coerencia(self) -> "SaidaPesquisa":
@@ -306,17 +409,9 @@ class SaidaPesquisa(Contrato):
         produzidos = {i for c in self.chamadas for i in c.evidencias_ids}
         if set(ids) != produzidos:
             raise ValueError("evidências devem corresponder às registradas nas chamadas")
-        houve_erro = any(c.status in ("erro", "negada") for c in self.chamadas)
-        if self.status in ("concluida", "parcial") and not self.evidencias:
-            raise ValueError(f"status {self.status} exige ao menos uma evidência")
-        if self.status in ("sem_evidencias", "falha") and self.evidencias:
-            raise ValueError(f"status {self.status} não pode trazer evidências")
-        if self.status == "concluida" and houve_erro:
-            raise ValueError("houve chamada negada/com erro: use 'parcial'")
-        if self.status == "parcial" and not houve_erro:
-            raise ValueError("'parcial' exige ao menos uma chamada negada/com erro")
-        if self.status == "falha" and not houve_erro:
-            raise ValueError("'falha' exige ao menos uma chamada negada/com erro")
+        esperado = status_da_pesquisa(bool(self.evidencias), self.chamadas)
+        if self.status != esperado:
+            raise ValueError(f"status '{self.status}' não corresponde às chamadas: o correto é '{esperado}'")
         if self.modo == "integrado" and any(e.origem.sintetica for e in self.evidencias):
             raise ValueError("modo integrado não pode conter evidência sintética")
         return self
@@ -333,7 +428,7 @@ class Afirmacao(Contrato):
     id: IdAfirmacao
     texto: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=600)]
     natureza: Literal["dado_pessoal", "calculo", "orientacao_educativa"]
-    evidencias_ids: Annotated[list[IdEvidencia], Field(min_length=1, max_length=10)]
+    evidencias_ids: Annotated[Lista[IdEvidencia], Field(min_length=1, max_length=10)]
 
 
 class Lacuna(Contrato):
@@ -350,27 +445,56 @@ class Lacuna(Contrato):
     pergunta_complemento: TextoCurto | None = None
 
 
+class PedidoCalculo(Contrato):
+    """A Analysis pede um número que ainda não está nas evidências.
+
+    A Analysis não calcula valores oficiais (decisão D05): ela pede ao backend,
+    pela mesma lista fechada de operações da Research. O orquestrador
+    transforma o pedido em ``ChamadaFerramenta`` com ``pedido_id``, a Research
+    executa e a Analysis recebe a pesquisa completada. Exemplo: a pergunta
+    compara outubro com setembro, mas a Research só trouxe outubro.
+    """
+
+    id: IdPedidoCalculo
+    operacao: OperacaoFinanceira
+    parametros: ParametrosFinanceiros = Field(default_factory=ParametrosFinanceiros)
+    motivo: TextoCurto = Field(description="Para que a Analysis precisa do resultado.")
+
+    def como_chamada(self) -> ChamadaFerramenta:
+        return ChamadaFerramenta(ferramenta="financeiro.consultar", operacao=self.operacao,
+                                 parametros=self.parametros, pedido_id=self.id)
+
+
 class EntradaAnalise(Contrato):
     contexto: ContextoAutorizado
     pergunta: Annotated[str, StringConstraints(min_length=1, max_length=1000)]
     pesquisa: SaidaPesquisa
-    feedback_validacao: list[TextoCurto] = Field(
-        default_factory=list, description="Preenchido somente na revisão após uma reprovação."
+    feedback_validacao: Lista[TextoCurto] = Field(
+        default=(), description="Preenchido somente na revisão após uma reprovação."
+    )
+    calculos_ja_pedidos: Lista[IdPedidoCalculo] = Field(
+        default=(), description="Pedidos já atendidos ou tentados; não podem ser repetidos."
     )
 
 
 class SaidaAnalise(Contrato):
     versao: Literal["1.0"] = VERSAO_CONTRATOS
-    status: Literal["analisada", "dados_insuficientes", "falha"]
-    afirmacoes: list[Afirmacao] = Field(default_factory=list)
-    lacunas: list[Lacuna] = Field(default_factory=list)
+    status: Literal["analisada", "precisa_calculo", "dados_insuficientes", "falha"]
+    afirmacoes: Annotated[Lista[Afirmacao], Field(max_length=5)] = Field(default=())
+    calculos: Annotated[Lista[PedidoCalculo], Field(max_length=3)] = Field(default=())
+    lacunas: Lista[Lacuna] = Field(default=())
     codigo_erro: Annotated[str, StringConstraints(pattern=r"^[a-z_]{3,40}$")] | None = None
 
     @model_validator(mode="after")
     def _coerencia(self) -> "SaidaAnalise":
         _ids_unicos([a.id for a in self.afirmacoes], "afirmacoes")
+        _ids_unicos([c.id for c in self.calculos], "calculos")
         if self.status == "analisada" and not self.afirmacoes:
             raise ValueError("'analisada' exige ao menos uma afirmação")
+        if self.status == "precisa_calculo" and (not self.calculos or self.afirmacoes):
+            raise ValueError("'precisa_calculo' exige pedidos de cálculo e nenhuma afirmação ainda")
+        if self.status != "precisa_calculo" and self.calculos:
+            raise ValueError("pedidos de cálculo só com status 'precisa_calculo'")
         if self.status == "dados_insuficientes" and not self.lacunas:
             raise ValueError("'dados_insuficientes' exige ao menos uma lacuna")
         if self.status == "falha" and (not self.codigo_erro or self.afirmacoes):
@@ -423,12 +547,12 @@ class EntradaValidacao(Contrato):
 class SaidaValidacao(Contrato):
     versao: Literal["1.0"] = VERSAO_CONTRATOS
     decisao: Literal["aprovada", "aprovada_com_alertas", "reprovada"]
-    verificacoes: Annotated[list[Verificacao], Field(min_length=1)]
-    afirmacoes_aprovadas: list[IdAfirmacao] = Field(default_factory=list)
-    alegacoes_sem_suporte: list[IdAfirmacao] = Field(default_factory=list)
+    verificacoes: Annotated[Lista[Verificacao], Field(min_length=1)]
+    afirmacoes_aprovadas: Lista[IdAfirmacao] = Field(default=())
+    alegacoes_sem_suporte: Lista[IdAfirmacao] = Field(default=())
     motivo_bloqueio: MotivoBloqueio | None = None
-    feedback: list[TextoCurto] = Field(
-        default_factory=list, description="Orientação objetiva para uma revisão da Analysis."
+    feedback: Lista[TextoCurto] = Field(
+        default=(), description="Orientação objetiva para uma revisão da Analysis."
     )
 
     @model_validator(mode="after")
@@ -466,7 +590,7 @@ class Ligacao(Contrato):
     """Explica qual evidência sustenta cada afirmação usada no texto."""
 
     afirmacao_id: IdAfirmacao
-    evidencias_ids: Annotated[list[IdEvidencia], Field(min_length=1)]
+    evidencias_ids: Annotated[Lista[IdEvidencia], Field(min_length=1)]
 
 
 class EntradaComunicacao(Contrato):
@@ -483,21 +607,27 @@ class EntradaComunicacao(Contrato):
         return self
 
 
-class SaidaComunicacao(Contrato):
-    versao: Literal["1.0"] = VERSAO_CONTRATOS
-    texto: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=3000)]
-    fontes: Annotated[list[FonteCitada], Field(min_length=1)]
-    ligacoes: Annotated[list[Ligacao], Field(min_length=1)]
-    limites: list[TextoCurto] = Field(default_factory=list)
+class Paragrafo(Contrato):
+    """Um parágrafo da resposta e as afirmações aprovadas que ele expressa."""
 
-    @model_validator(mode="after")
-    def _coerencia(self) -> "SaidaComunicacao":
-        _ids_unicos([f.evidencia_id for f in self.fontes], "fontes")
-        citadas = {f.evidencia_id for f in self.fontes}
-        usadas = {i for lig in self.ligacoes for i in lig.evidencias_ids}
-        if not usadas <= citadas:
-            raise ValueError("toda evidência usada nas ligações deve aparecer em 'fontes'")
-        return self
+    afirmacoes_ids: Annotated[Lista[IdAfirmacao], Field(min_length=1, max_length=5)]
+    texto: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=800)]
+
+
+class SaidaComunicacao(Contrato):
+    """A Communication só redige: não escolhe fontes nem cria ligações.
+
+    Cada parágrafo declara quais afirmações aprovadas ele expressa. O
+    orquestrador monta o texto final, numera as citações e deriva fontes e
+    ligações das evidências de cada afirmação (``fluxo.montar_resposta``).
+    Antes disso, ``fluxo.inconsistencias_comunicacao`` confere os parágrafos;
+    se algo não bater, a resposta é montada só com o texto literal das
+    afirmações aprovadas.
+    """
+
+    versao: Literal["1.0"] = VERSAO_CONTRATOS
+    paragrafos: Annotated[Lista[Paragrafo], Field(min_length=1, max_length=8)]
+    limites: Lista[TextoCurto] = Field(default=())
 
 
 # --------------------------------------------------------------------------
@@ -507,13 +637,14 @@ class SaidaComunicacao(Contrato):
 
 class MotivoEncerramento(StrEnum):
     SEM_EVIDENCIAS = "sem_evidencias"
+    SEM_PERMISSAO = "sem_permissao"
     DADOS_INSUFICIENTES = "dados_insuficientes"
+    CALCULO_INDISPONIVEL = "calculo_indisponivel"
     VALIDACAO_REPROVADA = "validacao_reprovada"
     FALHA_PESQUISA = "falha_pesquisa"
     FALHA_ANALISE = "falha_analise"
     FALHA_VALIDACAO = "falha_validacao"
     FALHA_COMUNICACAO = "falha_comunicacao"
-    COMUNICACAO_INCONSISTENTE = "comunicacao_inconsistente"
     CONTRATO_INVALIDO = "contrato_invalido"
     TEMPO_ESGOTADO = "tempo_esgotado"
 
@@ -526,26 +657,39 @@ class EtapaRastro(Contrato):
 
 
 class RespostaFinal(Contrato):
+    """O que a API devolve à PWA.
+
+    ``redacao`` diz quem escreveu o texto de uma resposta aprovada:
+    ``communication`` (parágrafos conferidos) ou ``literal`` (texto das
+    afirmações aprovadas, usado quando a redação não passou na checagem).
+    """
+
     versao: Literal["1.0"] = VERSAO_CONTRATOS
     correlation_id: CorrelationId
     estado: Literal["respondida", "abstencao", "pedido_complemento", "falha"]
-    texto: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=3000)]
-    fontes: list[FonteCitada] = Field(default_factory=list)
-    limites: list[TextoCurto] = Field(default_factory=list)
-    perguntas_complemento: list[TextoCurto] = Field(default_factory=list)
+    texto: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=4000)]
+    redacao: Literal["communication", "literal"] | None = None
+    fontes: Lista[FonteCitada] = Field(default=())
+    ligacoes: Lista[Ligacao] = Field(default=())
+    limites: Lista[TextoCurto] = Field(default=())
+    perguntas_complemento: Lista[TextoCurto] = Field(default=())
     motivo: MotivoEncerramento | None = None
-    etapas: list[EtapaRastro] = Field(default_factory=list)
+    etapas: Lista[EtapaRastro] = Field(default=())
 
     @model_validator(mode="after")
     def _coerencia(self) -> "RespostaFinal":
         if self.estado == "respondida":
-            if not self.fontes or self.motivo is not None:
-                raise ValueError("'respondida' exige fontes e não tem motivo")
+            if not self.fontes or not self.ligacoes or self.redacao is None or self.motivo is not None:
+                raise ValueError("'respondida' exige fontes, ligações e redação, e não tem motivo")
+            _ids_unicos([f.evidencia_id for f in self.fontes], "fontes")
+            citadas = {f.evidencia_id for f in self.fontes}
+            if not {i for lig in self.ligacoes for i in lig.evidencias_ids} <= citadas:
+                raise ValueError("toda evidência das ligações deve aparecer em 'fontes'")
         else:
             if self.motivo is None:
                 raise ValueError(f"'{self.estado}' exige motivo")
-            if self.fontes:
-                raise ValueError("somente resposta aprovada cita fontes")
+            if self.fontes or self.ligacoes or self.redacao:
+                raise ValueError("somente resposta aprovada tem fontes, ligações e redação")
         if self.estado == "pedido_complemento" and not self.perguntas_complemento:
             raise ValueError("'pedido_complemento' exige ao menos uma pergunta")
         if self.estado != "pedido_complemento" and self.perguntas_complemento:

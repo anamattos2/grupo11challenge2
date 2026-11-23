@@ -33,7 +33,6 @@ from .contratos import (
     EntradaPesquisa,
     EntradaValidacao,
     EtapaRastro,
-    Lacuna,
     Papel,
     RespostaFinal,
     SaidaAnalise,
@@ -42,17 +41,19 @@ from .contratos import (
     SaidaValidacao,
 )
 from .fluxo import (
+    MAX_RODADAS_CALCULO,
     MAX_REVISOES_PADRAO,
     ContratoInvalido,
     Etapa,
     Transicao,
     apos_analise,
-    apos_comunicacao,
     apos_pesquisa,
     apos_validacao,
+    chamadas_para_calculos,
     falha_de_etapa,
     ler_contrato,
-    resposta_aprovada,
+    mesclar_pesquisas,
+    montar_resposta,
     resposta_segura,
 )
 
@@ -79,20 +80,25 @@ class EstadoFluxo(TypedDict, total=False):
     pesquisa: SaidaPesquisa
     analise: SaidaAnalise
     validacao: SaidaValidacao
-    comunicacao: SaidaComunicacao
+    comunicacao: SaidaComunicacao | None
     revisoes: int
+    rodadas_calculo: int
+    calculos_pedidos: tuple[str, ...]
     transicao: Transicao
     # O redutor operator.add faz o LangGraph ACUMULAR as etapas de cada nó.
-    etapas: Annotated[list[EtapaRastro], operator.add]
+    etapas: Annotated[tuple[EtapaRastro, ...], operator.add]
     resposta: RespostaFinal
 
 
 def _executar_agente(papel: Papel, chamada: Callable[[], object], modelo, status_de):
-    """Chama o agente, valida a saída e devolve (saida, etapa, transicao_de_falha)."""
+    """Chama o agente, valida a saída e devolve (saida, etapa, transicao_de_falha).
+
+    ``ler_contrato`` revalida a saída a partir de uma cópia: o estado nunca
+    guarda o objeto que o agente devolveu, e sim um objeto novo e imutável.
+    """
     inicio = time.perf_counter()
     try:
-        saida = chamada()
-        saida = ler_contrato(modelo, saida if not isinstance(saida, modelo) else saida.model_dump())
+        saida = ler_contrato(modelo, chamada())
         falha = None
         status, codigo = status_de(saida), None
     except (ContratoInvalido, ValidationError):
@@ -109,55 +115,81 @@ def _executar_agente(papel: Papel, chamada: Callable[[], object], modelo, status
     return saida, etapa, falha
 
 
-def construir_grafo(agentes: Agentes, *, max_revisoes: int = MAX_REVISOES_PADRAO):
+def construir_grafo(agentes: Agentes, *, max_revisoes: int = MAX_REVISOES_PADRAO,
+                    max_rodadas_calculo: int = MAX_RODADAS_CALCULO):
+    # Cada agente recebe CÓPIAS (``.copia()``) do que está no estado. Mesmo que
+    # um agente tente alterar a entrada, o estado e as outras etapas não mudam.
+
     def no_pesquisa(estado: EstadoFluxo) -> dict:
-        entrada = EntradaPesquisa(contexto=estado["contexto"], pergunta=estado["pergunta"])
+        transicao = estado.get("transicao")
+        calculos = transicao.calculos if transicao else ()
+        entrada = EntradaPesquisa(contexto=estado["contexto"].copia(), pergunta=estado["pergunta"],
+                                  chamadas_solicitadas=chamadas_para_calculos(calculos))
         saida, etapa, falha = _executar_agente(Papel.RESEARCH, lambda: agentes.research(entrada),
                                                SaidaPesquisa, lambda s: s.status)
         if falha:
-            return {"etapas": [etapa], "transicao": falha}
-        return {"pesquisa": saida, "etapas": [etapa], "transicao": apos_pesquisa(saida)}
+            return {"etapas": (etapa,), "transicao": falha}
+        if not calculos:
+            return {"pesquisa": saida, "etapas": (etapa,), "transicao": apos_pesquisa(saida)}
+        # Rodada de cálculo: junta com a pesquisa original e volta à Analysis.
+        mesclada = mesclar_pesquisas(estado["pesquisa"], saida)
+        return {"pesquisa": mesclada, "etapas": (etapa,), "transicao": apos_pesquisa(mesclada),
+                "rodadas_calculo": estado.get("rodadas_calculo", 0) + 1,
+                "calculos_pedidos": estado.get("calculos_pedidos", ()) + tuple(p.id for p in calculos)}
 
     def no_analise(estado: EstadoFluxo) -> dict:
-        feedback = estado["transicao"].feedback if estado.get("validacao") else []
-        entrada = EntradaAnalise(contexto=estado["contexto"], pergunta=estado["pergunta"],
-                                 pesquisa=estado["pesquisa"], feedback_validacao=feedback)
+        transicao = estado["transicao"]
+        feedback = transicao.feedback if estado.get("validacao") else ()
+        entrada = EntradaAnalise(contexto=estado["contexto"].copia(), pergunta=estado["pergunta"],
+                                 pesquisa=estado["pesquisa"].copia(), feedback_validacao=feedback,
+                                 calculos_ja_pedidos=estado.get("calculos_pedidos", ()))
         saida, etapa, falha = _executar_agente(Papel.ANALYSIS, lambda: agentes.analysis(entrada),
                                                SaidaAnalise, lambda s: s.status)
         if falha:
-            return {"etapas": [etapa], "transicao": falha}
-        return {"analise": saida, "etapas": [etapa], "transicao": apos_analise(saida)}
+            return {"etapas": (etapa,), "transicao": falha}
+        proxima = apos_analise(saida, estado.get("rodadas_calculo", 0), max_rodadas_calculo,
+                               estado.get("calculos_pedidos", ()))
+        return {"analise": saida, "etapas": (etapa,), "transicao": proxima}
 
     def no_validacao(estado: EstadoFluxo) -> dict:
-        entrada = EntradaValidacao(contexto=estado["contexto"], pergunta=estado["pergunta"],
-                                   pesquisa=estado["pesquisa"], analise=estado["analise"])
+        entrada = EntradaValidacao(contexto=estado["contexto"].copia(), pergunta=estado["pergunta"],
+                                   pesquisa=estado["pesquisa"].copia(), analise=estado["analise"].copia())
         saida, etapa, falha = _executar_agente(Papel.VALIDATION, lambda: agentes.validation(entrada),
                                                SaidaValidacao, lambda s: s.decisao)
         if falha:
-            return {"etapas": [etapa], "transicao": falha}
+            return {"etapas": (etapa,), "transicao": falha}
         revisoes = estado.get("revisoes", 0)
         transicao = apos_validacao(saida, revisoes, max_revisoes)
         if transicao.proxima is Etapa.ANALISE:
             revisoes += 1
-        return {"validacao": saida, "etapas": [etapa], "transicao": transicao, "revisoes": revisoes}
+        return {"validacao": saida, "etapas": (etapa,), "transicao": transicao, "revisoes": revisoes}
 
     def no_comunicacao(estado: EstadoFluxo) -> dict:
-        entrada = EntradaComunicacao(contexto=estado["contexto"], pergunta=estado["pergunta"],
-                                     pesquisa=estado["pesquisa"], analise=estado["analise"],
-                                     validacao=estado["validacao"])
-        saida, etapa, falha = _executar_agente(Papel.COMMUNICATION, lambda: agentes.communication(entrada),
-                                               SaidaComunicacao, lambda s: "ok")
-        if falha:
-            return {"etapas": [etapa], "transicao": falha}
-        transicao = apos_comunicacao(estado["pesquisa"], estado["analise"], estado["validacao"], saida)
-        return {"comunicacao": saida, "etapas": [etapa], "transicao": transicao}
+        entrada = EntradaComunicacao(contexto=estado["contexto"].copia(), pergunta=estado["pergunta"],
+                                     pesquisa=estado["pesquisa"].copia(), analise=estado["analise"].copia(),
+                                     validacao=estado["validacao"].copia())
+        saida, etapa, _falha = _executar_agente(Papel.COMMUNICATION, lambda: agentes.communication(entrada),
+                                                SaidaComunicacao, lambda s: "ok")
+        # O conteúdo já foi aprovado: se a redação falhar, a resposta sai com o
+        # texto literal das afirmações aprovadas, em vez de virar falha.
+        return {"comunicacao": saida, "etapas": (etapa,), "transicao": Transicao(proxima=Etapa.RESPONDIDA)}
 
     def no_respondida(estado: EstadoFluxo) -> dict:
-        return {"resposta": resposta_aprovada(estado["contexto"], estado["comunicacao"], estado["etapas"])}
+        try:
+            resposta, problemas = montar_resposta(estado["contexto"], estado["pesquisa"], estado["analise"],
+                                                  estado["validacao"], estado.get("comunicacao"), estado["etapas"])
+        except ValueError:
+            return {"resposta": resposta_segura(estado["contexto"], Etapa.FALHA,
+                                                falha_de_etapa(Papel.ORQUESTRADOR).motivo, estado["etapas"])}
+        if problemas:
+            etapa = EtapaRastro(papel=Papel.ORQUESTRADOR, status="redacao_literal", duracao_ms=0,
+                                codigo="redacao_substituida")
+            resposta = resposta.model_copy(update={"etapas": resposta.etapas + (etapa,)})
+        return {"resposta": resposta}
 
     def encerrar(final: Etapa):
         def no(estado: EstadoFluxo) -> dict:
-            lacunas: list[Lacuna] = estado["analise"].lacunas if final is Etapa.PEDIDO_COMPLEMENTO else []
+            lacunas = estado["analise"].lacunas if final is Etapa.PEDIDO_COMPLEMENTO else ()
             return {"resposta": resposta_segura(estado["contexto"], final, estado["transicao"].motivo,
                                                 estado["etapas"], lacunas)}
         return no
@@ -177,9 +209,9 @@ def construir_grafo(agentes: Agentes, *, max_revisoes: int = MAX_REVISOES_PADRAO
     grafo.add_edge(START, Etapa.PESQUISA.value)
     destinos = {
         Etapa.PESQUISA: [Etapa.ANALISE, Etapa.ABSTENCAO, Etapa.FALHA],
-        Etapa.ANALISE: [Etapa.VALIDACAO, Etapa.PEDIDO_COMPLEMENTO, Etapa.FALHA],
+        Etapa.ANALISE: [Etapa.VALIDACAO, Etapa.PESQUISA, Etapa.PEDIDO_COMPLEMENTO, Etapa.ABSTENCAO, Etapa.FALHA],
         Etapa.VALIDACAO: [Etapa.COMUNICACAO, Etapa.ANALISE, Etapa.ABSTENCAO, Etapa.FALHA],
-        Etapa.COMUNICACAO: [Etapa.RESPONDIDA, Etapa.FALHA],
+        Etapa.COMUNICACAO: [Etapa.RESPONDIDA],
     }
     for origem, alvos in destinos.items():
         grafo.add_conditional_edges(origem.value, rota, {a.value: a.value for a in alvos})
@@ -189,7 +221,8 @@ def construir_grafo(agentes: Agentes, *, max_revisoes: int = MAX_REVISOES_PADRAO
 
 
 def executar_fluxo(grafo, contexto: ContextoAutorizado, pergunta: str) -> RespostaFinal:
-    estado = grafo.invoke({"contexto": contexto, "pergunta": pergunta, "revisoes": 0, "etapas": []})
+    estado = grafo.invoke({"contexto": contexto, "pergunta": pergunta, "revisoes": 0,
+                           "rodadas_calculo": 0, "calculos_pedidos": (), "etapas": ()})
     return estado["resposta"]
 
 

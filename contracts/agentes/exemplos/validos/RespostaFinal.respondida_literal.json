@@ -1,0 +1,67 @@
+{
+  "schema": "RespostaFinal",
+  "caso": "respondida_literal",
+  "descricao": "Redação trouxe número inexistente; saiu o texto literal das afirmações.",
+  "documento": {
+    "versao": "1.0",
+    "correlation_id": "req-20261118-0001",
+    "estado": "respondida",
+    "texto": "Em outubro de 2026 você registrou R$ 1.850,40 em despesas de categorias essenciais. [1]\n\nA reserva de emergência serve para cobrir despesas essenciais quando a renda é interrompida ou surge um imprevisto. [2]",
+    "redacao": "literal",
+    "fontes": [
+      {
+        "evidencia_id": "fin:resumo_transacoes:53dd2d27e384",
+        "rotulo": "[1] Despesas em categorias essenciais de 01/10/2026 a 31/10/2026: 3 registros, total 1850.40 BRL."
+      },
+      {
+        "evidencia_id": "doc:4ca5959e85ae1899",
+        "rotulo": "[2] Guia fictício de reserva de emergência, p. 1"
+      }
+    ],
+    "ligacoes": [
+      {
+        "afirmacao_id": "a1",
+        "evidencias_ids": [
+          "fin:resumo_transacoes:53dd2d27e384"
+        ]
+      },
+      {
+        "afirmacao_id": "a2",
+        "evidencias_ids": [
+          "doc:4ca5959e85ae1899"
+        ]
+      }
+    ],
+    "limites": [
+      "Valores financeiros são os declarados por você no aplicativo, sem conexão com bancos."
+    ],
+    "perguntas_complemento": [],
+    "motivo": null,
+    "etapas": [
+      {
+        "papel": "research",
+        "status": "concluida",
+        "duracao_ms": 45,
+        "codigo": null
+      },
+      {
+        "papel": "analysis",
+        "status": "analisada",
+        "duracao_ms": 900,
+        "codigo": null
+      },
+      {
+        "papel": "validation",
+        "status": "aprovada",
+        "duracao_ms": 15,
+        "codigo": null
+      },
+      {
+        "papel": "communication",
+        "status": "ok",
+        "duracao_ms": 700,
+        "codigo": null
+      }
+    ]
+  }
+}

@@ -92,6 +92,34 @@ class InvariantesTest(unittest.TestCase):
                 esperado = ["usuaria_ref"] if definicao == "ContextoAutorizado" else []
                 self.assertEqual(com_usuaria, esperado, f"{nome} → {definicao}")
 
+    def test_nenhum_contrato_guarda_lista_ou_dicionario_mutavel(self):
+        # Revisão #135, item 4: frozen=True não basta; coleções internas também.
+        def mutaveis(objeto, caminho):
+            if isinstance(objeto, (list, dict, set)):
+                yield caminho
+            elif isinstance(objeto, c.Contrato):
+                for nome in type(objeto).model_fields:
+                    yield from mutaveis(getattr(objeto, nome), f"{caminho}.{nome}")
+            elif isinstance(objeto, tuple):
+                for i, item in enumerate(objeto):
+                    yield from mutaveis(item, f"{caminho}[{i}]")
+            elif hasattr(objeto, "items"):
+                for chave, valor in objeto.items():
+                    yield from mutaveis(valor, f"{caminho}[{chave}]")
+
+        for caminho_arquivo, dados in carregar("validos"):
+            with self.subTest(exemplo=caminho_arquivo.name):
+                objeto = c.CONTRATOS_EXPORTADOS[dados["schema"]].model_validate(dados["documento"])
+                self.assertEqual(list(mutaveis(objeto, dados["schema"])), [])
+
+    def test_copia_e_independente_e_igual(self):
+        copia = self.pesquisa.copia()
+        self.assertEqual(copia, self.pesquisa)
+        self.assertIsNot(copia, self.pesquisa)
+        self.assertIsNot(copia.evidencias[0], self.pesquisa.evidencias[0])
+        with self.assertRaises(TypeError):
+            copia.evidencias[0].valores["despesas"] = "0.00"
+
     def test_contratos_sao_imutaveis(self):
         with self.assertRaises(ValidationError):
             self.pesquisa.status = "falha"
@@ -101,11 +129,11 @@ class InvariantesTest(unittest.TestCase):
         campos = [frozenset(m.model_fields) - {"versao"} for m in saidas]
         self.assertEqual(len(set(campos)), 4)
         # Só a Research produz evidências; só a Analysis produz afirmações;
-        # só a Validation decide; só a Communication escreve texto à usuária.
+        # só a Validation decide; só a Communication redige parágrafos.
         self.assertEqual([("evidencias" in f) for f in campos], [True, False, False, False])
         self.assertEqual([("afirmacoes" in f) for f in campos], [False, True, False, False])
         self.assertEqual([("decisao" in f) for f in campos], [False, False, True, False])
-        self.assertEqual([("texto" in f) for f in campos], [False, False, False, True])
+        self.assertEqual([("paragrafos" in f) for f in campos], [False, False, False, True])
 
 
 if __name__ == "__main__":

@@ -2,49 +2,66 @@
 
 Este módulo é a especificação executável que o orquestrador (S4-06 / #80) vai
 seguir. Ele não chama modelos nem ferramentas: só decide, a partir da saída
-de uma etapa, qual é a próxima. Por ser determinístico, cada regra tem teste.
+de uma etapa, qual é a próxima, e monta a resposta final. Por ser
+determinístico, cada regra tem teste.
 
 Estados possíveis::
 
+            ┌──── pedido de cálculo (1 rodada) ───┐
+            ▼                                     │
     PESQUISA ─► ANALISE ─► VALIDACAO ─► COMUNICACAO ─► RESPONDIDA
-       │           │           │  ▲            │
-       │           │           └──┘ (1 revisão) │
-       ▼           ▼           ▼                ▼
-    ABSTENCAO  PEDIDO_COMPLEMENTO  ABSTENCAO   FALHA
-    FALHA      FALHA
+       │           │           │  ▲
+       │           │           └──┘ (1 revisão)
+       ▼           ▼           ▼
+    ABSTENCAO  PEDIDO_COMPLEMENTO  ABSTENCAO
+    FALHA      ABSTENCAO, FALHA
 
-Três desfechos que não são "respondida", com significados diferentes:
+Desfechos que não são "respondida", com significados diferentes:
 
-- **abstenção**: o sistema funcionou, mas não há base para afirmar nada
-  (sem evidências, ou a validação reprovou). Dizer "não sei" é correto.
+- **abstenção**: o sistema funcionou, mas não há base para afirmar nada:
+  busca sem resultados, consultas sem permissão, cálculo que não pôde ser
+  obtido ou validação reprovada. Dizer "não sei" é correto.
 - **pedido de complemento**: falta um dado que só a usuária pode informar
   (ex.: nenhuma categoria marcada como essencial).
-- **falha**: algum componente quebrou (erro, tempo esgotado, contrato inválido).
+- **falha**: algum componente quebrou (erro de ferramenta, exceção, tempo
+  esgotado, contrato inválido). Falha nunca é apresentada como "não encontrei".
 """
 
 from __future__ import annotations
 
+from decimal import Decimal, InvalidOperation
 from enum import StrEnum
+import re
 from typing import TypeVar
 
 from pydantic import ValidationError
 
 from .contratos import (
+    ChamadaFerramenta,
     Contrato,
     ContextoAutorizado,
     EtapaRastro,
+    Evidencia,
+    FonteCitada,
     Lacuna,
+    Ligacao,
+    Lista,
     MotivoEncerramento,
     Papel,
+    PedidoCalculo,
     RespostaFinal,
     SaidaAnalise,
     SaidaComunicacao,
     SaidaPesquisa,
     SaidaValidacao,
+    status_da_pesquisa,
 )
 
 MAX_REVISOES_PADRAO = 1
 """Quantas vezes a Analysis pode refazer o trabalho após uma reprovação."""
+
+MAX_RODADAS_CALCULO = 1
+"""Quantas vezes a Analysis pode pedir cálculos à Research numa pergunta."""
 
 
 class Etapa(StrEnum):
@@ -64,7 +81,8 @@ ETAPAS_FINAIS = frozenset({Etapa.RESPONDIDA, Etapa.ABSTENCAO, Etapa.PEDIDO_COMPL
 class Transicao(Contrato):
     proxima: Etapa
     motivo: MotivoEncerramento | None = None
-    feedback: list[str] = []
+    feedback: Lista[str] = ()
+    calculos: Lista[PedidoCalculo] = ()
 
 
 # --------------------------------------------------------------------------
@@ -84,14 +102,18 @@ class ContratoInvalido(Exception):
 
 
 def ler_contrato(modelo: type[C], dados: object) -> C:
-    """Valida ``dados`` (dict ou JSON) contra ``modelo``.
+    """Valida ``dados`` (dict, JSON ou objeto do próprio modelo) contra ``modelo``.
 
     Use na fronteira de cada agente, principalmente quando a saída vem de um
-    LLM: o texto gerado é não confiável até passar por aqui.
+    LLM: o texto gerado é não confiável até passar por aqui. Um objeto do
+    modelo também é revalidado a partir de uma cópia, para que o agente que o
+    produziu não guarde uma referência ao que segue no fluxo.
     """
     try:
         if isinstance(dados, (str, bytes)):
             return modelo.model_validate_json(dados)
+        if isinstance(dados, Contrato):
+            dados = dados.model_dump()
         return modelo.model_validate(dados)
     except ValidationError as exc:
         erros = [{"loc": list(e["loc"]), "type": e["type"]} for e in exc.errors()]
@@ -99,24 +121,67 @@ def ler_contrato(modelo: type[C], dados: object) -> C:
 
 
 # --------------------------------------------------------------------------
-# Transições
+# Pesquisa e pedidos de cálculo
 # --------------------------------------------------------------------------
 
 
 def apos_pesquisa(saida: SaidaPesquisa) -> Transicao:
+    """Busca vazia, falta de permissão e falha de ferramenta têm destinos distintos."""
     if saida.status == "falha":
         return Transicao(proxima=Etapa.FALHA, motivo=MotivoEncerramento.FALHA_PESQUISA)
+    if saida.status == "sem_permissao":
+        return Transicao(proxima=Etapa.ABSTENCAO, motivo=MotivoEncerramento.SEM_PERMISSAO)
     if saida.status == "sem_evidencias":
         return Transicao(proxima=Etapa.ABSTENCAO, motivo=MotivoEncerramento.SEM_EVIDENCIAS)
     return Transicao(proxima=Etapa.ANALISE)
 
 
-def apos_analise(saida: SaidaAnalise) -> Transicao:
+def chamadas_para_calculos(calculos: Lista[PedidoCalculo]) -> tuple[ChamadaFerramenta, ...]:
+    return tuple(pedido.como_chamada() for pedido in calculos)
+
+
+def mesclar_pesquisas(base: SaidaPesquisa, complemento: SaidaPesquisa) -> SaidaPesquisa:
+    """Junta a pesquisa original com a que atendeu os pedidos de cálculo.
+
+    Evidências repetidas entram uma vez; todas as chamadas ficam no rastro.
+    O status é recalculado pela mesma regra de ``status_da_pesquisa``.
+    """
+    evidencias = {e.id: e for e in base.evidencias}
+    for evidencia in complemento.evidencias:
+        evidencias.setdefault(evidencia.id, evidencia)
+    chamadas = base.chamadas + complemento.chamadas
+    modo = "prototipo_fixtures" if "prototipo_fixtures" in (base.modo, complemento.modo) else "integrado"
+    return SaidaPesquisa(
+        status=status_da_pesquisa(bool(evidencias), chamadas),
+        modo=modo,
+        evidencias=tuple(evidencias.values()),
+        chamadas=chamadas,
+        observacoes=base.observacoes + complemento.observacoes,
+    )
+
+
+def apos_analise(
+    saida: SaidaAnalise,
+    rodadas_calculo: int = 0,
+    max_rodadas: int = MAX_RODADAS_CALCULO,
+    ja_pedidos: Lista[str] = (),
+) -> Transicao:
+    """Pedido de cálculo volta à Research uma vez; repetido ou além do limite, abstenção."""
     if saida.status == "falha":
         return Transicao(proxima=Etapa.FALHA, motivo=MotivoEncerramento.FALHA_ANALISE)
     if saida.status == "dados_insuficientes":
         return Transicao(proxima=Etapa.PEDIDO_COMPLEMENTO, motivo=MotivoEncerramento.DADOS_INSUFICIENTES)
+    if saida.status == "precisa_calculo":
+        repetido = any(p.id in ja_pedidos for p in saida.calculos)
+        if rodadas_calculo < max_rodadas and not repetido:
+            return Transicao(proxima=Etapa.PESQUISA, calculos=saida.calculos)
+        return Transicao(proxima=Etapa.ABSTENCAO, motivo=MotivoEncerramento.CALCULO_INDISPONIVEL)
     return Transicao(proxima=Etapa.VALIDACAO)
+
+
+# --------------------------------------------------------------------------
+# Validação
+# --------------------------------------------------------------------------
 
 
 def apos_validacao(
@@ -128,44 +193,138 @@ def apos_validacao(
     """
     if saida.decisao == "reprovada":
         if revisoes_realizadas < max_revisoes:
-            return Transicao(proxima=Etapa.ANALISE, feedback=list(saida.feedback))
+            return Transicao(proxima=Etapa.ANALISE, feedback=saida.feedback)
         return Transicao(proxima=Etapa.ABSTENCAO, motivo=MotivoEncerramento.VALIDACAO_REPROVADA)
     return Transicao(proxima=Etapa.COMUNICACAO)
 
 
-def inconsistencias_comunicacao(
-    pesquisa: SaidaPesquisa, analise: SaidaAnalise, validacao: SaidaValidacao, saida: SaidaComunicacao
-) -> list[str]:
-    """Checagem determinística final: a Communication não pode inventar suporte.
+# --------------------------------------------------------------------------
+# Communication: checagem e montagem da resposta
+# --------------------------------------------------------------------------
 
-    - só usa afirmações aprovadas;
-    - cada afirmação mantém as evidências que a Analysis indicou;
-    - toda fonte citada existe na pesquisa desta requisição.
+_NUMERO = re.compile(r"\d+(?:[.,]\d+)*")
+
+
+def _normalizar_numero(bruto: str) -> str:
+    """'R$ 1.850,40', '1850.40' e '1850,4' viram '1850.4'; '6.000' vira '6000'."""
+    if "." in bruto and "," in bruto:
+        texto = bruto.replace(".", "").replace(",", ".")
+    elif "," in bruto:
+        texto = bruto.replace(",", ".") if bruto.count(",") == 1 else bruto.replace(",", "")
+    elif "." in bruto:
+        partes = bruto.split(".")
+        milhar = len(partes) > 1 and all(len(p) == 3 for p in partes[1:])
+        texto = bruto.replace(".", "") if milhar else bruto
+    else:
+        texto = bruto
+    try:
+        return format(Decimal(texto).normalize(), "f")
+    except InvalidOperation:
+        return bruto
+
+
+def numeros(texto: str) -> set[str]:
+    """Números (valores, percentuais, anos, dias) de um texto, em forma canônica."""
+    return {_normalizar_numero(m.group()) for m in _NUMERO.finditer(texto)}
+
+
+def inconsistencias_comunicacao(
+    analise: SaidaAnalise, validacao: SaidaValidacao, saida: SaidaComunicacao
+) -> list[str]:
+    """Checagem determinística dos parágrafos da Communication.
+
+    - cada parágrafo só expressa afirmações aprovadas;
+    - todo número do parágrafo aparece no texto das afirmações que ele declara
+      (a Communication pode reformatar "1850.40" como "R$ 1.850,40", mas não
+      pode trazer um número novo, nem marcar citações por conta própria);
+    - toda afirmação aprovada aparece em algum parágrafo.
+
+    Limite conhecido: uma frase nova sem números não é detectável por regra.
+    Por isso a Communication não escolhe fontes, e a implementação dela
+    (S4-05) deve trazer avaliação própria do texto.
     """
     problemas: list[str] = []
-    aprovadas = set(validacao.afirmacoes_aprovadas)
-    evid_por_afirmacao = {a.id: set(a.evidencias_ids) for a in analise.afirmacoes}
-    existentes = {e.id for e in pesquisa.evidencias}
-
-    for lig in saida.ligacoes:
-        if lig.afirmacao_id not in aprovadas:
-            problemas.append(f"afirmação {lig.afirmacao_id} não foi aprovada")
-            continue
-        extras = set(lig.evidencias_ids) - evid_por_afirmacao.get(lig.afirmacao_id, set())
+    aprovadas = list(validacao.afirmacoes_aprovadas)
+    por_id = {a.id: a for a in analise.afirmacoes}
+    cobertas: set[str] = set()
+    for indice, paragrafo in enumerate(saida.paragrafos, start=1):
+        permitidos: set[str] = set()
+        for afirmacao_id in paragrafo.afirmacoes_ids:
+            if afirmacao_id not in aprovadas or afirmacao_id not in por_id:
+                problemas.append(f"parágrafo {indice} usa a afirmação {afirmacao_id}, que não foi aprovada")
+                continue
+            cobertas.add(afirmacao_id)
+            permitidos |= numeros(por_id[afirmacao_id].texto)
+        extras = numeros(paragrafo.texto) - permitidos
         if extras:
-            problemas.append(f"afirmação {lig.afirmacao_id} ligada a evidência não indicada: {sorted(extras)}")
-    for fonte in saida.fontes:
-        if fonte.evidencia_id not in existentes:
-            problemas.append(f"fonte {fonte.evidencia_id} não existe na pesquisa")
+            problemas.append(f"parágrafo {indice} traz números fora das afirmações: {sorted(extras)}")
+    faltando = [a for a in aprovadas if a not in cobertas]
+    if faltando:
+        problemas.append(f"afirmações aprovadas fora do texto: {faltando}")
     return problemas
 
 
-def apos_comunicacao(
-    pesquisa: SaidaPesquisa, analise: SaidaAnalise, validacao: SaidaValidacao, saida: SaidaComunicacao
-) -> Transicao:
-    if inconsistencias_comunicacao(pesquisa, analise, validacao, saida):
-        return Transicao(proxima=Etapa.FALHA, motivo=MotivoEncerramento.COMUNICACAO_INCONSISTENTE)
-    return Transicao(proxima=Etapa.RESPONDIDA)
+def rotulo_evidencia(evidencia: Evidencia) -> str:
+    if evidencia.tipo == "documental":
+        nome = evidencia.origem.titulo or evidencia.origem.document_id
+        return f"{nome}, p. {evidencia.localizacao.pagina}"
+    return evidencia.resumo
+
+
+def montar_resposta(
+    contexto: ContextoAutorizado,
+    pesquisa: SaidaPesquisa,
+    analise: SaidaAnalise,
+    validacao: SaidaValidacao,
+    comunicacao: SaidaComunicacao | None,
+    etapas: Lista[EtapaRastro],
+) -> tuple[RespostaFinal, list[str]]:
+    """Monta texto, citações, fontes e ligações a partir das afirmações aprovadas.
+
+    Usa os parágrafos da Communication quando passam na checagem; senão (ou
+    se a Communication falhou), usa o texto literal das afirmações aprovadas.
+    Devolve a resposta e a lista de problemas encontrados na redação.
+    """
+    por_id = {a.id: a for a in analise.afirmacoes}
+    evidencias = {e.id: e for e in pesquisa.evidencias}
+    problemas = (inconsistencias_comunicacao(analise, validacao, comunicacao)
+                 if comunicacao else ["a Communication não entregou redação"])
+    literal = [((a,), por_id[a].texto) for a in validacao.afirmacoes_aprovadas]
+    tentativas = [("literal", literal, ())]
+    if not problemas:
+        redigidos = [(p.afirmacoes_ids, p.texto) for p in comunicacao.paragrafos]
+        tentativas.insert(0, ("communication", redigidos, comunicacao.limites))
+
+    for redacao, paragrafos, limites in tentativas:
+        numero: dict[str, int] = {}
+        blocos: list[str] = []
+        ligacoes: list[Ligacao] = []
+        for afirmacoes_ids, texto in paragrafos:
+            marcas = []
+            for afirmacao_id in afirmacoes_ids:
+                ids = por_id[afirmacao_id].evidencias_ids
+                if afirmacao_id not in {l.afirmacao_id for l in ligacoes}:
+                    ligacoes.append(Ligacao(afirmacao_id=afirmacao_id, evidencias_ids=ids))
+                for evidencia_id in ids:
+                    if evidencia_id not in evidencias:
+                        raise ValueError(f"evidência {evidencia_id} não existe na pesquisa")
+                    numero.setdefault(evidencia_id, len(numero) + 1)
+                    if numero[evidencia_id] not in marcas:
+                        marcas.append(numero[evidencia_id])
+            blocos.append(texto.rstrip() + " " + "".join(f"[{n}]" for n in sorted(marcas)))
+        fontes = [FonteCitada(evidencia_id=i, rotulo=f"[{n}] {rotulo_evidencia(evidencias[i])}"[:300])
+                  for i, n in numero.items()]
+        try:
+            resposta = RespostaFinal(
+                correlation_id=contexto.correlation_id, estado="respondida", texto="\n\n".join(blocos),
+                redacao=redacao, fontes=fontes, ligacoes=ligacoes,
+                limites=tuple(limites) or (LIMITE_PADRAO,), etapas=etapas,
+            )
+        except ValidationError:
+            problemas = problemas + [f"redação {redacao} não cabe na resposta final"]
+            continue
+        return resposta, problemas
+    raise ValueError("não foi possível montar a resposta nem com a redação literal")
 
 
 def falha_de_etapa(papel: Papel, *, tempo_esgotado: bool = False, contrato: bool = False) -> Transicao:
@@ -185,7 +344,7 @@ def falha_de_etapa(papel: Papel, *, tempo_esgotado: bool = False, contrato: bool
 
 
 # --------------------------------------------------------------------------
-# Respostas finais
+# Respostas seguras
 # --------------------------------------------------------------------------
 
 LIMITE_PADRAO = (
@@ -196,6 +355,14 @@ MENSAGENS_SEGURAS: dict[MotivoEncerramento, str] = {
     MotivoEncerramento.SEM_EVIDENCIAS: (
         "Não encontrei informações suficientes nos documentos e nos dados cadastrados "
         "para responder com segurança. Você pode reformular a pergunta?"
+    ),
+    MotivoEncerramento.SEM_PERMISSAO: (
+        "Esta conversa não tem permissão para consultar as informações necessárias "
+        "para responder. Nenhum dado foi acessado."
+    ),
+    MotivoEncerramento.CALCULO_INDISPONIVEL: (
+        "Não consegui obter, a partir dos dados cadastrados, os cálculos necessários "
+        "para responder com segurança."
     ),
     MotivoEncerramento.VALIDACAO_REPROVADA: (
         "Não consegui confirmar a resposta com as fontes disponíveis, então prefiro "
@@ -215,8 +382,8 @@ def resposta_segura(
     contexto: ContextoAutorizado,
     final: Etapa,
     motivo: MotivoEncerramento,
-    etapas: list[EtapaRastro],
-    lacunas: list[Lacuna] | None = None,
+    etapas: Lista[EtapaRastro],
+    lacunas: Lista[Lacuna] = (),
 ) -> RespostaFinal:
     """Texto fixo, sem LLM, para abstenção, pedido de complemento ou falha.
 
@@ -224,9 +391,9 @@ def resposta_segura(
     """
     if final not in (Etapa.ABSTENCAO, Etapa.PEDIDO_COMPLEMENTO, Etapa.FALHA):
         raise ValueError("resposta_segura não se aplica a respostas aprovadas")
-    perguntas = []
+    perguntas = ()
     if final is Etapa.PEDIDO_COMPLEMENTO:
-        perguntas = [l.pergunta_complemento or l.descricao for l in (lacunas or [])]
+        perguntas = tuple(l.pergunta_complemento or l.descricao for l in lacunas)
     texto = MENSAGEM_FALHA if final is Etapa.FALHA else MENSAGENS_SEGURAS[motivo]
     return RespostaFinal(
         correlation_id=contexto.correlation_id,
@@ -234,20 +401,6 @@ def resposta_segura(
         texto=texto,
         perguntas_complemento=perguntas,
         motivo=motivo,
-        limites=[LIMITE_PADRAO],
-        etapas=etapas,
-    )
-
-
-def resposta_aprovada(
-    contexto: ContextoAutorizado, comunicacao: SaidaComunicacao, etapas: list[EtapaRastro]
-) -> RespostaFinal:
-    limites = list(comunicacao.limites) or [LIMITE_PADRAO]
-    return RespostaFinal(
-        correlation_id=contexto.correlation_id,
-        estado="respondida",
-        texto=comunicacao.texto,
-        fontes=comunicacao.fontes,
-        limites=limites,
+        limites=(LIMITE_PADRAO,),
         etapas=etapas,
     )

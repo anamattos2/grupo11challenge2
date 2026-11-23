@@ -1,76 +1,41 @@
 {
   "$defs": {
-    "FonteCitada": {
+    "Paragrafo": {
       "additionalProperties": false,
+      "description": "Um parágrafo da resposta e as afirmações aprovadas que ele expressa.",
       "properties": {
-        "evidencia_id": {
-          "pattern": "^(doc:[0-9a-f]{16,64}|fin:[a-z_]{3,40}:[0-9a-f]{12})$",
-          "title": "Evidencia Id",
-          "type": "string"
-        },
-        "rotulo": {
-          "description": "Como a fonte aparece para a usuária (ex.: 'F003, p. 12').",
-          "maxLength": 300,
-          "minLength": 1,
-          "title": "Rotulo",
-          "type": "string"
-        }
-      },
-      "required": [
-        "evidencia_id",
-        "rotulo"
-      ],
-      "title": "FonteCitada",
-      "type": "object"
-    },
-    "Ligacao": {
-      "additionalProperties": false,
-      "description": "Explica qual evidência sustenta cada afirmação usada no texto.",
-      "properties": {
-        "afirmacao_id": {
-          "pattern": "^a[0-9]{1,3}$",
-          "title": "Afirmacao Id",
-          "type": "string"
-        },
-        "evidencias_ids": {
+        "afirmacoes_ids": {
           "items": {
-            "pattern": "^(doc:[0-9a-f]{16,64}|fin:[a-z_]{3,40}:[0-9a-f]{12})$",
+            "pattern": "^a[0-9]{1,3}$",
             "type": "string"
           },
+          "maxItems": 5,
           "minItems": 1,
-          "title": "Evidencias Ids",
+          "title": "Afirmacoes Ids",
           "type": "array"
+        },
+        "texto": {
+          "maxLength": 800,
+          "minLength": 1,
+          "title": "Texto",
+          "type": "string"
         }
       },
       "required": [
-        "afirmacao_id",
-        "evidencias_ids"
+        "afirmacoes_ids",
+        "texto"
       ],
-      "title": "Ligacao",
+      "title": "Paragrafo",
       "type": "object"
     }
   },
   "$id": "https://github.com/anamattos2/grupo11challenge2/contracts/agentes/schemas/SaidaComunicacao.schema.json",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "additionalProperties": false,
+  "description": "A Communication só redige: não escolhe fontes nem cria ligações.\n\nCada parágrafo declara quais afirmações aprovadas ele expressa. O\norquestrador monta o texto final, numera as citações e deriva fontes e\nligações das evidências de cada afirmação (``fluxo.montar_resposta``).\nAntes disso, ``fluxo.inconsistencias_comunicacao`` confere os parágrafos;\nse algo não bater, a resposta é montada só com o texto literal das\nafirmações aprovadas.",
   "properties": {
-    "fontes": {
-      "items": {
-        "$ref": "#/$defs/FonteCitada"
-      },
-      "minItems": 1,
-      "title": "Fontes",
-      "type": "array"
-    },
-    "ligacoes": {
-      "items": {
-        "$ref": "#/$defs/Ligacao"
-      },
-      "minItems": 1,
-      "title": "Ligacoes",
-      "type": "array"
-    },
     "limites": {
+      "default": [],
       "items": {
         "maxLength": 300,
         "minLength": 1,
@@ -79,11 +44,14 @@
       "title": "Limites",
       "type": "array"
     },
-    "texto": {
-      "maxLength": 3000,
-      "minLength": 1,
-      "title": "Texto",
-      "type": "string"
+    "paragrafos": {
+      "items": {
+        "$ref": "#/$defs/Paragrafo"
+      },
+      "maxItems": 8,
+      "minItems": 1,
+      "title": "Paragrafos",
+      "type": "array"
     },
     "versao": {
       "const": "1.0",
@@ -93,9 +61,7 @@
     }
   },
   "required": [
-    "texto",
-    "fontes",
-    "ligacoes"
+    "paragrafos"
   ],
   "title": "SaidaComunicacao",
   "type": "object",

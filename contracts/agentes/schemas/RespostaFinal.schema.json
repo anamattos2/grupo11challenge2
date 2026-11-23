@@ -61,16 +61,43 @@
       "title": "FonteCitada",
       "type": "object"
     },
+    "Ligacao": {
+      "additionalProperties": false,
+      "description": "Explica qual evidência sustenta cada afirmação usada no texto.",
+      "properties": {
+        "afirmacao_id": {
+          "pattern": "^a[0-9]{1,3}$",
+          "title": "Afirmacao Id",
+          "type": "string"
+        },
+        "evidencias_ids": {
+          "items": {
+            "pattern": "^(doc:[0-9a-f]{16,64}|fin:[a-z_]{3,40}:[0-9a-f]{12})$",
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Evidencias Ids",
+          "type": "array"
+        }
+      },
+      "required": [
+        "afirmacao_id",
+        "evidencias_ids"
+      ],
+      "title": "Ligacao",
+      "type": "object"
+    },
     "MotivoEncerramento": {
       "enum": [
         "sem_evidencias",
+        "sem_permissao",
         "dados_insuficientes",
+        "calculo_indisponivel",
         "validacao_reprovada",
         "falha_pesquisa",
         "falha_analise",
         "falha_validacao",
         "falha_comunicacao",
-        "comunicacao_inconsistente",
         "contrato_invalido",
         "tempo_esgotado"
       ],
@@ -92,6 +119,7 @@
   "$id": "https://github.com/anamattos2/grupo11challenge2/contracts/agentes/schemas/RespostaFinal.schema.json",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "additionalProperties": false,
+  "description": "O que a API devolve à PWA.\n\n``redacao`` diz quem escreveu o texto de uma resposta aprovada:\n``communication`` (parágrafos conferidos) ou ``literal`` (texto das\nafirmações aprovadas, usado quando a redação não passou na checagem).",
   "properties": {
     "correlation_id": {
       "pattern": "^[A-Za-z0-9_-]{8,64}$",
@@ -109,6 +137,7 @@
       "type": "string"
     },
     "etapas": {
+      "default": [],
       "items": {
         "$ref": "#/$defs/EtapaRastro"
       },
@@ -116,13 +145,23 @@
       "type": "array"
     },
     "fontes": {
+      "default": [],
       "items": {
         "$ref": "#/$defs/FonteCitada"
       },
       "title": "Fontes",
       "type": "array"
     },
+    "ligacoes": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/Ligacao"
+      },
+      "title": "Ligacoes",
+      "type": "array"
+    },
     "limites": {
+      "default": [],
       "items": {
         "maxLength": 300,
         "minLength": 1,
@@ -143,6 +182,7 @@
       "default": null
     },
     "perguntas_complemento": {
+      "default": [],
       "items": {
         "maxLength": 300,
         "minLength": 1,
@@ -151,8 +191,24 @@
       "title": "Perguntas Complemento",
       "type": "array"
     },
+    "redacao": {
+      "anyOf": [
+        {
+          "enum": [
+            "communication",
+            "literal"
+          ],
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Redacao"
+    },
     "texto": {
-      "maxLength": 3000,
+      "maxLength": 4000,
       "minLength": 1,
       "title": "Texto",
       "type": "string"

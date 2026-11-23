@@ -86,6 +86,102 @@
       ],
       "title": "Lacuna",
       "type": "object"
+    },
+    "OperacaoFinanceira": {
+      "description": "Lista fechada de consultas financeiras. Não há SQL livre nem escrita.",
+      "enum": [
+        "resumo_transacoes",
+        "listar_contas",
+        "situacao_reserva"
+      ],
+      "title": "OperacaoFinanceira",
+      "type": "string"
+    },
+    "ParametrosFinanceiros": {
+      "additionalProperties": false,
+      "description": "Parâmetros que o planejador (regra ou LLM) pode preencher.\n\nRepare que não existe campo de usuária: quem é a dona dos dados vem do\n``ContextoAutorizado``, e ``extra=\"forbid\"`` recusa qualquer tentativa.",
+      "properties": {
+        "periodo_fim": {
+          "anyOf": [
+            {
+              "format": "date",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Periodo Fim"
+        },
+        "periodo_inicio": {
+          "anyOf": [
+            {
+              "format": "date",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Periodo Inicio"
+        },
+        "somente_essenciais": {
+          "default": false,
+          "title": "Somente Essenciais",
+          "type": "boolean"
+        },
+        "tipo": {
+          "anyOf": [
+            {
+              "enum": [
+                "receita",
+                "despesa"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Tipo"
+        }
+      },
+      "title": "ParametrosFinanceiros",
+      "type": "object"
+    },
+    "PedidoCalculo": {
+      "additionalProperties": false,
+      "description": "A Analysis pede um número que ainda não está nas evidências.\n\nA Analysis não calcula valores oficiais (decisão D05): ela pede ao backend,\npela mesma lista fechada de operações da Research. O orquestrador\ntransforma o pedido em ``ChamadaFerramenta`` com ``pedido_id``, a Research\nexecuta e a Analysis recebe a pesquisa completada. Exemplo: a pergunta\ncompara outubro com setembro, mas a Research só trouxe outubro.",
+      "properties": {
+        "id": {
+          "pattern": "^c[0-9]{1,2}$",
+          "title": "Id",
+          "type": "string"
+        },
+        "motivo": {
+          "description": "Para que a Analysis precisa do resultado.",
+          "maxLength": 300,
+          "minLength": 1,
+          "title": "Motivo",
+          "type": "string"
+        },
+        "operacao": {
+          "$ref": "#/$defs/OperacaoFinanceira"
+        },
+        "parametros": {
+          "$ref": "#/$defs/ParametrosFinanceiros"
+        }
+      },
+      "required": [
+        "id",
+        "operacao",
+        "motivo"
+      ],
+      "title": "PedidoCalculo",
+      "type": "object"
     }
   },
   "$id": "https://github.com/anamattos2/grupo11challenge2/contracts/agentes/schemas/SaidaAnalise.schema.json",
@@ -93,10 +189,21 @@
   "additionalProperties": false,
   "properties": {
     "afirmacoes": {
+      "default": [],
       "items": {
         "$ref": "#/$defs/Afirmacao"
       },
+      "maxItems": 5,
       "title": "Afirmacoes",
+      "type": "array"
+    },
+    "calculos": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/PedidoCalculo"
+      },
+      "maxItems": 3,
+      "title": "Calculos",
       "type": "array"
     },
     "codigo_erro": {
@@ -113,6 +220,7 @@
       "title": "Codigo Erro"
     },
     "lacunas": {
+      "default": [],
       "items": {
         "$ref": "#/$defs/Lacuna"
       },
@@ -122,6 +230,7 @@
     "status": {
       "enum": [
         "analisada",
+        "precisa_calculo",
         "dados_insuficientes",
         "falha"
       ],

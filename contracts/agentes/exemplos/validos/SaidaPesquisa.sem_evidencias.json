@@ -1,7 +1,7 @@
 {
   "schema": "SaidaPesquisa",
   "caso": "sem_evidencias",
-  "descricao": "Nenhum trecho acima do limiar.",
+  "descricao": "Busca respondeu sem resultados: busca vazia de fato.",
   "documento": {
     "versao": "1.0",
     "status": "sem_evidencias",
