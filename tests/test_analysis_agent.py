@@ -315,7 +315,7 @@ class RedatorLLMTest(unittest.TestCase):
                             evidencias_ids=[MARCADOR.search(prompt).group(1)])])
         saida, relatorio, entrada = analisar(self.pergunta, agente=AnalysisAgent(RedatorLLM(ModeloFixo(responder))))
         self.assertNotIn("2.000", " ".join(a.texto for a in saida.afirmacoes))
-        self.assertIn("todos os rascunhos do modelo foram recusados; usadas as regras", relatorio.recusas)
+        self.assertIn("rascunhos do modelo não sustentaram a resposta; usadas as regras", relatorio.recusas)
         conferir_rastreabilidade(self, saida, entrada.pesquisa)
 
     def test_modelo_fora_do_ar_usa_regras(self):
@@ -382,6 +382,161 @@ class IntegracaoComGrafoTest(unittest.TestCase):
         self.assertEqual(resposta.estado, "respondida")
         self.assertEqual(len(resposta.ligacoes), 3)
         self.assertTrue(all(l.evidencias_ids for l in resposta.ligacoes))
+
+
+class FonteQueFalhaEm(ConsultaFinanceiraFixture):
+    """Fonte fictícia que dá erro só para um mês."""
+
+    def __init__(self, inicio):
+        super().__init__()
+        self.inicio = inicio
+
+    def consultar(self, contexto, operacao, parametros):
+        if parametros.periodo_inicio == self.inicio:
+            from finance_ai.agents.ferramentas import ErroFerramenta
+            raise ErroFerramenta("backend_indisponivel")
+        return super().consultar(contexto, operacao, parametros)
+
+
+class RedatorFixo:
+    """Redator que não é LLM e devolve rascunhos prontos (para testar o _conferir)."""
+
+    def __init__(self, fazer):
+        self.fazer = fazer
+
+    def redigir(self, entrada, diag):
+        return self.fazer(entrada, diag)
+
+
+def trocar_valores(pesquisa, prefixo, **valores):
+    """Cópia da pesquisa com valores trocados nas evidências cujo id começa com ``prefixo``."""
+    evidencias = [e.model_copy(update={"valores": valores}) if e.id.startswith(prefixo) else e
+                  for e in pesquisa.evidencias]
+    return pesquisa.model_copy(update={"evidencias": tuple(evidencias)})
+
+
+class SegundaRevisaoDoPR141Test(unittest.TestCase):
+    """Pontos da revisão do PR #141 (S4-03)."""
+
+    def test_rascunhos_pessoais_recusados_nao_viram_resposta_so_conceitual(self):
+        # Correção bloqueante (analysis.py:540): dado existe, rascunho pessoal recusado, educativo passa.
+        def redigir(entrada, diag):
+            ev = diag.transacoes[0].evidencia
+            doc, frase = diag.orientacoes[0]
+            return [Rascunho("dado_pessoal", "Você gastou R$ 9.999,00.", (ev.id,)),
+                    Rascunho("orientacao_educativa", frase, (doc.id,))]
+        saida, _, _ = analisar("Quanto gastei com despesas essenciais em outubro e por que devo ter uma "
+                               "reserva de emergência?", agente=AnalysisAgent(RedatorFixo(redigir)))
+        self.assertEqual(saida.status, "dados_insuficientes")
+        self.assertEqual([l.codigo for l in saida.lacunas], ["dados_pessoais_sem_suporte"])
+        self.assertTrue(saida.lacunas[0].pergunta_complemento)
+
+    def test_llm_que_so_responde_a_parte_conceitual_aciona_as_regras(self):
+        def responder(prompt):
+            ident, frase = next(l[1:].split("] ", 1) for l in prompt.splitlines() if l.startswith("[doc:"))
+            return RascunhosLLM(afirmacoes=[RascunhoLLM(natureza="orientacao_educativa", texto=frase,
+                                                        evidencias_ids=[ident])])
+        saida, relatorio, _ = analisar("Quanto gastei com despesas essenciais em outubro e por que devo ter uma "
+                                       "reserva de emergência?",
+                                       agente=AnalysisAgent(RedatorLLM(ModeloFixo(responder))))
+        self.assertEqual(saida.status, "analisada")
+        self.assertIn("R$ 1.850,40", saida.afirmacoes[0].texto)
+        self.assertIn("rascunhos do modelo não sustentaram a resposta; usadas as regras", relatorio.recusas)
+
+    def test_erro_num_mes_nao_marca_outro_mes_como_falho(self):
+        # analysis.py:200/:236: a situação da consulta é casada por período, não só por operação.
+        research = ResearchAgent(RetrieverFixture(), FonteQueFalhaEm(date(2026, 9, 1)))
+        pergunta = "Gastei mais em outubro ou em setembro?"
+        ctx, pesquisa = pesquisar(pergunta, research=research)
+        self.assertEqual([c.status for c in pesquisa.chamadas], ["erro"])  # a Research tentou setembro
+        saida, relatorio = AnalysisAgent().analisar(EntradaAnalise(contexto=ctx, pergunta=pergunta, pesquisa=pesquisa))
+        self.assertEqual(saida.status, "precisa_calculo")
+        self.assertEqual([(p.parametros.periodo_inicio, p.parametros.periodo_fim) for p in saida.calculos],
+                         [(date(2026, 10, 1), date(2026, 10, 31))])
+        self.assertEqual([l.descricao for l in relatorio.diagnostico.lacunas],
+                         ["Não consegui consultar as transações de setembro de 2026 agora."])
+
+    def test_registro_da_chamada_guarda_os_parametros(self):
+        _, pesquisa = pesquisar("Quanto gastei em outubro?")
+        (chamada,) = pesquisa.chamadas
+        self.assertEqual((chamada.parametros.periodo_inicio, chamada.parametros.periodo_fim),
+                         (date(2026, 10, 1), date(2026, 10, 31)))
+
+    def test_comparacao_com_valor_nulo_vira_lacuna_e_nao_excecao(self):
+        # redacao.py:232: Decimal(None) não pode escapar do nó.
+        pergunta = "Gastei mais em outubro ou em setembro?"
+        segunda, pesquisa, _ = com_rodada_de_calculo(pergunta)
+        self.assertEqual(segunda.status, "analisada")
+        ctx = contexto()
+        quebrada = trocar_valores(pesquisa, "fin:resumo_transacoes:", receitas="0.00", despesas=None, resultado=None)
+        for agente in (AnalysisAgent(), AnalysisAgent(RedatorLLM(ModeloFixo(lambda p: RascunhosLLM())))):
+            saida = agente(EntradaAnalise(contexto=ctx, pergunta=pergunta, pesquisa=quebrada, calculos_ja_pedidos=["c1"]))
+            self.assertNotIn("foram maiores", " ".join(a.texto for a in saida.afirmacoes))
+            self.assertIn("Não dá para comparar os períodos: o backend não devolveu as despesas dos dois meses.",
+                          [l.descricao for l in saida.lacunas])
+
+    def test_feedback_remove_a_afirmacao_pelo_texto_mesmo_com_ids_trocados(self):
+        # analysis.py:536: a numeração pode mudar entre rodadas; o texto não.
+        from finance_ai.agents.analysis import reprovadas_no_feedback
+        primeira = [c.Afirmacao(id="a1", natureza="dado_pessoal", texto="Valor A de outubro.", evidencias_ids=["fin:resumo_transacoes:000000000001"]),
+                    c.Afirmacao(id="a2", natureza="dado_pessoal", texto="Valor B de setembro.", evidencias_ids=["fin:resumo_transacoes:000000000002"])]
+        segunda = [primeira[1].model_copy(update={"id": "a1"}), primeira[0].model_copy(update={"id": "a2"})]
+        feedback = ("a2 sem suporte", 'a2 reprovada: "Valor B de setembro."')
+        self.assertEqual(reprovadas_no_feedback(segunda, feedback), ["a1"])  # o texto manda, não o id
+        self.assertEqual(reprovadas_no_feedback(segunda, ("a2 sem suporte",)), ["a2"])  # sem texto, usa o id
+
+    def test_ids_seguem_a_posicao_do_rascunho(self):
+        from finance_ai.agents.redacao import materializar_todos
+        _, pesquisa = pesquisar("Quanto gastei em outubro?")
+        ev = pesquisa.evidencias[0].id
+        afirmacoes, recusas = materializar_todos([
+            Rascunho("dado_pessoal", "Errado: R$ 1,00.", (ev,)),
+            Rascunho("dado_pessoal", "Gastos: {{" + ev + "|despesas}}.", (ev,)),
+        ], pesquisa)
+        self.assertEqual([a.id for a in afirmacoes], ["a2"])
+        self.assertEqual(len(recusas), 1)
+
+    def test_revisao_no_grafo_remove_exatamente_a_afirmacao_reprovada(self):
+        from finance_ai.agents.grafo import Agentes, construir_grafo, executar_fluxo
+        alvo = "Não há despesas registradas em setembro de 2026."
+        vistas = []
+
+        def validation(e):
+            vistas.append([a.texto for a in e.analise.afirmacoes])
+            ruim = [a.id for a in e.analise.afirmacoes if a.texto == alvo]
+            boas = tuple(a.id for a in e.analise.afirmacoes if a.texto != alvo)
+            return c.SaidaValidacao(
+                decisao="reprovada" if ruim else "aprovada", afirmacoes_aprovadas=() if ruim else boas,
+                alegacoes_sem_suporte=ruim,
+                motivo_bloqueio="sem_suporte" if ruim else None, feedback=("Revise a afirmação sem suporte.",) if ruim else (),
+                verificacoes=[c.Verificacao(regra="numeros_conferem", resultado="falha" if ruim else "ok", detalhe="teste")])
+
+        def communication(e):
+            return c.SaidaComunicacao(paragrafos=[c.Paragrafo(afirmacoes_ids=(a.id,), texto=a.texto)
+                                                  for a in e.analise.afirmacoes if a.id in e.validacao.afirmacoes_aprovadas])
+
+        research = ResearchAgent(RetrieverFixture(), ConsultaFinanceiraFixture())
+        grafo = construir_grafo(Agentes(research, AnalysisAgent(), validation, communication))
+        resposta = executar_fluxo(grafo, contexto(), "Gastei mais em outubro ou em setembro?")
+        self.assertEqual(resposta.estado, "respondida")
+        self.assertIn(alvo, vistas[0])
+        self.assertNotIn(alvo, vistas[1])
+        self.assertEqual(len(vistas[1]), len(vistas[0]) - 1)
+
+    def test_mais_de_tres_meses_viram_lacuna(self):
+        saida, relatorio, _ = analisar("Quanto gastei em julho, agosto, setembro e outubro?")
+        self.assertIn("periodo_excedido", [l.codigo for l in relatorio.diagnostico.lacunas])
+        lacuna = next(l for l in relatorio.diagnostico.lacunas if l.codigo == "periodo_excedido")
+        self.assertIn("outubro de 2026", lacuna.descricao)
+
+    def test_reserva_com_valores_vazios_nao_e_tratada_como_calculada(self):
+        pergunta = "Como está minha reserva de emergência?"
+        ctx, pesquisa = pesquisar(pergunta)
+        vazia = trocar_valores(pesquisa, "fin:situacao_reserva:")
+        saida, relatorio = AnalysisAgent().analisar(EntradaAnalise(contexto=ctx, pergunta=pergunta, pesquisa=vazia))
+        self.assertFalse(relatorio.diagnostico.reserva_calculada)
+        self.assertEqual(saida.status, "dados_insuficientes")
+        self.assertEqual(relatorio.recusas, [])
 
 
 @unittest.skipUnless(os.environ.get("RUN_OLLAMA_TESTS") == "1", "defina RUN_OLLAMA_TESTS=1 com o Ollama rodando")

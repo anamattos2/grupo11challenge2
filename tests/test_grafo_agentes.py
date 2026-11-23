@@ -8,7 +8,7 @@ from pathlib import Path
 import unittest
 
 from finance_ai.agents import contratos as c
-from finance_ai.agents.fluxo import ContratoInvalido
+from finance_ai.agents.fluxo import ContratoInvalido, feedback_para_revisao
 from finance_ai.agents.grafo import Agentes, construir_grafo, diagrama_mermaid, executar_fluxo
 
 RAIZ = Path(__file__).resolve().parents[1]
@@ -182,8 +182,9 @@ class GrafoTest(unittest.TestCase):
             analysis=analysis,
             validation=Roteiro(reprovada, exemplo("SaidaValidacao.aprovada")))
         self.assertEqual(resposta.estado, "respondida")
-        self.assertEqual([e.feedback_validacao for e in analysis.entradas],
-                         [(), reprovada.feedback, reprovada.feedback])
+        esperado = feedback_para_revisao(reprovada, exemplo("SaidaAnalise.analisada"))
+        self.assertEqual(esperado[:len(reprovada.feedback)], tuple(reprovada.feedback))
+        self.assertEqual([e.feedback_validacao for e in analysis.entradas], [(), esperado, esperado])
 
     def test_erro_dentro_do_orquestrador_nunca_escapa(self):
         from unittest import mock
@@ -208,7 +209,12 @@ class GrafoTest(unittest.TestCase):
         resposta = self.rodar(analysis=analysis, validation=validation)
         self.assertEqual(resposta.estado, "respondida")
         self.assertEqual(analysis.entradas[0].feedback_validacao, ())
-        self.assertEqual(analysis.entradas[1].feedback_validacao, exemplo("SaidaValidacao.reprovada").feedback)
+        reprovada, analisada = exemplo("SaidaValidacao.reprovada"), exemplo("SaidaAnalise.analisada")
+        feedback = analysis.entradas[1].feedback_validacao
+        self.assertEqual(feedback, feedback_para_revisao(reprovada, analisada))
+        self.assertEqual(feedback[:len(reprovada.feedback)], tuple(reprovada.feedback))
+        texto_reprovado = analisada.afirmacoes[0].texto
+        self.assertIn(f'a1 reprovada: "{texto_reprovado}"', feedback)
 
     def test_segunda_reprovacao_abstem_e_nunca_chega_a_communication(self):
         communication = Roteiro()

@@ -20,7 +20,7 @@ import unittest
 
 from langchain_core.runnables import RunnableLambda
 
-from finance_ai.agents.analysis import AnalysisAgent, RascunhoLLM, RascunhosLLM, RedatorLLM
+from finance_ai.agents.analysis import AnalysisAgent, RascunhoLLM, RascunhosLLM, RedatorLLM, diagnosticar
 from finance_ai.agents.contratos import (
     ContextoAutorizado,
     EntradaAnalise,
@@ -31,7 +31,7 @@ from finance_ai.agents.contratos import (
 )
 from finance_ai.agents.fixtures import ConsultaFinanceiraFixture, RetrieverFixture
 from finance_ai.agents.fluxo import Etapa, apos_pesquisa, chamadas_para_calculos, mesclar_pesquisas
-from finance_ai.agents.redacao import MARCADOR, numeros_sem_origem
+from finance_ai.agents.redacao import MARCADOR, Rascunho, numeros_sem_origem
 from finance_ai.agents.research import ResearchAgent
 
 HOJE = date(2026, 11, 18)
@@ -57,7 +57,15 @@ PERMISSOES = {
     "so_documentos": [Permissao.DOCUMENTOS_LER],
     "so_financeiro": [Permissao.FINANCEIRO_LER],
 }
-FONTES = {"ok": None, "fora_do_ar": "backend_indisponivel"}
+class FonteQueFalhaEmSetembro(ConsultaFinanceiraFixture):
+    def consultar(self, contexto, operacao, parametros):
+        if parametros.periodo_inicio == date(2026, 9, 1):
+            from finance_ai.agents.ferramentas import ErroFerramenta
+            raise ErroFerramenta("backend_indisponivel")
+        return super().consultar(contexto, operacao, parametros)
+
+
+FONTES = {"ok": None, "fora_do_ar": "backend_indisponivel", "falha_so_em_setembro": "setembro"}
 INDICES = {"ok": None, "fora_do_ar": "index_not_found"}
 
 
@@ -129,6 +137,7 @@ class ModeloFixo:
 
 REDATORES = {
     "regras": None,
+    "regras_so_conceitual": "especial",
     "llm_fiel": _fiel,
     "llm_digita_numero": _digita_numero,
     "llm_id_fantasma": _id_fantasma,
@@ -139,7 +148,18 @@ REDATORES = {
 }
 
 
+class RedatorSoConceitual:
+    """Não é LLM: estraga todo rascunho pessoal e mantém só a orientação (revisão do PR #141)."""
+
+    def redigir(self, entrada, diag):
+        rascunhos = [Rascunho("dado_pessoal", "Você gastou R$ 4.321,00.", (t.evidencia.id,)) for t in diag.transacoes]
+        rascunhos += [Rascunho("orientacao_educativa", frase, (doc.id,)) for doc, frase in diag.orientacoes]
+        return rascunhos
+
+
 def agente(nome):
+    if nome == "regras_so_conceitual":
+        return AnalysisAgent(RedatorSoConceitual())
     responder = REDATORES[nome]
     return AnalysisAgent(None if responder is None else RedatorLLM(ModeloFixo(responder)))
 
@@ -169,6 +189,11 @@ class AnalysisExaustivoTest(unittest.TestCase):
             self.assertTrue(saida.lacunas and all(l.descricao for l in saida.lacunas), rotulo)
         if saida.status == "analisada":
             self.assertGreaterEqual(len(saida.afirmacoes), 1, rotulo)
+            # Revisão do PR #141: pergunta pessoal nunca sai "analisada" só com a parte conceitual.
+            diag = diagnosticar(entrada)
+            nec = diag.necessidades
+            if nec.transacoes or nec.contas or nec.reserva:
+                self.assertTrue(any(a.natureza != "orientacao_educativa" for a in saida.afirmacoes), rotulo)
 
     def test_todas_as_combinacoes(self):
         execucoes, status = 0, set()
@@ -178,8 +203,9 @@ class AnalysisExaustivoTest(unittest.TestCase):
             contexto = ContextoAutorizado(correlation_id="exaustivo-analysis", usuaria_ref=usuaria,
                                           conversa_id="conv-exaustivo", permissoes=permissoes,
                                           data_referencia=HOJE)
-            research = ResearchAgent(RetrieverFixture(falhar_com=falha_indice),
-                                     ConsultaFinanceiraFixture(falhar_com=falha_fonte))
+            fonte = (FonteQueFalhaEmSetembro() if falha_fonte == "setembro"
+                     else ConsultaFinanceiraFixture(falhar_com=falha_fonte))
+            research = ResearchAgent(RetrieverFixture(falhar_com=falha_indice), fonte)
             pesquisa = research(EntradaPesquisa(contexto=contexto, pergunta=pergunta))
             if apos_pesquisa(pesquisa).proxima is not Etapa.ANALISE:
                 continue
@@ -213,10 +239,12 @@ class AnalysisExaustivoTest(unittest.TestCase):
                     self.assertNotEqual(saida.status, "analisada", rotulo)
 
                 if saida.status == "analisada":
-                    revisao_entrada = entrada.model_copy(update={"feedback_validacao": ("a1 sem suporte",)})
+                    primeira = saida.afirmacoes[0]
+                    feedback = ("a1 sem suporte", f'{primeira.id} reprovada: "{primeira.texto[:270]}"')
+                    revisao_entrada = entrada.model_copy(update={"feedback_validacao": feedback})
                     revisao = analysis(revisao_entrada)
                     self.conferir(rotulo + ("revisao",), revisao_entrada, revisao)
-                    self.assertNotIn("a1", [a.id for a in revisao.afirmacoes], rotulo)
+                    self.assertNotIn(primeira.texto, [a.texto for a in revisao.afirmacoes], rotulo)
                     status.add(revisao.status)
                     execucoes += 1
         self.assertGreaterEqual(execucoes, 1800)

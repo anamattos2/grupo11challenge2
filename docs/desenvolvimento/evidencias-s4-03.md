@@ -74,3 +74,23 @@ o que é esperado da defesa em profundidade.
 - Palavra comparativa escrita por LLM ("o dobro") não tem algarismo e não é
   barrada por regra; fica para a Validation (S4-04).
 - A comparação LLM × regras com o Ollama não foi executada neste ambiente.
+
+## Correções da revisão do PR #141 (23/11/2026)
+
+Branch rebaseada sobre a `main` em `8855447` (Research Agent já mesclado no #139).
+
+| Ponto da revisão | Correção | Teste (em `SegundaRevisaoDoPR141Test`, salvo indicação) |
+|---|---|---|
+| 🔴 `analysis.py:540`: pessoal recusado + educativo aprovado saía `analisada` | Sem `and diag.lacunas`; pergunta pessoal sem afirmação pessoal vira `dados_insuficientes` com lacuna `dados_pessoais_sem_suporte` | `test_rascunhos_pessoais_recusados_nao_viram_resposta_so_conceitual`; invariante nova no teste exaustivo |
+| Fallback das regras (`~529`) só com lista vazia | Também quando o LLM não sustenta a parte pessoal | `test_llm_que_so_responde_a_parte_conceitual_aciona_as_regras` |
+| `_situacao_da_operacao` casava só por operação | `RegistroChamada.parametros` + casamento por período e filtro | `test_erro_num_mes_nao_marca_outro_mes_como_falho`, `test_registro_da_chamada_guarda_os_parametros`; fonte que falha só em setembro no teste exaustivo |
+| `comparar` com valor nulo | Comparação feita no diagnóstico, só com os dois valores presentes; senão, lacuna | `test_comparacao_com_valor_nulo_vira_lacuna_e_nao_excecao` |
+| Remoção por feedback casava id renumerado | Ids pela posição do rascunho; feedback com texto; remoção pelo texto | `test_feedback_remove_a_afirmacao_pelo_texto_mesmo_com_ids_trocados`, `test_ids_seguem_a_posicao_do_rascunho`, `test_revisao_no_grafo_remove_exatamente_a_afirmacao_reprovada` |
+| 4º período descartado em silêncio | Lacuna `periodo_excedido` | `test_mais_de_tres_meses_viram_lacuna` |
+| `reserva_calculada` com mapa vazio | Exige mapa não vazio | `test_reserva_com_valores_vazios_nao_e_tratada_como_calculada` |
+
+Cada correção foi desfeita de propósito, uma por vez, e o teste correspondente
+falhou em todos os casos (o bloqueante também é pego pelo teste exaustivo).
+O teste exaustivo ganhou um redator que estraga todo rascunho pessoal, uma
+fonte que falha só em setembro e a invariante "pergunta pessoal nunca sai
+`analisada` só com orientação".

@@ -283,6 +283,16 @@ diagrama estiverem desatualizados em relação ao código.
 | Prompt e LLM de Analysis e Communication (LangChain + Ollama, como na S4-02) | Issues dos agentes + P03 |
 | Implementação da Validation (regras acima) | Issue da Validation |
 | Lacunas de uma análise parcial já entram em `RespostaFinal.limites`; a redação delas | S4-05 (Communication) |
+
+### Mudanças da revisão do PR #141 (S4-03)
+
+| Contrato ou fluxo | Mudança | Por quê |
+|---|---|---|
+| `RegistroChamada.parametros` (opcional) | A Research grava os parâmetros de cada consulta financeira | A Analysis precisa saber **qual período** deu erro ou foi negado |
+| `Lacuna.codigo` | Novos `periodo_excedido` e `dados_pessoais_sem_suporte` | Pergunta com mais de 3 meses; parte pessoal sem afirmação sustentada |
+| `fluxo.feedback_para_revisao` | Feedback da revisão leva o texto das afirmações reprovadas | Ids mudam entre rodadas; o texto não |
+
+As mudanças são aditivas: saídas antigas continuam válidas.
 | Operação `situacao_reserva` no backend | BE-05 (cálculo da reserva) |
 | Limiar de score e alertas de fonte | Avaliação RAG (P07) |
 | Avaliação do texto da Communication além da checagem por regra | S4-05 (Communication) |

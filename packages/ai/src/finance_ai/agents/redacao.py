@@ -208,15 +208,20 @@ def materializar(rascunho: Rascunho, pesquisa: SaidaPesquisa, afirmacao_id: str)
 
 def materializar_todos(rascunhos: Iterable[Rascunho], pesquisa: SaidaPesquisa,
                        maximo: int = 5) -> tuple[list[Afirmacao], list[str]]:
-    """Numera ``a1``, ``a2``... na ordem e devolve (afirmações, recusas)."""
+    """Devolve (afirmações, recusas).
+
+    O id vem da posição do rascunho (``a1`` é sempre o primeiro rascunho), e
+    não da contagem dos que passaram: um rascunho recusado deixa um buraco na
+    numeração, mas não muda o id dos outros.
+    """
     afirmacoes, recusas = [], []
     textos: set[str] = set()
-    for rascunho in rascunhos:
+    for indice, rascunho in enumerate(rascunhos):
         if len(afirmacoes) >= maximo:
             recusas.append("limite de afirmações atingido")
             break
         try:
-            afirmacao = materializar(rascunho, pesquisa, f"a{len(afirmacoes) + 1}")
+            afirmacao = materializar(rascunho, pesquisa, f"a{indice + 1}")
         except ErroRedacao as erro:
             recusas.append(str(erro))
             continue

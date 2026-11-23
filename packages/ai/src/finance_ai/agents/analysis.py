@@ -50,6 +50,7 @@ from .redacao import Rascunho, comparar, formatar_valor, materializar_todos, rot
 
 MAX_AFIRMACOES = 5
 MAX_ORIENTACOES = 2
+MAX_PERIODOS = 3
 
 _MESES = {
     "janeiro": 1, "fevereiro": 2, "marco": 3, "abril": 4, "maio": 5, "junho": 6,
@@ -153,6 +154,16 @@ class ValorTransacoes:
     evidencia: EvidenciaFinanceira
 
 
+@dataclass(frozen=True)
+class Comparacao:
+    """Comparação já feita pelo código entre dois valores do backend."""
+
+    a: EvidenciaFinanceira
+    b: EvidenciaFinanceira
+    chave: str
+    sentido: str  # "maiores", "menores" ou "iguais"
+
+
 @dataclass
 class Diagnostico:
     necessidades: Necessidades
@@ -163,10 +174,13 @@ class Diagnostico:
     pedidos: list[PedidoCalculo] = field(default_factory=list)
     lacunas: list[Lacuna] = field(default_factory=list)
     periodo_assumido: bool = False
+    comparacao: Comparacao | None = None
 
     @property
     def reserva_calculada(self) -> bool:
-        return self.reserva is not None and all(v is not None for v in self.reserva.valores.values())
+        # Mapa vazio também é "não calculada": all() de nada seria True.
+        return (self.reserva is not None and bool(self.reserva.valores)
+                and all(v is not None for v in self.reserva.valores.values()))
 
     @property
     def dado_pessoal_disponivel(self) -> bool:
@@ -197,10 +211,24 @@ def _transacoes_do_periodo(evidencias, periodo, essenciais: bool) -> EvidenciaFi
     return (exatas or [None])[0]
 
 
-def _situacao_da_operacao(pesquisa, operacao: OperacaoFinanceira) -> str | None:
-    """'negada' ou 'erro' se a Research tentou a operação e não conseguiu."""
+def _mesma_consulta(registrados: ParametrosFinanceiros | None, procurados: ParametrosFinanceiros) -> bool:
+    """A chamada registrada consultou o mesmo período (e o mesmo filtro de essenciais)?
+
+    Sem parâmetros registrados, só vale para operações sem período (contas,
+    reserva): assim um erro em outubro nunca marca setembro como falho.
+    """
+    if registrados is None:
+        return procurados.periodo_inicio is None and procurados.periodo_fim is None
+    return ((registrados.periodo_inicio, registrados.periodo_fim, bool(registrados.somente_essenciais))
+            == (procurados.periodo_inicio, procurados.periodo_fim, bool(procurados.somente_essenciais)))
+
+
+def _situacao_da_consulta(pesquisa, operacao: OperacaoFinanceira,
+                          parametros: ParametrosFinanceiros) -> str | None:
+    """'negada' ou 'erro' se a Research tentou esta mesma consulta e não conseguiu."""
     status = {c.status for c in pesquisa.chamadas
-              if c.ferramenta == "financeiro.consultar" and c.operacao is operacao}
+              if c.ferramenta == "financeiro.consultar" and c.operacao is operacao
+              and _mesma_consulta(c.parametros, parametros)}
     return "negada" if "negada" in status else "erro" if "erro" in status else None
 
 
@@ -233,7 +261,7 @@ def diagnosticar(entrada: EntradaAnalise) -> Diagnostico:
     pode_pedir = not entrada.calculos_ja_pedidos  # uma rodada de cálculo (MAX_RODADAS_CALCULO)
 
     def faltou(operacao: OperacaoFinanceira, o_que: str, parametros: ParametrosFinanceiros, motivo: str):
-        situacao = _situacao_da_operacao(pesquisa, operacao)
+        situacao = _situacao_da_consulta(pesquisa, operacao, parametros)
         if situacao is None and pode_pedir:
             diag.pedidos.append(PedidoCalculo(id=f"c{len(diag.pedidos) + 1}", operacao=operacao,
                                               parametros=parametros, motivo=motivo))
@@ -250,7 +278,13 @@ def diagnosticar(entrada: EntradaAnalise) -> Diagnostico:
                 codigo="periodo_nao_informado",
                 descricao="A pergunta não diz o período; considerei o mês corrente.",
                 pergunta_complemento="De qual mês você quer saber?"))
-        for periodo in periodos[:3]:
+        if len(periodos) > MAX_PERIODOS:
+            ignorados = ", ".join(rotulo_periodo(*p) for p in periodos[MAX_PERIODOS:])
+            diag.lacunas.append(Lacuna(
+                codigo="periodo_excedido",
+                descricao=f"Analiso até {MAX_PERIODOS} meses por pergunta; ficaram de fora: {ignorados}."[:300],
+                pergunta_complemento="Quer perguntar sobre os outros meses separadamente?"))
+        for periodo in periodos[:MAX_PERIODOS]:
             evidencia = _transacoes_do_periodo(financeiras, periodo, nec.essenciais)
             rotulo = rotulo_periodo(*periodo)
             if evidencia is not None:
@@ -260,6 +294,15 @@ def diagnosticar(entrada: EntradaAnalise) -> Diagnostico:
                        ParametrosFinanceiros(periodo_inicio=periodo[0], periodo_fim=periodo[1],
                                              tipo=nec.tipo, somente_essenciais=nec.essenciais),
                        f"A pergunta cita {rotulo}, que não veio na pesquisa.")
+        if len(diag.transacoes) >= 2:
+            chave = "receitas" if nec.tipo == "receita" else "despesas"
+            a, b = diag.transacoes[0].evidencia, diag.transacoes[1].evidencia
+            if a.valores.get(chave) is not None and b.valores.get(chave) is not None:
+                diag.comparacao = Comparacao(a, b, chave, comparar(a.valores[chave], b.valores[chave]))
+            else:
+                diag.lacunas.append(Lacuna(
+                    codigo="sem_dados_financeiros",
+                    descricao=f"Não dá para comparar os períodos: o backend não devolveu as {chave} dos dois meses."))
         if nec.essenciais and diag.transacoes and all(
                 not e.evidencia.localizacao.registros for e in diag.transacoes):
             diag.lacunas.append(Lacuna(
@@ -279,7 +322,7 @@ def diagnosticar(entrada: EntradaAnalise) -> Diagnostico:
         if diag.reserva is None:
             faltou(OperacaoFinanceira.SITUACAO_RESERVA, "a situação da sua reserva", ParametrosFinanceiros(),
                    "A pergunta é sobre a reserva, que não veio na pesquisa.")
-        elif any(v is None for v in diag.reserva.valores.values()):
+        elif not diag.reserva_calculada:
             diag.lacunas.append(Lacuna(
                 codigo="sem_dados_financeiros",
                 descricao=(f"Ainda não dá para calcular a sua reserva: falta cadastrar "
@@ -345,12 +388,11 @@ class RedatorPorRegras:
                 rascunhos.append(Rascunho("calculo", f"Em {_m(ev, 'periodo')} você registrou {_m(ev, 'receitas')} "
                                                      f"em receitas e {_m(ev, 'despesas')} em despesas; o resultado "
                                                      f"do mês foi {_m(ev, 'resultado')}.", (ev.id,)))
-        if len(diag.transacoes) >= 2:
-            chave = "receitas" if nec.tipo == "receita" else "despesas"
-            a, b = diag.transacoes[0].evidencia, diag.transacoes[1].evidencia
-            sentido = comparar(a.valores[chave], b.valores[chave])
+        if diag.comparacao is not None:
+            cmp_ = diag.comparacao
+            a, b, chave = cmp_.a, cmp_.b, cmp_.chave
             rascunhos.append(Rascunho("calculo", f"Suas {chave} em {_m(a, 'periodo')} ({_m(a, chave)}) foram "
-                                                 f"{sentido} que em {_m(b, 'periodo')} ({_m(b, chave)}).",
+                                                 f"{cmp_.sentido} que em {_m(b, 'periodo')} ({_m(b, chave)}).",
                                       (a.id, b.id)))
         if diag.contas is not None:
             rascunhos.append(Rascunho("calculo", f"O saldo total declarado nas suas contas é "
@@ -399,11 +441,10 @@ def _prompt_redator(entrada: EntradaAnalise, diag: Diagnostico) -> list:
         for chave, bruto in ev.valores.items():
             if bruto is not None:
                 valores.append(f"{_m(ev, chave)} = {formatar_valor(chave, bruto)} ({ev.origem.operacao.value})")
-    if len(diag.transacoes) >= 2:
-        a, b = diag.transacoes[0].evidencia, diag.transacoes[1].evidencia
-        chave = "receitas" if diag.necessidades.tipo == "receita" else "despesas"
-        fatos.append(f"{chave} de {_m(a, 'periodo')} foram {comparar(a.valores[chave], b.valores[chave])} "
-                     f"que as de {_m(b, 'periodo')} (ids {a.id}, {b.id})")
+    if diag.comparacao is not None:
+        cmp_ = diag.comparacao
+        fatos.append(f"{cmp_.chave} de {_m(cmp_.a, 'periodo')} foram {cmp_.sentido} "
+                     f"que as de {_m(cmp_.b, 'periodo')} (ids {cmp_.a.id}, {cmp_.b.id})")
     for evidencia, frase in diag.orientacoes:
         trechos.append(f"[{evidencia.id}] {frase}")
     partes = [f"PERGUNTA: {entrada.pergunta}",
@@ -467,6 +508,22 @@ class RelatorioAnalise:
 
 
 _ID_NO_FEEDBACK = re.compile(r"\ba[0-9]{1,3}\b")
+_TEXTO_NO_FEEDBACK = re.compile(r'"([^"]{10,})"')
+
+
+def reprovadas_no_feedback(afirmacoes, feedback) -> list[str]:
+    """Ids das afirmações que a Validation reprovou.
+
+    O orquestrador manda o texto de cada afirmação reprovada
+    (``fluxo.feedback_para_revisao``). Casar pelo texto é estável mesmo quando
+    a numeração muda entre rodadas (por exemplo, com o LLM). Só quando o
+    feedback não traz texto nenhum é que o id citado é usado.
+    """
+    textos = [m.strip() for f in feedback for m in _TEXTO_NO_FEEDBACK.findall(f)]
+    if textos:
+        return [a.id for a in afirmacoes if any(a.texto.startswith(x) for x in textos)]
+    citadas = {i for f in feedback for i in _ID_NO_FEEDBACK.findall(f)}
+    return [a.id for a in afirmacoes if a.id in citadas]
 
 
 class AnalysisAgent:
@@ -525,28 +582,37 @@ class AnalysisAgent:
 
     def _conferir(self, estado: EstadoAnalise) -> dict:
         entrada, diag = estado["entrada"], estado["diagnostico"]
-        afirmacoes, recusas = materializar_todos(estado["rascunhos"], entrada.pesquisa, MAX_AFIRMACOES)
-        if not afirmacoes and isinstance(self.redator, RedatorLLM):
-            # Nenhum rascunho do LLM passou: as regras garantem uma resposta verificável.
-            afirmacoes, recusas_regras = materializar_todos(
-                RedatorPorRegras().redigir(entrada, diag), entrada.pesquisa, MAX_AFIRMACOES)
-            recusas += ["todos os rascunhos do modelo foram recusados; usadas as regras", *recusas_regras]
-        removidas = []
-        if entrada.feedback_validacao:
-            citadas = {i for f in entrada.feedback_validacao for i in _ID_NO_FEEDBACK.findall(f)}
-            removidas = [a.id for a in afirmacoes if a.id in citadas]
-            afirmacoes = [a for a in afirmacoes if a.id not in citadas]
         nec = diag.necessidades
         pessoal_pedido = nec.transacoes or nec.contas or nec.reserva
-        pessoal_respondido = any(a.natureza != "orientacao_educativa" for a in afirmacoes)
-        if pessoal_pedido and not pessoal_respondido and diag.lacunas:
-            # A parte sobre os dados dela não tem resposta: pedir complemento é
-            # mais honesto do que responder só a parte conceitual.
-            saida = SaidaAnalise(status="dados_insuficientes", lacunas=diag.lacunas)
+
+        def responde_o_pessoal(lista) -> bool:
+            return any(a.natureza != "orientacao_educativa" for a in lista)
+
+        afirmacoes, recusas = materializar_todos(estado["rascunhos"], entrada.pesquisa, MAX_AFIRMACOES)
+        if isinstance(self.redator, RedatorLLM) and (
+                not afirmacoes or (pessoal_pedido and not responde_o_pessoal(afirmacoes))):
+            # O modelo não sustentou a resposta (nada passou, ou só passou a parte
+            # conceitual de uma pergunta pessoal): as regras assumem.
+            afirmacoes, recusas_regras = materializar_todos(
+                RedatorPorRegras().redigir(entrada, diag), entrada.pesquisa, MAX_AFIRMACOES)
+            recusas += ["rascunhos do modelo não sustentaram a resposta; usadas as regras", *recusas_regras]
+
+        removidas = []
+        if entrada.feedback_validacao:
+            removidas = reprovadas_no_feedback(afirmacoes, entrada.feedback_validacao)
+            afirmacoes = [a for a in afirmacoes if a.id not in removidas]
+
+        if removidas and not afirmacoes:
+            saida = SaidaAnalise(status="falha", codigo_erro="revisao_sem_afirmacoes")
+        elif pessoal_pedido and not responde_o_pessoal(afirmacoes):
+            # A parte sobre os dados dela ficou sem resposta sustentada: pedir
+            # complemento é mais honesto do que responder só a parte conceitual.
+            saida = SaidaAnalise(status="dados_insuficientes", lacunas=diag.lacunas or [Lacuna(
+                codigo="dados_pessoais_sem_suporte",
+                descricao="Não consegui sustentar a parte sobre seus dados com as evidências recuperadas.",
+                pergunta_complemento="Pode confirmar os lançamentos ou o período que você quer analisar?")])
         elif afirmacoes:
             saida = SaidaAnalise(status="analisada", afirmacoes=afirmacoes, lacunas=diag.lacunas)
-        elif removidas:
-            saida = SaidaAnalise(status="falha", codigo_erro="revisao_sem_afirmacoes")
         else:
             saida = SaidaAnalise(status="dados_insuficientes", lacunas=diag.lacunas or [Lacuna(
                 codigo="pergunta_ambigua", descricao="Não consegui escrever uma afirmação verificável com as evidências.",

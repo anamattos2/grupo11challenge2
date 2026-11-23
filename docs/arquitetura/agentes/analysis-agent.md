@@ -33,7 +33,10 @@ START → diagnosticar ─┬─ pedir_calculo ───────────
 planejador da Research e decide o que ela precisa: transações de quais meses
 (`periodos_da_pergunta` reconhece "outubro ou setembro", "este mês", "mês
 passado"), saldo das contas, situação da reserva, orientação educativa. Depois
-procura cada necessidade nas evidências:
+procura cada necessidade nas evidências. Negada ou erro são casados com a
+**mesma consulta** (operação, período e filtro de essenciais, que a Research
+agora grava em `RegistroChamada.parametros`): um erro em setembro não impede
+pedir outubro.
 
 | Situação | Resultado |
 |---|---|
@@ -41,6 +44,8 @@ procura cada necessidade nas evidências:
 | Dado ausente e nunca consultado | `PedidoCalculo` para o backend (uma rodada) |
 | Dado ausente porque a consulta foi negada | Lacuna: "Esta conversa não tem permissão para consultar…" |
 | Dado ausente porque a consulta deu erro, ou ainda falta depois da rodada | Lacuna: "Não consegui consultar … agora." |
+| Mais de 3 meses na pergunta | Analisa os 3 primeiros e registra `periodo_excedido` com os meses que ficaram de fora |
+| Comparação com valor nulo vindo do backend | Não compara; lacuna "Não dá para comparar os períodos…" |
 | Backend respondeu, mas não conseguiu calcular (reserva sem cadastro) | Lacuna com o que falta cadastrar, traduzido para a leitora |
 | Pergunta sem período | Responde o mês corrente e registra lacuna `periodo_nao_informado` |
 | Despesas essenciais sem registros | Diz "Não há despesas essenciais registradas…" e registra `sem_categoria_essencial` |
@@ -63,7 +68,13 @@ transforma isso em pedido de complemento, com as perguntas das lacunas.
   regras assumem.
 
 **conferir.** `materializar` transforma cada rascunho em `Afirmacao` ou o
-recusa. Depois aplica o feedback de uma revisão e monta a saída.
+recusa. O id vem da posição do rascunho (`a1` é sempre o primeiro), então uma
+recusa não renumera os outros. Depois aplica o feedback de uma revisão e monta
+a saída. Se a pergunta pede dado pessoal e nenhuma afirmação pessoal passou,
+a saída é `dados_insuficientes`, nunca `analisada` só com a parte conceitual;
+sem lacuna do diagnóstico, entra a lacuna `dados_pessoais_sem_suporte`. Com
+o `RedatorLLM`, esse caso (ou nenhum rascunho aproveitável) aciona as regras
+antes.
 
 ## 3. Números só por referência
 
@@ -119,9 +130,13 @@ sentido das afirmações `calculo`.
 ## 5. Revisão
 
 Na segunda passada, depois de uma reprovação, a `EntradaAnalise` traz
-`feedback_validacao`. A Analysis remove as afirmações cujo id aparece no
-feedback ("a2: número sem suporte"). Se não sobrar nenhuma, devolve `falha`
-com `revisao_sem_afirmacoes`. O `RedatorLLM` também recebe o feedback no
+`feedback_validacao`. O orquestrador acrescenta ao feedback o texto de cada
+afirmação reprovada (`fluxo.feedback_para_revisao`), e a Analysis remove as
+afirmações **pelo texto**, que é estável entre rodadas mesmo quando a
+numeração muda (por exemplo, com o LLM). Só quando não há texto no feedback é
+que o id citado é usado. Se não sobrar nenhuma afirmação, devolve `falha` com
+`revisao_sem_afirmacoes`; se sobrar só a parte conceitual de uma pergunta
+pessoal, devolve `dados_insuficientes`. O `RedatorLLM` também recebe o feedback no
 prompt.
 
 ## 6. Lacunas chegam à usuária
