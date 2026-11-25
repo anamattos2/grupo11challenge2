@@ -48,7 +48,7 @@ preencher manualmente ou tentar de novo.
 |---|---|---|
 | Valor total | Uma linha com rótulo de total (`TOTAL`, `VALOR TOTAL`, `TOTAL A PAGAR`…) traz um único valor positivo; linhas de subtotal, troco, desconto, tributos, itens e valor recebido não contam | Dois totais diferentes; valores sem rótulo de total; total com baixa confiança; total zero ou negativo, com o sinal preservado |
 | Data | Uma única data válida, não futura, de 2000 em diante (`dd/mm/aaaa`, `dd/mm/aa`, `dd-mm-aaaa`, `dd.mm.aaaa`). Rótulos de compra, venda, pagamento ou transação têm prioridade sobre datas auxiliares | Datas conflitantes; data impossível ou futura; apenas data auxiliar (ex.: impressão); baixa confiança |
-| Estabelecimento | Rótulo explícito (`Estabelecimento:`) ou primeira linha do cabeçalho, antes de CNPJ, data, valores e itens, que parece nome (letras, sem palavras como cupom, rua, CNPJ) | Mais de um nome explícito distinto ou baixa confiança na linha |
+| Estabelecimento | Rótulo explícito (`Estabelecimento:`) ou único nome plausível do cabeçalho, antes de CNPJ, data, valores e itens, que parece nome (letras, sem palavras como cupom, rua, CNPJ) | Mais de um nome distinto no contexto selecionado ou baixa confiança na linha |
 
 Princípios:
 
@@ -56,7 +56,8 @@ Princípios:
   Nunca completa, arredonda, corrige ou estima.
 - Confiança do OCR abaixo de 60 (escala 0–100 do Tesseract) transforma um
   campo que seria presente em ambíguo.
-- O `trecho` é copiado do texto lido. Um teste de propriedade gera 3.000
+- O `trecho` é copiado do texto lido. Se a linha do total ou da data exceder
+  o limite do trecho, o campo fica ambíguo. Um teste de propriedade gera 3.000
   recibos corrompidos ao acaso e confere que todo campo presente tem trecho
   dentro do texto e valor que sai do próprio trecho.
 
@@ -66,7 +67,10 @@ Princípios:
   imagem não sai do servidor.
 - Antes do OCR: tons de cinza, contraste automático, **endireitamento** (procura o
   ângulo entre −6° e 6° que deixa as linhas de texto mais retas, só com Pillow) e
-  ampliação de imagens com menos de 1000 px de largura.
+  ampliação de imagens com menos de 1000 px de largura, limitada a 8 milhões de
+  pixels. Proporções acima de 20:1 retornam leitura ilegível. A preparação tem
+  dimensões limitadas, e o Tesseract recebe apenas o tempo restante do orçamento
+  após essa etapa.
 - Motor configurável (`COMPROVANTES_OCR_MOTOR`): `tesseract` (padrão) ou
   `desligado` (responde 503). O protocolo `MotorOCR` permite trocar por outro
   motor, por exemplo um modelo de visão local, sem mudar a interpretação.

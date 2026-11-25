@@ -3,6 +3,7 @@ from datetime import date
 from decimal import Decimal
 from difflib import SequenceMatcher
 from io import BytesIO
+import os
 import random
 import shutil
 from unittest import mock, skipUnless
@@ -22,7 +23,7 @@ from comprovantes.extracao.interpretacao import (
     extrair_valor_total,
     interpretar,
 )
-from comprovantes.extracao.ocr import MotorTesseract
+from comprovantes.extracao.ocr import MotorTesseract, preparar
 
 from .test_comprovantes import BaseComprovantes, URL
 
@@ -127,6 +128,18 @@ class InterpretacaoTests(SimpleTestCase):
                                             "Valor total recebido 20,00"))
         self.assertEqual((campo.estado, campo.valor), ("presente", "19.40"))
 
+    def test_variantes_de_subtotal_e_descontos_nao_sao_totais(self):
+        for linha in ("SUB-TOTAL 25,00", "TOTAL DESCONTOS 5,60", "TOTAL TRIBUTO 2,10",
+                      "TOTAL IMPOSTO 2,10", "TOTAL DE ITEM 1,00", "TOTAL TROCOS 0,60"):
+            with self.subTest(linha=linha):
+                self.assertEqual(extrair_valor_total(leitura(linha)).estado, "ambiguo")
+                campo = extrair_valor_total(leitura(linha, "TOTAL 30,00"))
+                self.assertEqual((campo.estado, campo.valor), ("presente", "30.00"))
+
+    def test_total_sem_valor_no_limite_do_trecho_fica_ambiguo(self):
+        campo = extrair_valor_total(leitura("TOTAL " + " " * 200 + "30,00"))
+        self.assertEqual((campo.estado, campo.valor, campo.trecho), ("ambiguo", None, None))
+
     def test_dois_totais_diferentes_sao_ambiguos_e_nada_e_escolhido(self):
         campo = extrair_valor_total(leitura("TOTAL 19,40", "VALOR TOTAL 21,00"))
         self.assertEqual((campo.estado, campo.valor, campo.candidatos), ("ambiguo", None, ["19.40", "21.00"]))
@@ -157,6 +170,7 @@ class InterpretacaoTests(SimpleTestCase):
         casos = (
             ("TOTAL -R$ 19,40",),
             ("TOTAL R$ −19,40",),
+            ("TOTAL R$ 19,40-",),
             ("TOTAL (R$ 19,40)",),
             ("TOTAL -19.40", "TOTAL 20,00"),
         )
@@ -171,6 +185,10 @@ class InterpretacaoTests(SimpleTestCase):
             (("Data da compra: 31/02/2026", "Data de impressão: 03/03/2026"), "ambiguo", None),
             (("Data da compra: 03/03/2026 Data de impressão: 04/03/2026",), "presente", "2026-03-03"),
             (("Data de impressão: 03/03/2026",), "ambiguo", None),
+            (("Data de impressão:", "03/03/2026"), "ambiguo", None),
+            (("Impresso em 03/03/2026",), "ambiguo", None),
+            (("Emissão 03/03/2026", "Impresso em 03/03/2026"), "presente", "2026-03-03"),
+            (("03/10/2026", "31/02/2026"), "ambiguo", None),
         )
         for linhas, estado, valor in casos:
             with self.subTest(linhas=linhas):
@@ -200,6 +218,12 @@ class InterpretacaoTests(SimpleTestCase):
             with self.subTest(linhas=linhas):
                 campo = extrair_data(leitura(*linhas), HOJE)
                 self.assertEqual((campo.estado, campo.valor), (estado, valor))
+
+    def test_cabecalho_com_estabelecimentos_conflitantes_fica_ambiguo(self):
+        campo = extrair_estabelecimento(leitura(
+            "PADARIA PRIMAVERA", "MERCADO CENTRAL", "CNPJ 12.345.678/0001-90"))
+        self.assertEqual((campo.estado, campo.valor), ("ambiguo", None))
+        self.assertEqual(campo.candidatos, ["PADARIA PRIMAVERA", "MERCADO CENTRAL"])
 
     def test_estabelecimento(self):
         casos = [
@@ -303,6 +327,42 @@ class IlegivelTests(SimpleTestCase):
                 self.assertEqual(status, "ilegivel")
                 for campo in (campos.valor_total, campos.data, campos.estabelecimento):
                     self.assertEqual((campo.estado, campo.motivo), ("ausente", "imagem ilegível"))
+
+
+class PreparacaoOCRTests(SimpleTestCase):
+    @staticmethod
+    def imagem(largura, altura):
+        saida = BytesIO()
+        Image.new("L", (largura, altura), 255).save(saida, format="PNG")
+        return saida.getvalue()
+
+    def test_ampliacao_respeita_orcamento_de_pixels(self):
+        with mock.patch("comprovantes.extracao.ocr.MAXIMO_PIXELS_OCR", 100_000), mock.patch(
+            "comprovantes.extracao.ocr._angulo_de_inclinacao", return_value=6.0
+        ):
+            figura = preparar(self.imagem(80, 400))
+        self.assertIsNotNone(figura)
+        self.assertGreater(figura.width, 80)
+        self.assertLessEqual(figura.width * figura.height, 100_000)
+
+    def test_motor_trata_proporcao_inadequada_sem_chamar_tesseract(self):
+        with mock.patch("pytesseract.image_to_data") as ler:
+            leitura_ocr = MotorTesseract().ler(self.imagem(20, 420))
+        self.assertEqual(leitura_ocr.linhas, [])
+        ler.assert_not_called()
+
+    def test_preparacao_consumida_no_orcamento_interrompe_antes_do_tesseract(self):
+        with mock.patch("comprovantes.extracao.ocr.monotonic", side_effect=[0, 2]), mock.patch(
+            "pytesseract.image_to_data"
+        ) as ler:
+            with self.assertRaises(OCRIndisponivel) as erro:
+                MotorTesseract(tempo_limite_s=1).ler(self.imagem(120, 120))
+        self.assertEqual(erro.exception.codigo, "ocr_tempo_esgotado")
+        ler.assert_not_called()
+
+    def test_ocr_real_e_obrigatorio_na_ci(self):
+        if os.environ.get("CI") == "true":
+            self.assertTrue(_tesseract_com_portugues(), "A CI exige Tesseract com idioma 'por'.")
 
 
 class RotaDeExtracaoTests(BaseComprovantes):

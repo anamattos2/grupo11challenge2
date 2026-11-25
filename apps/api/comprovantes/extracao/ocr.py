@@ -9,11 +9,20 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from io import BytesIO
+from math import sqrt
 import statistics
+from time import monotonic
 from typing import Protocol
 
 from django.conf import settings
 from PIL import Image, ImageOps
+
+
+MAXIMO_PIXELS_OCR = 8_000_000
+MAXIMA_PROPORCAO_OCR = 20
+# Reserva espaço para a expansão da caixa ao girar até seis graus.
+_MAXIMO_PIXELS_ANTES_DE_GIRAR = 2_000_000
+_LARGURA_DESEJADA_OCR = 1000
 
 
 class OCRIndisponivel(RuntimeError):
@@ -55,8 +64,9 @@ def _angulo_de_inclinacao(figura: Image.Image, limite: float = 6.0, passo: float
     escuras (texto) e claras (entrelinha), e a variância é máxima. Só usa
     Pillow: reduzir a imagem para 1 coluna dá a média de cada linha.
     """
-    pequena = ImageOps.invert(figura).resize((max(1, figura.width * 300 // max(figura.height, 1)) or 1, 300)
-                                              if figura.height > 300 else figura.size)
+    fator = min(1.0, 300 / max(figura.size))
+    tamanho = tuple(max(1, int(lado * fator)) for lado in figura.size)
+    pequena = ImageOps.invert(figura.resize(tamanho, Image.Resampling.BOX))
     melhor, angulo = -1.0, 0.0
     passos = int(limite / passo)
     for i in range(-passos, passos + 1):
@@ -70,17 +80,29 @@ def _angulo_de_inclinacao(figura: Image.Image, limite: float = 6.0, passo: float
     return angulo
 
 
-def preparar(imagem: bytes) -> Image.Image:
-    """Tons de cinza, contraste automático, endireitamento e ampliação de imagens pequenas."""
+def _redimensionar(figura: Image.Image, fator: float) -> Image.Image:
+    tamanho = tuple(max(1, int(lado * fator)) for lado in figura.size)
+    if tamanho == figura.size:
+        return figura
+    return figura.resize(tamanho, Image.Resampling.LANCZOS)
+
+
+def preparar(imagem: bytes) -> Image.Image | None:
+    """Prepara a imagem com limites de proporção e de pixels para o OCR."""
     with Image.open(BytesIO(imagem)) as original:
-        figura = ImageOps.autocontrast(ImageOps.grayscale(original))
+        largura, altura = original.size
+        pixels = largura * altura
+        if (pixels > settings.COMPROVANTES_MAXIMO_PIXELS
+                or max(largura, altura) > MAXIMA_PROPORCAO_OCR * min(largura, altura)):
+            return None
+        fator = min(1.0, sqrt(_MAXIMO_PIXELS_ANTES_DE_GIRAR / pixels))
+        figura = ImageOps.autocontrast(ImageOps.grayscale(_redimensionar(original, fator)))
     angulo = _angulo_de_inclinacao(figura)
     if angulo:
         figura = figura.rotate(angulo, expand=True, fillcolor=255, resample=Image.Resampling.BICUBIC)
-    if figura.width < 1000:
-        fator = 1000 / figura.width
-        figura = figura.resize((1000, max(1, round(figura.height * fator))), Image.Resampling.LANCZOS)
-    return figura
+    pixels = figura.width * figura.height
+    fator = min(max(1.0, _LARGURA_DESEJADA_OCR / figura.width), sqrt(MAXIMO_PIXELS_OCR / pixels))
+    return _redimensionar(figura, fator)
 
 
 class MotorTesseract:
@@ -96,14 +118,23 @@ class MotorTesseract:
         except ImportError:
             raise OCRIndisponivel("ocr_nao_instalado") from None
         try:
-            dados = pytesseract.image_to_data(preparar(imagem), lang=self.idioma, config="--psm 6",
-                                              output_type=pytesseract.Output.DICT, timeout=self.tempo_limite_s)
+            inicio = monotonic()
+            figura = preparar(imagem)
+            if figura is None:
+                return Leitura()
+            restante = self.tempo_limite_s - (monotonic() - inicio)
+            if restante <= 0:
+                raise OCRIndisponivel("ocr_tempo_esgotado")
+            dados = pytesseract.image_to_data(figura, lang=self.idioma, config="--psm 6",
+                                              output_type=pytesseract.Output.DICT, timeout=restante)
         except pytesseract.TesseractNotFoundError:
             raise OCRIndisponivel("ocr_nao_instalado") from None
+        except OCRIndisponivel:
+            raise
         except RuntimeError as erro:  # o pytesseract sinaliza o tempo esgotado com RuntimeError
             codigo = "ocr_tempo_esgotado" if "timeout" in str(erro).lower() else "ocr_falhou"
             raise OCRIndisponivel(codigo) from None
-        except (pytesseract.TesseractError, OSError):
+        except (pytesseract.TesseractError, OSError, MemoryError):
             raise OCRIndisponivel("ocr_falhou") from None
 
         linhas: dict[tuple, list[tuple[str, float]]] = {}

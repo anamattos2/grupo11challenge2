@@ -24,13 +24,13 @@ _DINHEIRO_PONTO = re.compile(r"(?<![\d,.])(\d+\.\d{2})(?![\d.])")  # "19.40", s�
 _SINAL_NEGATIVO = re.compile(r"[-−]\s*(?:r\$\s*)?$", re.IGNORECASE)
 _ABRE_VALOR = re.compile(r"\(\s*(?:r\$\s*)?$", re.IGNORECASE)
 _DATA_COMPRA = re.compile(r"\b(?:compra|venda|pagamento|transacao)\b")
-_DATA_AUXILIAR = re.compile(r"\b(?:impressao|reimpressao|validade|vencimento)\b")
+_DATA_AUXILIAR = re.compile(r"\b(?:impressao|reimpressao|impress[oa]|reimpress[oa]|validade|vencimento)\b")
 _DATA = re.compile(r"(?<!\d)(\d{2})[/.\-](\d{2})[/.\-](\d{4}|\d{2})(?!\d)")
 _CNPJ = re.compile(r"\d{2}\.?\d{3}\.?\d{3}/?\d{4}-?\d{2}")
 
 _TOTAL = re.compile(r"\b(valor\s+total|total\s+a\s+pagar|valor\s+a\s+pagar|total\s+geral|total)\b")
-_NAO_E_TOTAL = re.compile(r"\b(subtotal|sub\s+total|itens|qtd|quantidade|troco|desconto|tributos|impostos|"
-                          r"aprox|lei\s+12\.?741|recebido|dinheiro|pago)\b")
+_NAO_E_TOTAL = re.compile(r"\b(sub[\s-]*total|item|itens|qtd|quantidades?|trocos?|descontos?|tributos?|impostos?|"
+                          r"aprox|lei\s+12\.?741|recebidos?|dinheiro|pagos?)\b")
 _ROTULO_LOJA = re.compile(r"^(estabelecimento|loja|empresa|razao\s+social)\s*[:\-]\s*(.+)$")
 _NAO_E_LOJA = re.compile(r"\b(cupom|fiscal|nfc|nf-?e|documento|auxiliar|extrato|cnpj|cpf|inscricao|ie|im|"
                          r"rua|av|avenida|alameda|rodovia|travessa|bairro|cep|tel|telefone|fone|sat|"
@@ -64,6 +64,7 @@ def _valores_da_linha(texto: str, padrao: re.Pattern[str]) -> list[str]:
         anterior = texto[:numero.start()]
         posterior = texto[numero.end():]
         negativo = (_SINAL_NEGATIVO.search(anterior)
+                    or re.match(r"[-−](?!\s*\d)", posterior)
                     or (_ABRE_VALOR.search(anterior) and posterior.lstrip().startswith(")")))
         valor = _decimal_de(numero.group())
         valores.append(f"-{valor}" if negativo else valor)
@@ -89,7 +90,10 @@ def extrair_valor_total(leitura: Leitura) -> Campo:
         (valor, linha), = nos_totais.items()
         if _baixa_confianca(linha):
             return Campo(estado="ambiguo", candidatos=[valor], motivo="leitura do total com baixa confiança")
-        return Campo(estado="presente", valor=valor, trecho=linha.texto.strip()[:200])
+        trecho = linha.texto.strip()
+        if len(trecho) > 200:
+            return Campo(estado="ambiguo", candidatos=[valor], motivo="a linha lida excede o limite do trecho")
+        return Campo(estado="presente", valor=valor, trecho=trecho)
     if len(nos_totais) > 1:
         return Campo(estado="ambiguo", candidatos=sorted(nos_totais)[:5],
                      motivo="mais de um valor em linhas de total")
@@ -109,21 +113,26 @@ def extrair_data(leitura: Leitura, hoje: date) -> Campo:
     invalidas: list[str] = []
     compras: list[tuple[Linha, re.Match[str]]] = []
     outras: list[tuple[Linha, re.Match[str]]] = []
-    tem_auxiliares = False
+    auxiliares: list[re.Match[str]] = []
+    rotulo_anterior = ""
     for linha in leitura.linhas:
         fim_anterior = 0
         for encontrada in _DATA.finditer(linha.texto):
             rotulo = _sem_acento(linha.texto[fim_anterior:encontrada.start()])
+            if fim_anterior == 0 and not rotulo.strip():
+                rotulo = rotulo_anterior
             fim_anterior = encontrada.end()
             if _DATA_AUXILIAR.search(rotulo):
-                tem_auxiliares = True
+                auxiliares.append(encontrada)
             elif _DATA_COMPRA.search(rotulo):
                 compras.append((linha, encontrada))
             else:
                 outras.append((linha, encontrada))
+        normal = _sem_acento(linha.texto).strip()
+        rotulo_anterior = normal if not fim_anterior and normal.endswith(":") else ""
 
     selecionadas = compras or outras
-    if not selecionadas and tem_auxiliares:
+    if not selecionadas and auxiliares:
         return Campo(estado="ambiguo", motivo="há apenas datas auxiliares no comprovante")
 
     for linha, encontrada in selecionadas:
@@ -142,7 +151,11 @@ def extrair_data(leitura: Leitura, hoje: date) -> Campo:
 
     # Uma data válida sem rótulo e outra data auxiliar continuam ambíguas:
     # só o rótulo de compra permite resolver o papel de cada data.
-    if not compras and tem_auxiliares and validas:
+    aux_datas = {
+        f"{int(ano) + (2000 if len(ano) == 2 else 0):04d}-{mes}-{dia}"
+        for dia, mes, ano in (data_aux.groups() for data_aux in auxiliares)
+    }
+    if not compras and validas and aux_datas.difference(validas):
         return Campo(estado="ambiguo", candidatos=list(validas)[:5],
                      motivo="não foi possível distinguir a data da compra das datas auxiliares")
     if invalidas:
@@ -152,7 +165,10 @@ def extrair_data(leitura: Leitura, hoje: date) -> Campo:
         (valor, linha), = validas.items()
         if _baixa_confianca(linha):
             return Campo(estado="ambiguo", candidatos=[valor], motivo="leitura da data com baixa confiança")
-        return Campo(estado="presente", valor=valor, trecho=linha.texto.strip()[:200])
+        trecho = linha.texto.strip()
+        if len(trecho) > 200:
+            return Campo(estado="ambiguo", candidatos=[valor], motivo="a linha lida excede o limite do trecho")
+        return Campo(estado="presente", valor=valor, trecho=trecho)
     if len(validas) > 1:
         return Campo(estado="ambiguo", candidatos=sorted(validas)[:5], motivo="mais de uma data no comprovante")
     return Campo(estado="ausente")
@@ -200,13 +216,20 @@ def extrair_estabelecimento(leitura: Leitura) -> Campo:
                 or re.search(r"\b(item|codigo|descricao|cupom|nfc|cnpj)\b", normal)):
             break
         cabecalho.append(linha)
-    nomes = [l for l in cabecalho if _parece_nome(l.texto.strip())]
+    nomes: dict[str, Linha] = {}
+    for linha in cabecalho:
+        if _parece_nome(linha.texto.strip()):
+            chave = " ".join(_sem_acento(linha.texto).split())
+            nomes.setdefault(chave, linha)
     if not nomes:
         return Campo(estado="ausente")
-    primeira = nomes[0]
+    if len(nomes) > 1:
+        return Campo(estado="ambiguo", candidatos=[l.texto.strip()[:120] for l in list(nomes.values())[:5]],
+                     motivo="mais de um nome plausível no cabeçalho")
+    primeira = next(iter(nomes.values()))
     nome = re.sub(r"\s+", " ", primeira.texto).strip(" .:-")[:120]
     if _baixa_confianca(primeira):
-        return Campo(estado="ambiguo", candidatos=[l.texto.strip()[:120] for l in nomes[:5]],
+        return Campo(estado="ambiguo", candidatos=[nome],
                      motivo="leitura do nome com baixa confiança")
     return Campo(estado="presente", valor=nome, trecho=primeira.texto.strip()[:200])
 
