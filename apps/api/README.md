@@ -9,7 +9,8 @@ financeiro e contas manuais. A
 [BE-04 / #86](https://github.com/anamattos2/grupo11challenge2/issues/86) adiciona
 categorias, receitas e despesas, e a
 [BE-05 / #87](https://github.com/anamattos2/grupo11challenge2/issues/87), a reserva
-de emergência. Os demais endpoints de negócio pertencem às respectivas issues.
+de emergência. A [BE-06 / #88](https://github.com/anamattos2/grupo11challenge2/issues/88)
+adiciona as consultas de leitura para as telas e os agentes de IA.
 
 Responsabilidades: sessão, autorização, regras financeiras, persistência e
 ferramentas determinísticas para os agentes. OpenAPI é a referência das
@@ -90,6 +91,13 @@ saldo declarado das contas. Rotas, validações, filtros e totais estão em
 cadastrados no aplicativo. Os filtros `mes_inicio` e `mes_fim` definem o período das
 despesas essenciais; sem eles, a API usa os 3 últimos meses completos. Regras, decisões
 e erros estão em [contracts/reserva.md](../../contracts/reserva.md).
+
+## Consultas financeiras
+
+As rotas em `/api/consultas` são somente de leitura e atendem as telas e os agentes de IA.
+Agentes usam apenas as ferramentas permitidas, com parâmetros tipados, e a usuária vem
+sempre da sessão. Ferramentas, resultados e erros estão em
+[contracts/consultas-financeiras.md](../../contracts/consultas-financeiras.md).
 
 ## Contrato OpenAPI
 

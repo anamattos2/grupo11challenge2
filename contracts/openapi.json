@@ -396,6 +396,35 @@
         "title": "ExtracaoOut",
         "type": "object"
       },
+      "FerramentaOut": {
+        "properties": {
+          "descricao": {
+            "title": "Descricao",
+            "type": "string"
+          },
+          "nome": {
+            "title": "Nome",
+            "type": "string"
+          },
+          "parametros": {
+            "additionalProperties": true,
+            "title": "Parametros",
+            "type": "object"
+          },
+          "rota": {
+            "title": "Rota",
+            "type": "string"
+          }
+        },
+        "required": [
+          "nome",
+          "descricao",
+          "rota",
+          "parametros"
+        ],
+        "title": "FerramentaOut",
+        "type": "object"
+      },
       "FiltrosIn": {
         "properties": {
           "categoria_id": {
@@ -748,6 +777,119 @@
         "title": "MovimentacaoOut",
         "type": "object"
       },
+      "ParametrosPeriodo": {
+        "additionalProperties": false,
+        "properties": {
+          "data_fim": {
+            "examples": [
+              "2026-11-10"
+            ],
+            "format": "date",
+            "title": "Data Fim",
+            "type": "string"
+          },
+          "data_inicio": {
+            "examples": [
+              "2026-11-10"
+            ],
+            "format": "date",
+            "title": "Data Inicio",
+            "type": "string"
+          }
+        },
+        "required": [
+          "data_inicio",
+          "data_fim"
+        ],
+        "title": "ParametrosPeriodo",
+        "type": "object"
+      },
+      "ParametrosReserva": {
+        "additionalProperties": false,
+        "properties": {
+          "mes_fim": {
+            "anyOf": [
+              {
+                "examples": [
+                  "2026-08"
+                ],
+                "pattern": "^[0-9]{4}-[0-9]{2}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mes Fim"
+          },
+          "mes_inicio": {
+            "anyOf": [
+              {
+                "examples": [
+                  "2026-08"
+                ],
+                "pattern": "^[0-9]{4}-[0-9]{2}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mes Inicio"
+          }
+        },
+        "title": "ParametrosReserva",
+        "type": "object"
+      },
+      "ParametrosTotais": {
+        "additionalProperties": false,
+        "properties": {
+          "categoria_id": {
+            "anyOf": [
+              {
+                "ge": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Categoria Id"
+          },
+          "data_fim": {
+            "examples": [
+              "2026-11-10"
+            ],
+            "format": "date",
+            "title": "Data Fim",
+            "type": "string"
+          },
+          "data_inicio": {
+            "examples": [
+              "2026-11-10"
+            ],
+            "format": "date",
+            "title": "Data Inicio",
+            "type": "string"
+          },
+          "tipo": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TipoLancamento"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "data_inicio",
+          "data_fim"
+        ],
+        "title": "ParametrosTotais",
+        "type": "object"
+      },
       "PerfilIn": {
         "additionalProperties": false,
         "properties": {
@@ -954,6 +1096,291 @@
         "title": "ReservaOut",
         "type": "object"
       },
+      "ResultadoContasOut": {
+        "properties": {
+          "dados": {
+            "$ref": "#/components/schemas/SaldosContasOut"
+          },
+          "evidencia_id": {
+            "pattern": "^fin-[0-9a-f]{16}$",
+            "title": "Evidencia Id",
+            "type": "string"
+          },
+          "ferramenta": {
+            "const": "saldos_contas",
+            "title": "Ferramenta",
+            "type": "string"
+          },
+          "moeda": {
+            "const": "BRL",
+            "default": "BRL",
+            "title": "Moeda",
+            "type": "string"
+          },
+          "origem": {
+            "const": "registros_declarados",
+            "default": "registros_declarados",
+            "title": "Origem",
+            "type": "string"
+          },
+          "parametros": {
+            "additionalProperties": true,
+            "title": "Parametros",
+            "type": "object"
+          },
+          "periodo": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PeriodoOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "tipo_evidencia": {
+            "const": "financeira",
+            "default": "financeira",
+            "title": "Tipo Evidencia",
+            "type": "string"
+          }
+        },
+        "required": [
+          "evidencia_id",
+          "periodo",
+          "parametros",
+          "ferramenta",
+          "dados"
+        ],
+        "title": "ResultadoContasOut",
+        "type": "object"
+      },
+      "ResultadoReservaOut": {
+        "properties": {
+          "dados": {
+            "$ref": "#/components/schemas/ResumoReservaOut"
+          },
+          "evidencia_id": {
+            "pattern": "^fin-[0-9a-f]{16}$",
+            "title": "Evidencia Id",
+            "type": "string"
+          },
+          "ferramenta": {
+            "const": "consultar_reserva",
+            "title": "Ferramenta",
+            "type": "string"
+          },
+          "moeda": {
+            "const": "BRL",
+            "default": "BRL",
+            "title": "Moeda",
+            "type": "string"
+          },
+          "origem": {
+            "const": "registros_declarados",
+            "default": "registros_declarados",
+            "title": "Origem",
+            "type": "string"
+          },
+          "parametros": {
+            "additionalProperties": true,
+            "title": "Parametros",
+            "type": "object"
+          },
+          "periodo": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PeriodoOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "tipo_evidencia": {
+            "const": "financeira",
+            "default": "financeira",
+            "title": "Tipo Evidencia",
+            "type": "string"
+          }
+        },
+        "required": [
+          "evidencia_id",
+          "periodo",
+          "parametros",
+          "ferramenta",
+          "dados"
+        ],
+        "title": "ResultadoReservaOut",
+        "type": "object"
+      },
+      "ResultadoResumoOut": {
+        "properties": {
+          "dados": {
+            "$ref": "#/components/schemas/ResumoPeriodoOut"
+          },
+          "evidencia_id": {
+            "pattern": "^fin-[0-9a-f]{16}$",
+            "title": "Evidencia Id",
+            "type": "string"
+          },
+          "ferramenta": {
+            "const": "resumo_periodo",
+            "title": "Ferramenta",
+            "type": "string"
+          },
+          "moeda": {
+            "const": "BRL",
+            "default": "BRL",
+            "title": "Moeda",
+            "type": "string"
+          },
+          "origem": {
+            "const": "registros_declarados",
+            "default": "registros_declarados",
+            "title": "Origem",
+            "type": "string"
+          },
+          "parametros": {
+            "additionalProperties": true,
+            "title": "Parametros",
+            "type": "object"
+          },
+          "periodo": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PeriodoOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "tipo_evidencia": {
+            "const": "financeira",
+            "default": "financeira",
+            "title": "Tipo Evidencia",
+            "type": "string"
+          }
+        },
+        "required": [
+          "evidencia_id",
+          "periodo",
+          "parametros",
+          "ferramenta",
+          "dados"
+        ],
+        "title": "ResultadoResumoOut",
+        "type": "object"
+      },
+      "ResultadoTotaisOut": {
+        "properties": {
+          "dados": {
+            "$ref": "#/components/schemas/TotaisPorCategoriaOut"
+          },
+          "evidencia_id": {
+            "pattern": "^fin-[0-9a-f]{16}$",
+            "title": "Evidencia Id",
+            "type": "string"
+          },
+          "ferramenta": {
+            "const": "totais_por_categoria",
+            "title": "Ferramenta",
+            "type": "string"
+          },
+          "moeda": {
+            "const": "BRL",
+            "default": "BRL",
+            "title": "Moeda",
+            "type": "string"
+          },
+          "origem": {
+            "const": "registros_declarados",
+            "default": "registros_declarados",
+            "title": "Origem",
+            "type": "string"
+          },
+          "parametros": {
+            "additionalProperties": true,
+            "title": "Parametros",
+            "type": "object"
+          },
+          "periodo": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PeriodoOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "tipo_evidencia": {
+            "const": "financeira",
+            "default": "financeira",
+            "title": "Tipo Evidencia",
+            "type": "string"
+          }
+        },
+        "required": [
+          "evidencia_id",
+          "periodo",
+          "parametros",
+          "ferramenta",
+          "dados"
+        ],
+        "title": "ResultadoTotaisOut",
+        "type": "object"
+      },
+      "ResumoPeriodoOut": {
+        "properties": {
+          "despesas": {
+            "examples": [
+              "1250.40"
+            ],
+            "pattern": "^-?[0-9]{1,18}\\.[0-9]{2}$",
+            "title": "Despesas",
+            "type": "string"
+          },
+          "despesas_essenciais": {
+            "examples": [
+              "1250.40"
+            ],
+            "pattern": "^-?[0-9]{1,18}\\.[0-9]{2}$",
+            "title": "Despesas Essenciais",
+            "type": "string"
+          },
+          "quantidade": {
+            "title": "Quantidade",
+            "type": "integer"
+          },
+          "receitas": {
+            "examples": [
+              "1250.40"
+            ],
+            "pattern": "^-?[0-9]{1,18}\\.[0-9]{2}$",
+            "title": "Receitas",
+            "type": "string"
+          },
+          "resultado": {
+            "examples": [
+              "1250.40"
+            ],
+            "pattern": "^-?[0-9]{1,18}\\.[0-9]{2}$",
+            "title": "Resultado",
+            "type": "string"
+          }
+        },
+        "required": [
+          "receitas",
+          "despesas",
+          "despesas_essenciais",
+          "resultado",
+          "quantidade"
+        ],
+        "title": "ResumoPeriodoOut",
+        "type": "object"
+      },
       "ResumoReservaOut": {
         "properties": {
           "aportes": {
@@ -1007,6 +1434,21 @@
             },
             "title": "Faltando",
             "type": "array"
+          },
+          "meses_cobertos": {
+            "anyOf": [
+              {
+                "examples": [
+                  "4.50"
+                ],
+                "pattern": "^-?[0-9]{1,23}\\.[0-9]{2}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Meses Cobertos"
           },
           "meses_cobertura": {
             "anyOf": [
@@ -1103,6 +1545,7 @@
           "despesas_essenciais_total",
           "despesas_essenciais_mensais",
           "meses_cobertura",
+          "meses_cobertos",
           "saldo_inicial",
           "aportes",
           "retiradas",
@@ -1111,6 +1554,67 @@
           "progresso_percentual"
         ],
         "title": "ResumoReservaOut",
+        "type": "object"
+      },
+      "SaldoContaOut": {
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "nome": {
+            "title": "Nome",
+            "type": "string"
+          },
+          "saldo_declarado": {
+            "examples": [
+              "1500.50"
+            ],
+            "pattern": "^-?[0-9]{1,12}(\\.[0-9]{1,2})?$",
+            "title": "Saldo Declarado",
+            "type": "string"
+          },
+          "tipo": {
+            "$ref": "#/components/schemas/Tipo"
+          }
+        },
+        "required": [
+          "id",
+          "nome",
+          "tipo",
+          "saldo_declarado"
+        ],
+        "title": "SaldoContaOut",
+        "type": "object"
+      },
+      "SaldosContasOut": {
+        "properties": {
+          "contas": {
+            "items": {
+              "$ref": "#/components/schemas/SaldoContaOut"
+            },
+            "title": "Contas",
+            "type": "array"
+          },
+          "quantidade": {
+            "title": "Quantidade",
+            "type": "integer"
+          },
+          "total_declarado": {
+            "examples": [
+              "1250.40"
+            ],
+            "pattern": "^-?[0-9]{1,18}\\.[0-9]{2}$",
+            "title": "Total Declarado",
+            "type": "string"
+          }
+        },
+        "required": [
+          "total_declarado",
+          "quantidade",
+          "contas"
+        ],
+        "title": "SaldosContasOut",
         "type": "object"
       },
       "Tipo": {
@@ -1173,6 +1677,95 @@
           "resultado"
         ],
         "title": "TotaisOut",
+        "type": "object"
+      },
+      "TotaisPorCategoriaOut": {
+        "properties": {
+          "categorias": {
+            "items": {
+              "$ref": "#/components/schemas/TotalCategoriaOut"
+            },
+            "title": "Categorias",
+            "type": "array"
+          },
+          "despesas": {
+            "examples": [
+              "1250.40"
+            ],
+            "pattern": "^-?[0-9]{1,18}\\.[0-9]{2}$",
+            "title": "Despesas",
+            "type": "string"
+          },
+          "quantidade": {
+            "title": "Quantidade",
+            "type": "integer"
+          },
+          "receitas": {
+            "examples": [
+              "1250.40"
+            ],
+            "pattern": "^-?[0-9]{1,18}\\.[0-9]{2}$",
+            "title": "Receitas",
+            "type": "string"
+          },
+          "resultado": {
+            "examples": [
+              "1250.40"
+            ],
+            "pattern": "^-?[0-9]{1,18}\\.[0-9]{2}$",
+            "title": "Resultado",
+            "type": "string"
+          }
+        },
+        "required": [
+          "receitas",
+          "despesas",
+          "resultado",
+          "quantidade",
+          "categorias"
+        ],
+        "title": "TotaisPorCategoriaOut",
+        "type": "object"
+      },
+      "TotalCategoriaOut": {
+        "properties": {
+          "categoria_id": {
+            "title": "Categoria Id",
+            "type": "integer"
+          },
+          "categoria_nome": {
+            "title": "Categoria Nome",
+            "type": "string"
+          },
+          "essencial": {
+            "title": "Essencial",
+            "type": "boolean"
+          },
+          "quantidade": {
+            "title": "Quantidade",
+            "type": "integer"
+          },
+          "tipo": {
+            "$ref": "#/components/schemas/TipoLancamento"
+          },
+          "total": {
+            "examples": [
+              "1250.40"
+            ],
+            "pattern": "^-?[0-9]{1,18}\\.[0-9]{2}$",
+            "title": "Total",
+            "type": "string"
+          }
+        },
+        "required": [
+          "categoria_id",
+          "categoria_nome",
+          "tipo",
+          "essencial",
+          "total",
+          "quantidade"
+        ],
+        "title": "TotalCategoriaOut",
         "type": "object"
       },
       "TransacaoIn": {
@@ -2079,6 +2672,387 @@
         "summary": "Extrair valor, data e estabelecimento",
         "tags": [
           "comprovantes"
+        ]
+      }
+    },
+    "/api/consultas/ferramentas": {
+      "get": {
+        "description": "Lista as ferramentas de leitura permitidas e seus parâmetros.",
+        "operationId": "financas_api_consultas_listar_ferramentas",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/FerramentaOut"
+                  },
+                  "title": "Response",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroOut"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          }
+        },
+        "security": [
+          {
+            "SessionAuth": []
+          }
+        ],
+        "summary": "Listar Ferramentas",
+        "tags": [
+          "consultas financeiras"
+        ]
+      }
+    },
+    "/api/consultas/reserva": {
+      "get": {
+        "description": "Retorna meta, saldo declarado, cobertura e progresso da reserva.",
+        "operationId": "financas_api_consultas_consultar_reserva_declarada",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "mes_inicio",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "examples": [
+                    "2026-08"
+                  ],
+                  "pattern": "^[0-9]{4}-[0-9]{2}$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Mes Inicio"
+            }
+          },
+          {
+            "in": "query",
+            "name": "mes_fim",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "examples": [
+                    "2026-08"
+                  ],
+                  "pattern": "^[0-9]{4}-[0-9]{2}$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Mes Fim"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResultadoReservaOut"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroOut"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroValidacaoOut"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "security": [
+          {
+            "SessionAuth": []
+          }
+        ],
+        "summary": "Consultar Reserva Declarada",
+        "tags": [
+          "consultas financeiras"
+        ]
+      }
+    },
+    "/api/consultas/resumo-periodo": {
+      "get": {
+        "description": "Resume receitas, despesas e despesas essenciais declaradas em um período.",
+        "operationId": "financas_api_consultas_consultar_resumo_periodo",
+        "parameters": [
+          {
+            "examples": {
+              "example0": {
+                "value": "2026-11-10"
+              }
+            },
+            "in": "query",
+            "name": "data_inicio",
+            "required": true,
+            "schema": {
+              "examples": [
+                "2026-11-10"
+              ],
+              "format": "date",
+              "title": "Data Inicio",
+              "type": "string"
+            }
+          },
+          {
+            "examples": {
+              "example0": {
+                "value": "2026-11-10"
+              }
+            },
+            "in": "query",
+            "name": "data_fim",
+            "required": true,
+            "schema": {
+              "examples": [
+                "2026-11-10"
+              ],
+              "format": "date",
+              "title": "Data Fim",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResultadoResumoOut"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroOut"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroValidacaoOut"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "security": [
+          {
+            "SessionAuth": []
+          }
+        ],
+        "summary": "Consultar Resumo Periodo",
+        "tags": [
+          "consultas financeiras"
+        ]
+      }
+    },
+    "/api/consultas/saldos-contas": {
+      "get": {
+        "description": "Lista os saldos declarados das contas manuais.",
+        "operationId": "financas_api_consultas_consultar_saldos_contas",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResultadoContasOut"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroOut"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroValidacaoOut"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "security": [
+          {
+            "SessionAuth": []
+          }
+        ],
+        "summary": "Consultar Saldos Contas",
+        "tags": [
+          "consultas financeiras"
+        ]
+      }
+    },
+    "/api/consultas/totais-por-categoria": {
+      "get": {
+        "description": "Soma receitas e despesas declaradas por categoria em um período.",
+        "operationId": "financas_api_consultas_consultar_totais_por_categoria",
+        "parameters": [
+          {
+            "examples": {
+              "example0": {
+                "value": "2026-11-10"
+              }
+            },
+            "in": "query",
+            "name": "data_inicio",
+            "required": true,
+            "schema": {
+              "examples": [
+                "2026-11-10"
+              ],
+              "format": "date",
+              "title": "Data Inicio",
+              "type": "string"
+            }
+          },
+          {
+            "examples": {
+              "example0": {
+                "value": "2026-11-10"
+              }
+            },
+            "in": "query",
+            "name": "data_fim",
+            "required": true,
+            "schema": {
+              "examples": [
+                "2026-11-10"
+              ],
+              "format": "date",
+              "title": "Data Fim",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "tipo",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/TipoLancamento"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "categoria_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "ge": 1,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Categoria Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResultadoTotaisOut"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroOut"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroValidacaoOut"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "security": [
+          {
+            "SessionAuth": []
+          }
+        ],
+        "summary": "Consultar Totais Por Categoria",
+        "tags": [
+          "consultas financeiras"
         ]
       }
     },

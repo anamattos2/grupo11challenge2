@@ -5,12 +5,16 @@ from decimal import Decimal
 from typing import Annotated, Any, Literal, Optional
 
 from django.db import transaction
-from django.db.models import Count, Sum
-from django.db.models.functions import TruncMonth
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from ninja import Field, Query, Router, Schema
-from pydantic import BeforeValidator, StrictInt, WithJsonSchema, model_validator
+from pydantic import (
+    BeforeValidator,
+    PlainSerializer,
+    StrictInt,
+    WithJsonSchema,
+    model_validator,
+)
 
 from autenticacao.api import ErroOut
 from autenticacao.isolamento import obter_da_usuaria_ou_404
@@ -28,25 +32,18 @@ from financas.api_transacoes import (
     ValorEntrada,
     mesmo_estado_do_banco,
     recusar_filtros_desconhecidos,
-    somar,
 )
-from financas.models import (
-    MovimentacaoReserva,
-    ReservaEmergencia,
-    TipoLancamento,
-    Transacao,
+from financas.consultas import (
+    formatar_mes,
+    mes_atual,
+    resumir_reserva,
+    somar_movimentacoes,
 )
-from financas.reserva import (
-    avaliar_reserva,
-    calcular_media_mensal,
-    calcular_saldo,
-    contar_meses,
-    somar_meses,
-)
+from financas.models import MovimentacaoReserva, ReservaEmergencia
+from financas.reserva import calcular_saldo, contar_meses
 
 reserva_router = Router(tags=["reserva de emergência"])
 
-MESES_PADRAO = 3
 MAXIMO_MESES_PERIODO = 24
 RESERVA_NAO_CONFIGURADA = {"detail": "Configure a reserva antes de registrar movimentações."}
 SALDO_INSUFICIENTE = {"detail": "O saldo declarado da reserva é insuficiente para esta operação."}
@@ -75,14 +72,6 @@ def validar_mes(valor: Any) -> date:
     raise ValueError("Informe um mês válido no formato AAAA-MM.")
 
 
-def formatar_mes(mes: date) -> str:
-    return f"{mes.year:04d}-{mes.month:02d}"
-
-
-def mes_atual() -> date:
-    return timezone.localdate().replace(day=1)
-
-
 SaldoInicialEntrada = Annotated[
     Decimal,
     BeforeValidator(validar_saldo_inicial),
@@ -98,6 +87,11 @@ AcumuladoSaida = Annotated[
     Decimal,
     WithJsonSchema({"type": "string", "pattern": PADRAO_ACUMULADO, "examples": ["1200000000000.00"]}),
 ]
+# Meses que o saldo cobre: saldo ÷ média mensal, com o mesmo alcance do percentual.
+CoberturaSaida = Annotated[
+    Decimal,
+    WithJsonSchema({"type": "string", "pattern": PADRAO_PERCENTUAL, "examples": ["4.50"]}),
+]
 PercentualSaida = Annotated[
     Decimal,
     WithJsonSchema({"type": "string", "pattern": PADRAO_PERCENTUAL, "examples": ["37.50"]}),
@@ -105,6 +99,7 @@ PercentualSaida = Annotated[
 MesIso = Annotated[
     date,
     BeforeValidator(validar_mes),
+    PlainSerializer(formatar_mes, return_type=str, when_used="json"),
     WithJsonSchema({"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}$", "examples": ["2026-08"]}),
 ]
 
@@ -156,6 +151,7 @@ class ResumoReservaOut(Schema):
     despesas_essenciais_total: AcumuladoSaida
     despesas_essenciais_mensais: Optional[AcumuladoSaida]
     meses_cobertura: Optional[int]
+    meses_cobertos: Optional[CoberturaSaida]
     saldo_inicial: Optional[SaldoSaida]
     aportes: AcumuladoSaida
     retiradas: AcumuladoSaida
@@ -209,13 +205,6 @@ class ListaMovimentacoesOut(Schema):
     itens: list[MovimentacaoOut]
 
 
-def somar_movimentacoes(usuaria) -> dict[str, Decimal]:
-    return MovimentacaoReserva.objects.da_usuaria(usuaria).aggregate(
-        aportes=somar(MovimentacaoReserva.Tipo.APORTE),
-        retiradas=somar(MovimentacaoReserva.Tipo.RETIRADA),
-    )
-
-
 def saldo_com_inicial(usuaria, saldo_inicial: Decimal) -> Decimal:
     totais = somar_movimentacoes(usuaria)
     return calcular_saldo(saldo_inicial, totais["aportes"], totais["retiradas"])
@@ -234,51 +223,7 @@ def consultar_reserva(request, filtros: Query[FiltrosReservaIn]):
     """Calcula meta, saldo e progresso; sem filtros, usa os 3 últimos meses completos."""
     recusar_filtros_desconhecidos(request, FiltrosReservaIn)
 
-    inicio = filtros.mes_inicio or somar_meses(mes_atual(), -MESES_PADRAO)
-    fim = filtros.mes_fim or somar_meses(mes_atual(), -1)
-    despesas = Transacao.objects.da_usuaria(request.auth).filter(
-        tipo=TipoLancamento.DESPESA,
-        categoria__essencial=True,
-        data__gte=inicio,
-        data__lt=somar_meses(fim, 1),
-    )
-    # Despesas, configuração e movimentações vêm do mesmo snapshot: um saldo
-    # inicial alterado e uma retirada nova não podem se misturar com o estado
-    # anterior e gerar um saldo que nunca existiu.
-    with mesmo_estado_do_banco():
-        resumo = despesas.aggregate(
-            total=Sum("valor", default=Decimal("0.00")),
-            meses=Count(TruncMonth("data"), distinct=True),
-        )
-        reserva = ReservaEmergencia.objects.da_usuaria(request.auth).first()
-        totais = somar_movimentacoes(request.auth)
-    mensais = calcular_media_mensal(resumo["total"], resumo["meses"])
-    saldo = None
-    if reserva is not None:
-        saldo = calcular_saldo(reserva.saldo_inicial, totais["aportes"], totais["retiradas"])
-    meses_cobertura = reserva.meses_cobertura if reserva else None
-    resultado = avaliar_reserva(mensais, meses_cobertura, saldo)
-
-    return {
-        "estado": resultado.estado,
-        "faltando": resultado.faltando,
-        "moeda": "BRL",
-        "periodo": {
-            "mes_inicio": formatar_mes(inicio),
-            "mes_fim": formatar_mes(fim),
-            "meses_no_periodo": contar_meses(inicio, fim),
-            "meses_com_registro": resumo["meses"],
-        },
-        "despesas_essenciais_total": resumo["total"],
-        "despesas_essenciais_mensais": mensais,
-        "meses_cobertura": meses_cobertura,
-        "saldo_inicial": reserva.saldo_inicial if reserva else None,
-        "aportes": totais["aportes"],
-        "retiradas": totais["retiradas"],
-        "saldo_declarado": saldo,
-        "meta": resultado.meta,
-        "progresso_percentual": resultado.progresso_percentual,
-    }
+    return resumir_reserva(request.auth, filtros.mes_inicio, filtros.mes_fim)
 
 
 @reserva_router.put(
