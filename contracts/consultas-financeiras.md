@@ -88,6 +88,18 @@ GET /api/consultas/totais-por-categoria?data_inicio=2026-10-01&data_fim=2026-10-
 }
 ```
 
+### Formato dos valores
+
+Os valores são texto decimal com 2 casas. Somas de vários registros não cabem no
+formato de um valor individual (até 12 dígitos inteiros) e têm formato próprio:
+
+| Campos | Formato |
+|---|---|
+| Saldo de cada conta em `saldos_contas` | Valor individual: até 12 dígitos inteiros |
+| `receitas`, `despesas`, `resultado` e `total` de `totais_por_categoria`; `receitas`, `despesas`, `despesas_essenciais` e `resultado` de `resumo_periodo`; `total_declarado` de `saldos_contas` | `^-?[0-9]{1,18}\.[0-9]{2}$`, o mesmo dos totais de `GET /api/transacoes` |
+| Somas, média, saldo e meta de `consultar_reserva` | `^-?[0-9]{1,20}\.[0-9]{2}$` (ver [reserva](reserva.md)) |
+| `progresso_percentual` e `meses_cobertos` | `^-?[0-9]{1,23}\.[0-9]{2}$`: passam de 100 ou de 12 dígitos quando o saldo é grande perto da meta ou da despesa mensal |
+
 ## Meta, saldo e cobertura
 
 | Campo em `consultar_reserva` | Significado |
@@ -103,6 +115,11 @@ GET /api/consultas/totais-por-categoria?data_inicio=2026-10-01&data_fim=2026-10-
 Campos que dependem de um dado ausente retornam `null`. O agente deve comunicar o que
 falta, sem estimar o valor.
 
+`consultar_reserva` e `GET /api/reserva` usam a mesma função (`resumir_reserva`), que lê
+despesas, configuração e movimentações numa transação `REPEATABLE READ`. Uma alteração
+concorrente do saldo inicial ou das movimentações aparece inteira ou não aparece: saldo,
+`meses_cobertos` e progresso nunca combinam estados diferentes.
+
 ## Uso pelos agentes
 
 No backend, os agentes usam a função `executar_ferramenta(usuaria, nome, parametros)`, em
@@ -114,6 +131,31 @@ escolhe apenas `nome` e `parametros`.
 | `AcessoNegado` | Não há usuária autenticada |
 | `FerramentaNaoPermitida` | O nome não está na lista de ferramentas |
 | `ParametrosInvalidos` | Há parâmetro desconhecido, ausente ou inválido |
+
+### Integração com o Research Agent (S6-01 / #99)
+
+O contrato dos agentes (S4-01 / #75) já está concluído, e o adaptador
+`FonteFinanceiraBackend`, em `packages/ai/src/finance_ai/agents/backend.py`, converte as
+duas pontas sem alterar esta API:
+
+| Operação do Research Agent | Ferramenta chamada |
+|---|---|
+| `resumo_transacoes` com `somente_essenciais` | `resumo_periodo` (usa `despesas_essenciais`) |
+| `resumo_transacoes` | `totais_por_categoria` |
+| `listar_contas` | `saldos_contas` |
+| `situacao_reserva` | `consultar_reserva` |
+
+- **ID de evidência:** o Research Agent exige `fin:<operacao>:<12 hex>`. O adaptador gera
+  esse ID com `id_financeiro(operacao, parametros)`, a partir da operação e dos parâmetros
+  dos agentes, e guarda o `evidencia_id` desta API (`fin-<16 hex>`) em
+  `localizacao.filtros["evidencia_backend"]`, junto do nome da ferramenta. Assim a
+  citação mostrada pelos agentes continua rastreável até a consulta feita aqui.
+- **Usuária:** o adaptador recebe a `usuaria_ref` opaca do `ContextoAutorizado` e só a
+  troca pela usuária da sessão por meio de `resolver_usuaria`; sem correspondência, falha
+  com `contexto_ausente`. Os agentes nunca enviam a identidade nos parâmetros.
+- **Erros:** o código `acesso_negado` vira `permissao_ausente` (negação da fonte). As
+  demais exceções mantêm o `codigo` desta API, ou viram `ferramenta_indisponivel`, e uma
+  resposta de outra ferramenta ou sem `tipo_evidencia` financeira vira `resposta_invalida`.
 
 ## Erros das rotas
 

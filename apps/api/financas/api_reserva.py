@@ -87,6 +87,11 @@ AcumuladoSaida = Annotated[
     Decimal,
     WithJsonSchema({"type": "string", "pattern": PADRAO_ACUMULADO, "examples": ["1200000000000.00"]}),
 ]
+# Meses que o saldo cobre: saldo ÷ média mensal, com o mesmo alcance do percentual.
+CoberturaSaida = Annotated[
+    Decimal,
+    WithJsonSchema({"type": "string", "pattern": PADRAO_PERCENTUAL, "examples": ["4.50"]}),
+]
 PercentualSaida = Annotated[
     Decimal,
     WithJsonSchema({"type": "string", "pattern": PADRAO_PERCENTUAL, "examples": ["37.50"]}),
@@ -146,7 +151,7 @@ class ResumoReservaOut(Schema):
     despesas_essenciais_total: AcumuladoSaida
     despesas_essenciais_mensais: Optional[AcumuladoSaida]
     meses_cobertura: Optional[int]
-    meses_cobertos: Optional[SaldoSaida]
+    meses_cobertos: Optional[CoberturaSaida]
     saldo_inicial: Optional[SaldoSaida]
     aportes: AcumuladoSaida
     retiradas: AcumuladoSaida

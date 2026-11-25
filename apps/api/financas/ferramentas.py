@@ -16,7 +16,7 @@ from pydantic import BeforeValidator, ConfigDict, ValidationError, model_validat
 
 from financas.api import EntradaEstrita, SaldoSaida
 from financas.api_reserva import FiltrosReservaIn, ResumoReservaOut
-from financas.api_transacoes import DataIso, PeriodoOut
+from financas.api_transacoes import DataIso, PeriodoOut, TotalSaida
 from financas.consultas import (
     listar_saldos_contas,
     periodo_da_reserva,
@@ -92,23 +92,26 @@ class TotalCategoriaOut(Schema):
     categoria_nome: str
     tipo: TipoLancamento
     essencial: bool
-    total: SaldoSaida
+    total: TotalSaida
     quantidade: int
 
 
+# Somas de vários registros usam TotalSaida (até 18 dígitos inteiros), o mesmo
+# formato dos totais da listagem de transações: SaldoSaida é o formato de um
+# valor individual e limita a 12 dígitos.
 class TotaisPorCategoriaOut(Schema):
-    receitas: SaldoSaida
-    despesas: SaldoSaida
-    resultado: SaldoSaida
+    receitas: TotalSaida
+    despesas: TotalSaida
+    resultado: TotalSaida
     quantidade: int
     categorias: list[TotalCategoriaOut]
 
 
 class ResumoPeriodoOut(Schema):
-    receitas: SaldoSaida
-    despesas: SaldoSaida
-    despesas_essenciais: SaldoSaida
-    resultado: SaldoSaida
+    receitas: TotalSaida
+    despesas: TotalSaida
+    despesas_essenciais: TotalSaida
+    resultado: TotalSaida
     quantidade: int
 
 
@@ -120,7 +123,7 @@ class SaldoContaOut(Schema):
 
 
 class SaldosContasOut(Schema):
-    total_declarado: SaldoSaida
+    total_declarado: TotalSaida
     quantidade: int
     contas: list[SaldoContaOut]
 

@@ -1,13 +1,18 @@
 import re
-from datetime import date
+from datetime import date, timedelta
 from decimal import Decimal
 from unittest import mock
 
+import json
+import threading
+
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser
-from django.db import connection
-from django.test import Client, SimpleTestCase, TestCase
+from django.db import connection, connections, transaction
+from django.test import Client, SimpleTestCase, TestCase, TransactionTestCase
 from django.test.utils import CaptureQueriesContext
+from django.utils import timezone
 
 from financas.ferramentas import (
     FERRAMENTAS,
@@ -540,3 +545,165 @@ class RotasDeConsultaTests(BaseFerramentas):
         self.assertEqual(corpo["ferramenta"], "consultar_reserva")
         self.assertEqual(corpo["parametros"], {"mes_inicio": "2026-10", "mes_fim": "2026-10"})
         self.assertEqual(corpo["periodo"], {"inicio": "2026-10-01", "fim": "2026-10-31"})
+
+
+CONTRATO = settings.BASE_DIR.parent.parent / "contracts" / "openapi.json"
+
+
+def padrao_no_contrato(esquema, campo):
+    """Padrão publicado de um campo texto, inclusive quando ele é opcional."""
+    esquemas = json.loads(CONTRATO.read_text(encoding="utf-8"))["components"]["schemas"]
+    propriedade = esquemas[esquema]["properties"][campo]
+    opcoes = propriedade.get("anyOf", [propriedade])
+    return next(o["pattern"] for o in opcoes if o.get("type") == "string")
+
+
+class AcumuladosNoContratoTests(TestCase):
+    """Revisão do PR #129: somas não cabem no formato de um valor individual."""
+
+    GRANDE = Decimal("600000000000.00")
+
+    def setUp(self):
+        self.ana = get_user_model().objects.create_user("ana.ficticia")
+        self.client.force_login(self.ana)
+        relogio = mock.patch("django.utils.timezone.localdate", return_value=HOJE)
+        relogio.start()
+        self.addCleanup(relogio.stop)
+        self.moradia = Categoria.objects.create(usuaria=self.ana, nome="Moradia",
+                                                tipo=TipoLancamento.DESPESA, essencial=True)
+        self.salario = Categoria.objects.create(usuaria=self.ana, nome="Salário",
+                                                tipo=TipoLancamento.RECEITA)
+
+    def registrar(self, categoria, quantidade):
+        for dia in range(1, quantidade + 1):
+            Transacao.objects.create(usuaria=self.ana, categoria=categoria, tipo=categoria.tipo,
+                                     valor=self.GRANDE, data=date(2026, 10, dia))
+
+    def conferir(self, esquema, dados, campos):
+        for campo in campos:
+            with self.subTest(esquema=esquema, campo=campo):
+                self.assertRegex(dados[campo], padrao_no_contrato(esquema, campo))
+
+    def test_totais_por_categoria_acima_de_12_digitos(self):
+        self.registrar(self.moradia, 2)
+        self.registrar(self.salario, 3)
+
+        dados = self.client.get("/api/consultas/totais-por-categoria?data_inicio=2026-10-01"
+                                "&data_fim=2026-10-31").json()["dados"]
+
+        self.assertEqual((dados["receitas"], dados["despesas"], dados["resultado"]),
+                         ("1800000000000.00", "1200000000000.00", "600000000000.00"))
+        self.conferir("TotaisPorCategoriaOut", dados, ("receitas", "despesas", "resultado"))
+        for categoria in dados["categorias"]:
+            self.conferir("TotalCategoriaOut", categoria, ("total",))
+
+    def test_resumo_do_periodo_acima_de_12_digitos_e_negativo(self):
+        self.registrar(self.moradia, 3)
+
+        dados = self.client.get("/api/consultas/resumo-periodo?data_inicio=2026-10-01"
+                                "&data_fim=2026-10-31").json()["dados"]
+
+        self.assertEqual((dados["despesas_essenciais"], dados["resultado"]),
+                         ("1800000000000.00", "-1800000000000.00"))
+        self.conferir("ResumoPeriodoOut", dados,
+                      ("receitas", "despesas", "despesas_essenciais", "resultado"))
+
+    def test_saldo_total_das_contas_acima_de_12_digitos(self):
+        for nome in ("Conta A", "Conta B"):
+            ContaManual.objects.create(usuaria=self.ana, nome=nome, tipo="corrente",
+                                       saldo_declarado=Decimal("999999999999.99"))
+
+        dados = self.client.get("/api/consultas/saldos-contas").json()["dados"]
+
+        self.assertEqual(dados["total_declarado"], "1999999999999.98")
+        self.conferir("SaldosContasOut", dados, ("total_declarado",))
+
+    def test_cobertura_da_reserva_acima_de_12_digitos(self):
+        Transacao.objects.create(usuaria=self.ana, categoria=self.moradia, tipo=TipoLancamento.DESPESA,
+                                 valor=Decimal("0.01"), data=date(2026, 10, 5))
+        ReservaEmergencia.objects.create(usuaria=self.ana, saldo_inicial=Decimal("999999999999.99"),
+                                         meses_cobertura=1)
+        MovimentacaoReserva.objects.create(usuaria=self.ana, tipo=MovimentacaoReserva.Tipo.APORTE,
+                                           valor=Decimal("999999999999.99"), data=date(2026, 10, 6))
+
+        for rota in ("/api/reserva", "/api/consultas/reserva"):
+            with self.subTest(rota=rota):
+                corpo = self.client.get(rota).json()
+                dados = corpo.get("dados", corpo)
+                self.assertEqual(dados["meses_cobertos"], "199999999999998.00")
+                self.conferir("ResumoReservaOut", dados,
+                              ("meses_cobertos", "saldo_declarado", "meta", "progresso_percentual"))
+
+
+class ResumoDaReservaConsistenteTests(TransactionTestCase):
+    """Revisão do PR #129: a função compartilhada resumir_reserva lê tudo no mesmo snapshot.
+
+    Logo depois de a consulta ler a configuração, outra conexão aumenta o saldo
+    inicial e registra uma retirada que só cabe no saldo novo. O resumo, nos dois
+    endpoints que usam a função, mostra o estado anterior inteiro.
+    """
+
+    ROTAS = ("/api/reserva", "/api/consultas/reserva")
+
+    def setUp(self):
+        self.ana = get_user_model().objects.create_user("ana.ficticia")
+        moradia = Categoria.objects.create(usuaria=self.ana, nome="Moradia",
+                                           tipo=TipoLancamento.DESPESA, essencial=True)
+        # Dentro do período padrão da reserva (os 3 últimos meses completos).
+        mes_passado = (timezone.localdate().replace(day=1) - timedelta(days=1)).replace(day=10)
+        Transacao.objects.create(usuaria=self.ana, categoria=moradia, tipo=TipoLancamento.DESPESA,
+                                 valor=Decimal("50.00"), data=mes_passado)
+        ReservaEmergencia.objects.create(usuaria=self.ana, saldo_inicial=Decimal("100.00"),
+                                         meses_cobertura=3)
+        self.client.force_login(self.ana)
+
+    def alterar_por_outra_conexao(self):
+        def alterar():
+            try:
+                with transaction.atomic():
+                    ReservaEmergencia.objects.filter(usuaria=self.ana).update(
+                        saldo_inicial=Decimal("1000.00"))
+                    MovimentacaoReserva.objects.create(usuaria=self.ana,
+                                                       tipo=MovimentacaoReserva.Tipo.RETIRADA,
+                                                       valor=Decimal("500.00"), data=date(2026, 10, 1))
+            finally:
+                connections.close_all()
+
+        tarefa = threading.Thread(target=alterar)
+        tarefa.start()
+        tarefa.join()
+
+    def ler_com_escrita_concorrente(self, rota):
+        alterou = []
+
+        def depois_da_configuracao(execute, sql, params, many, context):
+            resultado = execute(sql, params, many, context)
+            if (not alterou and sql.lstrip().upper().startswith("SELECT")
+                    and '"financas_reservaemergencia"' in sql):
+                alterou.append(True)
+                self.alterar_por_outra_conexao()
+            return resultado
+
+        with connection.execute_wrapper(depois_da_configuracao):
+            corpo = self.client.get(rota).json()
+        self.assertTrue(alterou)
+        return corpo.get("dados", corpo)
+
+    def desfazer_alteracao(self):
+        ReservaEmergencia.objects.filter(usuaria=self.ana).update(saldo_inicial=Decimal("100.00"))
+        MovimentacaoReserva.objects.filter(usuaria=self.ana).delete()
+
+    def test_saldo_e_cobertura_nao_misturam_estados_nos_dois_endpoints(self):
+        for rota in self.ROTAS:
+            with self.subTest(rota=rota):
+                dados = self.ler_com_escrita_concorrente(rota)
+
+                self.assertEqual((dados["saldo_inicial"], dados["retiradas"], dados["saldo_declarado"]),
+                                 ("100.00", "0.00", "100.00"))
+                self.assertEqual(dados["meses_cobertos"], "2.00")
+
+                depois = self.client.get(rota).json()
+                depois = depois.get("dados", depois)
+                self.assertEqual((depois["saldo_declarado"], depois["meses_cobertos"]),
+                                 ("500.00", "10.00"))
+                self.desfazer_alteracao()
