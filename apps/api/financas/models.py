@@ -114,3 +114,54 @@ class Transacao(RegistroDaUsuaria):
         constraints = [
             models.CheckConstraint(condition=Q(valor__gt=0), name="transacao_valor_positivo"),
         ]
+
+
+class ReservaEmergencia(RegistroDaUsuaria):
+    saldo_inicial = models.DecimalField(max_digits=14, decimal_places=2)
+    meses_cobertura = models.PositiveSmallIntegerField(null=True, blank=True)
+    moeda = models.CharField(max_length=3, default="BRL", editable=False)
+    criado_em = models.DateTimeField(auto_now_add=True)
+    atualizado_em = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["usuaria"], name="reserva_unica_por_usuaria"),
+            models.CheckConstraint(
+                condition=Q(saldo_inicial__gte=0),
+                name="reserva_saldo_inicial_nao_negativo",
+            ),
+            models.CheckConstraint(
+                condition=Q(meses_cobertura__isnull=True)
+                | Q(meses_cobertura__gte=1, meses_cobertura__lte=60),
+                name="reserva_meses_cobertura_validos",
+            ),
+        ]
+
+
+class TipoMovimentacao(models.TextChoices):
+    APORTE = "aporte", "Aporte"
+    RETIRADA = "retirada", "Retirada"
+
+
+class MovimentacaoReserva(RegistroDaUsuaria):
+    # O nome próprio evita colisão com ContaManual.Tipo no contrato OpenAPI.
+    Tipo = TipoMovimentacao
+
+    tipo = models.CharField(max_length=10, choices=Tipo.choices)
+    valor = models.DecimalField(max_digits=14, decimal_places=2)
+    moeda = models.CharField(max_length=3, default="BRL", editable=False)
+    data = models.DateField()
+    descricao = models.CharField(max_length=200, blank=True, default="")
+    criado_em = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-data", "-id"]
+        indexes = [
+            models.Index(F("usuaria"), F("data").desc(), name="movimentacao_usuaria_data"),
+        ]
+        constraints = [
+            models.CheckConstraint(
+                condition=Q(valor__gt=0),
+                name="movimentacao_valor_positivo",
+            ),
+        ]

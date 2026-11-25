@@ -184,6 +184,22 @@ def referencia_invalida(campo: str, mensagem: str) -> ValidationError:
     )
 
 
+def recusar_filtros_desconhecidos(request, esquema) -> None:
+    """Impede que um filtro digitado errado devolva totais de todo o histórico."""
+    desconhecidos = sorted(set(request.GET) - set(esquema.model_fields))
+    if desconhecidos:
+        raise ValidationError(
+            [
+                {
+                    "type": "filtro_desconhecido",
+                    "loc": ["query", nome],
+                    "msg": "Filtro desconhecido.",
+                }
+                for nome in desconhecidos
+            ]
+        )
+
+
 def bloquear_da_usuaria_ou_404(modelo, usuaria, registro_id: int):
     """Trava o registro próprio até o fim da transação do banco."""
     registros = modelo.objects.da_usuaria(usuaria).select_for_update()
@@ -322,19 +338,7 @@ def excluir_categoria(request, categoria_id: int):
 )
 def listar_transacoes(request, filtros: Query[FiltrosIn]):
     """Lista as transações próprias; os totais consideram todo o filtro aplicado."""
-    # Um filtro digitado errado não pode devolver totais de todo o histórico.
-    desconhecidos = sorted(set(request.GET) - set(FiltrosIn.model_fields))
-    if desconhecidos:
-        raise ValidationError(
-            [
-                {
-                    "type": "filtro_desconhecido",
-                    "loc": ["query", nome],
-                    "msg": "Filtro desconhecido.",
-                }
-                for nome in desconhecidos
-            ]
-        )
+    recusar_filtros_desconhecidos(request, FiltrosIn)
 
     transacoes = Transacao.objects.da_usuaria(request.auth)
     if filtros.data_inicio:
