@@ -1,10 +1,13 @@
 from datetime import date, timedelta
 from decimal import Decimal
+import json
+import threading
 from unittest import mock
 
+from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.db import IntegrityError, transaction
-from django.test import Client, SimpleTestCase, TestCase
+from django.db import IntegrityError, connection, connections, transaction
+from django.test import Client, SimpleTestCase, TestCase, TransactionTestCase
 from django.utils import timezone
 
 from financas.models import (
@@ -658,3 +661,107 @@ class RelogioRealTests(TestCase):
         corpo = self.client.get("/api/reserva").json()
 
         self.assertEqual(corpo["periodo"]["mes_fim"], somar_meses(atual, -1).strftime("%Y-%m"))
+
+
+CONTRATO = settings.BASE_DIR.parent.parent / "contracts" / "openapi.json"
+CAMPOS_NUMERICOS_DO_RESUMO = (
+    "despesas_essenciais_total", "despesas_essenciais_mensais", "saldo_inicial", "aportes",
+    "retiradas", "saldo_declarado", "meta", "progresso_percentual",
+)
+
+
+class ResumoNoContratoTests(BaseReserva):
+    """Revisão do PR #128: valores calculados não cabem no formato do valor individual."""
+
+    def conferir_contra_o_contrato(self, corpo):
+        esquema = json.loads(CONTRATO.read_text(encoding="utf-8"))["components"]["schemas"]
+        propriedades = esquema["ResumoReservaOut"]["properties"]
+        for campo in CAMPOS_NUMERICOS_DO_RESUMO:
+            with self.subTest(campo=campo):
+                opcoes = propriedades[campo].get("anyOf", [propriedades[campo]])
+                padrao = next(o["pattern"] for o in opcoes if o.get("type") == "string")
+                self.assertRegex(corpo[campo], padrao)
+
+    def test_meta_acima_de_12_digitos_respeita_o_contrato_publicado(self):
+        self.despesa("20000000000.00", date(2026, 10, 5))
+        self.reserva(saldo_inicial="500.00", meses=60)
+
+        corpo = self.resumo().json()
+
+        self.assertEqual((corpo["estado"], corpo["meta"]), ("calculado", "1200000000000.00"))
+        self.conferir_contra_o_contrato(corpo)
+
+    def test_somas_e_percentual_acima_de_12_digitos_respeitam_o_contrato(self):
+        self.despesa("0.01", date(2026, 10, 5))
+        self.reserva(saldo_inicial="999999999999.99", meses=1)
+        self.movimentacao(APORTE, "999999999999.99")
+        self.movimentacao(APORTE, "999999999999.99")
+
+        corpo = self.resumo().json()
+
+        self.assertEqual(corpo["aportes"], "1999999999999.98")
+        self.assertEqual(corpo["saldo_declarado"], "2999999999999.97")
+        self.assertEqual(corpo["progresso_percentual"], "29999999999999700.00")
+        self.conferir_contra_o_contrato(corpo)
+
+
+class LeituraConsistenteDaReservaTests(TransactionTestCase):
+    """Revisão do PR #128: o resumo lê configuração e movimentações no mesmo snapshot.
+
+    Logo depois de a consulta ler a configuração, outra conexão aumenta o saldo
+    inicial e registra uma retirada que só cabe no saldo novo. Lendo em momentos
+    diferentes, o resumo combinaria o saldo inicial antigo com a retirada nova.
+    """
+
+    def setUp(self):
+        self.ana = get_user_model().objects.create_user("ana.ficticia")
+        ReservaEmergencia.objects.create(usuaria=self.ana, saldo_inicial=Decimal("100.00"),
+                                         meses_cobertura=3)
+        self.client.force_login(self.ana)
+
+    def alterar_por_outra_conexao(self):
+        def alterar():
+            try:
+                with transaction.atomic():
+                    ReservaEmergencia.objects.filter(usuaria=self.ana).update(
+                        saldo_inicial=Decimal("1000.00"))
+                    MovimentacaoReserva.objects.create(usuaria=self.ana, tipo=RETIRADA,
+                                                       valor=Decimal("500.00"), data=date(2026, 10, 1))
+            finally:
+                connections.close_all()
+
+        tarefa = threading.Thread(target=alterar)
+        tarefa.start()
+        tarefa.join()
+
+    def ler_com_escrita_concorrente(self, url, tabela):
+        alterou = []
+
+        def depois_da_leitura(execute, sql, params, many, context):
+            resultado = execute(sql, params, many, context)
+            if not alterou and sql.lstrip().upper().startswith("SELECT") and f'"{tabela}"' in sql:
+                alterou.append(True)
+                self.alterar_por_outra_conexao()
+            return resultado
+
+        with connection.execute_wrapper(depois_da_leitura):
+            corpo = self.client.get(url).json()
+        self.assertTrue(alterou)
+        return corpo
+
+    def test_saldo_inicial_e_retirada_concorrentes_nao_se_misturam(self):
+        corpo = self.ler_com_escrita_concorrente("/api/reserva", "financas_reservaemergencia")
+
+        self.assertEqual(corpo["saldo_inicial"], "100.00")
+        self.assertEqual(corpo["retiradas"], "0.00")
+        self.assertEqual(corpo["saldo_declarado"], "100.00")
+
+        depois = self.client.get("/api/reserva").json()
+        self.assertEqual((depois["saldo_inicial"], depois["retiradas"], depois["saldo_declarado"]),
+                         ("1000.00", "500.00", "500.00"))
+
+    def test_listagem_de_movimentacoes_conta_e_itens_no_mesmo_estado(self):
+        corpo = self.ler_com_escrita_concorrente("/api/reserva/movimentacoes",
+                                                 "financas_movimentacaoreserva")
+
+        self.assertEqual(corpo["quantidade"], len(corpo["itens"]))

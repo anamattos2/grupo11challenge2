@@ -99,6 +99,25 @@ GET /api/reserva?mes_inicio=2026-10&mes_fim=2026-10
 
 `faltando` pode conter `despesas_essenciais`, `meses_cobertura` e `saldo_inicial`.
 
+### Formato dos valores do resumo
+
+Todos são texto decimal com 2 casas. O saldo inicial segue o formato do valor
+informado (até 12 dígitos inteiros). Os valores calculados acumulam registros e
+precisam de formatos maiores:
+
+| Campos | Formato |
+|---|---|
+| `despesas_essenciais_total`, `despesas_essenciais_mensais`, `aportes`, `retiradas`, `saldo_declarado`, `meta` | `^-?[0-9]{1,20}\.[0-9]{2}$`: somas de muitos registros, e a meta multiplica a média por até 60 meses |
+| `progresso_percentual` | `^-?[0-9]{1,23}\.[0-9]{2}$`: passa de 100 quando o saldo supera a meta |
+
+### Consistência
+
+O resumo lê despesas, configuração e movimentações numa única transação
+`REPEATABLE READ`, assim como a listagem de movimentações lê a quantidade e os
+itens. Uma alteração concorrente, como um saldo inicial novo e uma retirada
+registrada logo depois, aparece inteira ou não aparece, e o saldo nunca combina
+estados diferentes.
+
 ## Validações
 
 ### Configuração da reserva

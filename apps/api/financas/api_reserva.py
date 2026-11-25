@@ -26,6 +26,7 @@ from financas.api_transacoes import (
     DataIso,
     Descricao,
     ValorEntrada,
+    mesmo_estado_do_banco,
     recusar_filtros_desconhecidos,
     somar,
 )
@@ -87,6 +88,20 @@ SaldoInicialEntrada = Annotated[
     BeforeValidator(validar_saldo_inicial),
     WithJsonSchema({"type": "string", "pattern": PADRAO_VALOR, "examples": ["500.00"]}),
 ]
+# Valores calculados podem passar dos 12 dígitos de um valor individual: as
+# somas acumulam muitos registros e a meta multiplica a média por até 60 meses.
+PADRAO_ACUMULADO = r"^-?[0-9]{1,20}\.[0-9]{2}$"
+# O percentual passa de 100 quando o saldo supera a meta; com meta de R$ 0,01 e
+# saldo acumulado máximo, chega a 23 dígitos inteiros.
+PADRAO_PERCENTUAL = r"^-?[0-9]{1,23}\.[0-9]{2}$"
+AcumuladoSaida = Annotated[
+    Decimal,
+    WithJsonSchema({"type": "string", "pattern": PADRAO_ACUMULADO, "examples": ["1200000000000.00"]}),
+]
+PercentualSaida = Annotated[
+    Decimal,
+    WithJsonSchema({"type": "string", "pattern": PADRAO_PERCENTUAL, "examples": ["37.50"]}),
+]
 MesIso = Annotated[
     date,
     BeforeValidator(validar_mes),
@@ -138,15 +153,15 @@ class ResumoReservaOut(Schema):
     faltando: list[Literal["despesas_essenciais", "meses_cobertura", "saldo_inicial"]]
     moeda: str
     periodo: PeriodoReservaOut
-    despesas_essenciais_total: SaldoSaida
-    despesas_essenciais_mensais: Optional[SaldoSaida]
+    despesas_essenciais_total: AcumuladoSaida
+    despesas_essenciais_mensais: Optional[AcumuladoSaida]
     meses_cobertura: Optional[int]
     saldo_inicial: Optional[SaldoSaida]
-    aportes: SaldoSaida
-    retiradas: SaldoSaida
-    saldo_declarado: Optional[SaldoSaida]
-    meta: Optional[SaldoSaida]
-    progresso_percentual: Optional[SaldoSaida]
+    aportes: AcumuladoSaida
+    retiradas: AcumuladoSaida
+    saldo_declarado: Optional[AcumuladoSaida]
+    meta: Optional[AcumuladoSaida]
+    progresso_percentual: Optional[PercentualSaida]
 
 
 class MovimentacaoIn(EntradaEstrita):
@@ -227,14 +242,17 @@ def consultar_reserva(request, filtros: Query[FiltrosReservaIn]):
         data__gte=inicio,
         data__lt=somar_meses(fim, 1),
     )
-    resumo = despesas.aggregate(
-        total=Sum("valor", default=Decimal("0.00")),
-        meses=Count(TruncMonth("data"), distinct=True),
-    )
+    # Despesas, configuração e movimentações vêm do mesmo snapshot: um saldo
+    # inicial alterado e uma retirada nova não podem se misturar com o estado
+    # anterior e gerar um saldo que nunca existiu.
+    with mesmo_estado_do_banco():
+        resumo = despesas.aggregate(
+            total=Sum("valor", default=Decimal("0.00")),
+            meses=Count(TruncMonth("data"), distinct=True),
+        )
+        reserva = ReservaEmergencia.objects.da_usuaria(request.auth).first()
+        totais = somar_movimentacoes(request.auth)
     mensais = calcular_media_mensal(resumo["total"], resumo["meses"])
-
-    reserva = ReservaEmergencia.objects.da_usuaria(request.auth).first()
-    totais = somar_movimentacoes(request.auth)
     saldo = None
     if reserva is not None:
         saldo = calcular_saldo(reserva.saldo_inicial, totais["aportes"], totais["retiradas"])
@@ -302,12 +320,15 @@ def listar_movimentacoes(request, filtros: Query[FiltrosMovimentacaoIn]):
         movimentacoes = movimentacoes.filter(tipo=filtros.tipo)
 
     inicio = filtros.deslocamento
+    with mesmo_estado_do_banco():
+        quantidade = movimentacoes.count()
+        itens = list(movimentacoes[inicio : inicio + filtros.limite])
     return {
         "moeda": "BRL",
-        "quantidade": movimentacoes.count(),
+        "quantidade": quantidade,
         "limite": filtros.limite,
         "deslocamento": inicio,
-        "itens": list(movimentacoes[inicio : inicio + filtros.limite]),
+        "itens": itens,
     }
 
 
