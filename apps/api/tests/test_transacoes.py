@@ -624,7 +624,8 @@ class ListagemConsistenteTests(TransactionTestCase):
         tarefa.start()
         tarefa.join()
 
-    def test_escrita_concorrente_nao_separa_itens_e_totais(self):
+    def listar_com_escrita_concorrente(self, consulta=""):
+        """Lista e grava uma transação por outra conexão logo após a primeira leitura."""
         gravou = []
 
         def depois_da_primeira_leitura(execute, sql, params, many, context):
@@ -635,10 +636,32 @@ class ListagemConsistenteTests(TransactionTestCase):
             return resultado
 
         with connection.execute_wrapper(depois_da_primeira_leitura):
-            corpo = self.client.get("/api/transacoes").json()
-
+            corpo = self.client.get(f"/api/transacoes{consulta}").json()
         self.assertTrue(gravou)
+        return corpo
+
+    def test_escrita_concorrente_nao_separa_itens_e_totais(self):
+        corpo = self.listar_com_escrita_concorrente()
+
         soma_dos_itens = sum(Decimal(item["valor"]) for item in corpo["itens"])
         self.assertEqual(corpo["quantidade"], len(corpo["itens"]))
         self.assertEqual(Decimal(corpo["totais"]["despesas"]), soma_dos_itens)
         self.assertEqual(Transacao.objects.count(), 3)
+
+    def test_pagina_vazia_e_totais_veem_o_mesmo_estado(self):
+        # Revisão do PR #127: com dois registros e deslocamento=2, a página vem
+        # vazia e os totais exigem uma segunda consulta. A inserção entre as duas
+        # não pode aparecer na quantidade nem nos totais.
+        corpo = self.listar_com_escrita_concorrente("?deslocamento=2")
+
+        self.assertEqual(corpo["itens"], [])
+        self.assertEqual(corpo["quantidade"], 2)
+        self.assertEqual(corpo["totais"]["despesas"], "30.00")
+        self.assertEqual(Transacao.objects.count(), 3)
+
+    def test_listagem_seguinte_ve_a_escrita_concorrente(self):
+        self.listar_com_escrita_concorrente("?deslocamento=2")
+
+        corpo = self.client.get("/api/transacoes").json()
+
+        self.assertEqual((corpo["quantidade"], corpo["totais"]["despesas"]), (3, "1030.00"))

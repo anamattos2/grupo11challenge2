@@ -10,7 +10,7 @@ from django.db.models import Count, Q, Sum
 from django.db.models.functions import TruncMonth
 from django.utils import timezone
 
-from financas.api_transacoes import somar
+from financas.api_transacoes import mesmo_estado_do_banco, somar
 from financas.models import (
     ContaManual,
     MovimentacaoReserva,
@@ -64,7 +64,14 @@ def resumir_reserva(
     mes_inicio: Optional[date] = None,
     mes_fim: Optional[date] = None,
 ) -> dict[str, Any]:
-    """Calcula meta, saldo declarado, cobertura e progresso da reserva."""
+    """Calcula meta, saldo declarado, cobertura e progresso da reserva.
+
+    Despesas, configuração e movimentações são lidas no mesmo snapshot do banco
+    (``REPEATABLE READ``): um saldo inicial alterado e uma movimentação nova
+    não se misturam com o estado anterior no saldo, na cobertura ou no
+    progresso. Vale para ``GET /api/reserva`` e para a ferramenta
+    ``resumo_reserva``, que usam esta função.
+    """
     inicio, fim = periodo_da_reserva(mes_inicio, mes_fim)
     despesas = Transacao.objects.da_usuaria(usuaria).filter(
         tipo=TipoLancamento.DESPESA,
@@ -72,14 +79,14 @@ def resumir_reserva(
         data__gte=inicio,
         data__lt=somar_meses(fim, 1),
     )
-    resumo = despesas.aggregate(
-        total=Sum("valor", default=Decimal("0.00")),
-        meses=Count(TruncMonth("data"), distinct=True),
-    )
+    with mesmo_estado_do_banco():
+        resumo = despesas.aggregate(
+            total=Sum("valor", default=Decimal("0.00")),
+            meses=Count(TruncMonth("data"), distinct=True),
+        )
+        reserva = ReservaEmergencia.objects.da_usuaria(usuaria).first()
+        totais = somar_movimentacoes(usuaria)
     mensais = calcular_media_mensal(resumo["total"], resumo["meses"])
-
-    reserva = ReservaEmergencia.objects.da_usuaria(usuaria).first()
-    totais = somar_movimentacoes(usuaria)
     saldo = None
     if reserva is not None:
         saldo = calcular_saldo(reserva.saldo_inicial, totais["aportes"], totais["retiradas"])

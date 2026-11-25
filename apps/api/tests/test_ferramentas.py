@@ -420,16 +420,23 @@ class SegurancaDasFerramentasTests(BaseFerramentas):
 
     def test_toda_consulta_e_leitura_filtrada_pela_usuaria(self):
         filtro = re.compile(rf'"usuaria_id" = {self.ana.id}\b')
+        # A leitura no mesmo snapshot abre uma transação: esses comandos não leem
+        # nem gravam dados, e só eles ficam fora da regra.
+        controle = re.compile(
+            r'^(SAVEPOINT "[^"]+"|RELEASE SAVEPOINT "[^"]+"|ROLLBACK TO SAVEPOINT "[^"]+"'
+            r"|SET TRANSACTION ISOLATION LEVEL REPEATABLE READ)$"
+        )
 
         for nome, parametros in PARAMETROS_VALIDOS.items():
             with self.subTest(ferramenta=nome):
                 with CaptureQueriesContext(connection) as consultas:
                     executar_ferramenta(self.ana, nome, parametros)
 
-                self.assertTrue(consultas.captured_queries)
-                for consulta in consultas.captured_queries:
-                    self.assertTrue(consulta["sql"].startswith("SELECT"), consulta["sql"])
-                    self.assertRegex(consulta["sql"], filtro)
+                leituras = [c["sql"] for c in consultas.captured_queries if not controle.match(c["sql"])]
+                self.assertTrue(leituras)
+                for sql in leituras:
+                    self.assertTrue(sql.startswith("SELECT"), sql)
+                    self.assertRegex(sql, filtro)
 
     def test_resultados_nao_trazem_dados_de_outra_usuaria(self):
         ContaManual.objects.create(
