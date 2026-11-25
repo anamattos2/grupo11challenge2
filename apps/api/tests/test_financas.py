@@ -302,6 +302,7 @@ class ContratoTests(TestCase):
                     "post": {
                         "responses": {
                             201: {"description": "Created"},
+                            413: {"description": "Request Entity Too Large"},
                             422: {"description": "Unprocessable Entity"},
                         }
                     }
@@ -312,6 +313,7 @@ class ContratoTests(TestCase):
         respostas = normalizar_contrato(contrato)["paths"]["/api/contas"]["post"]["responses"]
 
         self.assertEqual(respostas[201]["description"], "Created")
+        self.assertEqual(respostas[413]["description"], "Content Too Large")
         self.assertEqual(respostas[422]["description"], "Unprocessable Content")
 
     def test_saldo_e_publicado_como_texto_decimal(self):
