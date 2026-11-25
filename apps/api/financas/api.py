@@ -18,6 +18,7 @@ contas_router = Router(tags=["contas manuais"])
 PADRAO_SALDO = r"^-?[0-9]{1,12}(\.[0-9]{1,2})?$"
 ESQUEMA_SALDO = {"type": "string", "pattern": PADRAO_SALDO, "examples": ["1500.50"]}
 CONTA_DUPLICADA = {"detail": "Já existe uma conta com este nome."}
+RESTRICAO_NOME_UNICO = "conta_nome_unico_por_usuaria"
 
 
 def validar_saldo(valor: Any) -> Decimal:
@@ -94,13 +95,25 @@ ERROS_LEITURA = {401: ErroOut}
 ERROS_ESCRITA = {401: ErroOut, 403: ErroOut, 422: ErroValidacaoOut}
 
 
+def viola_nome_unico(erro: IntegrityError) -> bool:
+    """Se o erro veio da restrição de nome único por usuária."""
+    diagnostico = getattr(erro.__cause__, "diag", None)
+    return getattr(diagnostico, "constraint_name", None) == RESTRICAO_NOME_UNICO
+
+
 def salvar_conta(conta: ContaManual) -> bool:
-    """Grava a conta e informa se o nome já estava em uso pela usuária."""
+    """Grava a conta e informa se o nome já estava em uso pela usuária.
+
+    Só a violação do nome único vira ``False`` (409). Qualquer outro erro de
+    integridade é relançado e segue o tratamento normal (500).
+    """
     try:
         with transaction.atomic():
             conta.save()
-    except IntegrityError:
-        return False
+    except IntegrityError as erro:
+        if viola_nome_unico(erro):
+            return False
+        raise
     return True
 
 

@@ -74,7 +74,8 @@ sessão expira em 8 horas.
 Perfis, nomes e saldos são declarados pela usuária e não são sincronizados com
 bancos. Rotas, validações e erros estão em
 [contracts/perfil-contas.md](../../contracts/perfil-contas.md). Ao alterar uma rota
-ou schema, atualize o contrato versionado em `apps/api`:
+ou schema, atualize o contrato versionado em `contracts/openapi.json`, na raiz,
+rodando o comando dentro de `apps/api`:
 
 ```bash
 ../../.venv-api/bin/python manage.py exportar_contrato
