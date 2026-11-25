@@ -1,0 +1,69 @@
+{
+  "$defs": {
+    "Paragrafo": {
+      "additionalProperties": false,
+      "description": "Um parágrafo da resposta e as afirmações aprovadas que ele expressa.",
+      "properties": {
+        "afirmacoes_ids": {
+          "items": {
+            "pattern": "^a[0-9]{1,3}$",
+            "type": "string"
+          },
+          "maxItems": 5,
+          "minItems": 1,
+          "title": "Afirmacoes Ids",
+          "type": "array"
+        },
+        "texto": {
+          "maxLength": 800,
+          "minLength": 1,
+          "title": "Texto",
+          "type": "string"
+        }
+      },
+      "required": [
+        "afirmacoes_ids",
+        "texto"
+      ],
+      "title": "Paragrafo",
+      "type": "object"
+    }
+  },
+  "$id": "https://github.com/anamattos2/grupo11challenge2/contracts/agentes/schemas/SaidaComunicacao.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "A Communication só redige: não escolhe fontes nem cria ligações.\n\nCada parágrafo declara quais afirmações aprovadas ele expressa. O\norquestrador monta o texto final, numera as citações e deriva fontes e\nligações das evidências de cada afirmação (``fluxo.montar_resposta``).\nAntes disso, ``fluxo.inconsistencias_comunicacao`` confere os parágrafos;\nse algo não bater, a resposta é montada só com o texto literal das\nafirmações aprovadas.",
+  "properties": {
+    "limites": {
+      "default": [],
+      "items": {
+        "maxLength": 300,
+        "minLength": 1,
+        "type": "string"
+      },
+      "title": "Limites",
+      "type": "array"
+    },
+    "paragrafos": {
+      "items": {
+        "$ref": "#/$defs/Paragrafo"
+      },
+      "maxItems": 8,
+      "minItems": 1,
+      "title": "Paragrafos",
+      "type": "array"
+    },
+    "versao": {
+      "const": "1.0",
+      "default": "1.0",
+      "title": "Versao",
+      "type": "string"
+    }
+  },
+  "required": [
+    "paragrafos"
+  ],
+  "title": "SaidaComunicacao",
+  "type": "object",
+  "x-versao-contrato": "1.0"
+}

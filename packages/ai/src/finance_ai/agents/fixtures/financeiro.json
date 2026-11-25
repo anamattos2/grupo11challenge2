@@ -1,0 +1,149 @@
+{
+  "aviso": "Dados inteiramente fictícios para protótipo e testes do Research Agent (S4-02 / #76). Não representam pessoas reais.",
+  "usuarias": {
+    "usuaria-ficticia-a": {
+      "categorias": [
+        {
+          "id": 1,
+          "nome": "Moradia",
+          "tipo": "despesa",
+          "essencial": true
+        },
+        {
+          "id": 2,
+          "nome": "Mercado",
+          "tipo": "despesa",
+          "essencial": true
+        },
+        {
+          "id": 3,
+          "nome": "Lazer",
+          "tipo": "despesa",
+          "essencial": false
+        },
+        {
+          "id": 4,
+          "nome": "Salário",
+          "tipo": "receita",
+          "essencial": false
+        }
+      ],
+      "contas": [
+        {
+          "id": 1,
+          "nome": "Conta corrente",
+          "tipo": "corrente",
+          "saldo_declarado": "1200.00"
+        },
+        {
+          "id": 2,
+          "nome": "Reserva",
+          "tipo": "reserva",
+          "saldo_declarado": "600.00"
+        }
+      ],
+      "transacoes": [
+        {
+          "id": 101,
+          "tipo": "despesa",
+          "valor": "1200.00",
+          "data": "2026-10-05",
+          "categoria_id": 1
+        },
+        {
+          "id": 102,
+          "tipo": "despesa",
+          "valor": "450.40",
+          "data": "2026-10-09",
+          "categoria_id": 2
+        },
+        {
+          "id": 103,
+          "tipo": "despesa",
+          "valor": "80.00",
+          "data": "2026-10-18",
+          "categoria_id": 3
+        },
+        {
+          "id": 104,
+          "tipo": "despesa",
+          "valor": "200.00",
+          "data": "2026-10-25",
+          "categoria_id": 2
+        },
+        {
+          "id": 105,
+          "tipo": "receita",
+          "valor": "3000.00",
+          "data": "2026-10-01",
+          "categoria_id": 4
+        },
+        {
+          "id": 106,
+          "tipo": "despesa",
+          "valor": "150.00",
+          "data": "2026-11-03",
+          "categoria_id": 2
+        },
+        {
+          "id": 107,
+          "tipo": "receita",
+          "valor": "3000.00",
+          "data": "2026-11-01",
+          "categoria_id": 4
+        }
+      ],
+      "reserva": {
+        "meses_cobertura": 3,
+        "saldo_inicial": "500.00",
+        "aportes": [
+          "200.00"
+        ],
+        "retiradas": [
+          "100.00"
+        ]
+      }
+    },
+    "usuaria-ficticia-b": {
+      "categorias": [
+        {
+          "id": 11,
+          "nome": "Mercado",
+          "tipo": "despesa",
+          "essencial": true
+        },
+        {
+          "id": 12,
+          "nome": "Bolsa de estudos",
+          "tipo": "receita",
+          "essencial": false
+        }
+      ],
+      "contas": [
+        {
+          "id": 11,
+          "nome": "Carteira",
+          "tipo": "carteira",
+          "saldo_declarado": "77.70"
+        }
+      ],
+      "transacoes": [
+        {
+          "id": 201,
+          "tipo": "despesa",
+          "valor": "999.99",
+          "data": "2026-10-12",
+          "categoria_id": 11
+        },
+        {
+          "id": 202,
+          "tipo": "receita",
+          "valor": "1500.00",
+          "data": "2026-10-02",
+          "categoria_id": 12
+        }
+      ],
+      "reserva": null
+    }
+  }
+}

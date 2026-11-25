@@ -1,0 +1,20 @@
+{
+  "schema": "SaidaPesquisa",
+  "caso": "concluida_sem_evidencias",
+  "motivo": "'concluida' exige evidência.",
+  "erro_esperado": "value_error",
+  "documento": {
+    "versao": "1.0",
+    "status": "concluida",
+    "modo": "prototipo_fixtures",
+    "evidencias": [],
+    "chamadas": [
+      {
+        "ferramenta": "documentos.buscar",
+        "status": "sem_resultados",
+        "duracao_ms": 30
+      }
+    ],
+    "observacoes": []
+  }
+}

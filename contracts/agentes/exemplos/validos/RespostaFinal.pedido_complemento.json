@@ -1,0 +1,29 @@
+{
+  "schema": "RespostaFinal",
+  "caso": "pedido_complemento",
+  "descricao": "Pede à usuária o dado que falta.",
+  "documento": {
+    "versao": "1.0",
+    "correlation_id": "req-20261118-0001",
+    "estado": "pedido_complemento",
+    "texto": "Para responder, preciso de mais algumas informações.",
+    "fontes": [],
+    "limites": [],
+    "perguntas_complemento": [
+      "Quais categorias de despesa você considera essenciais (ex.: moradia, mercado)?"
+    ],
+    "motivo": "dados_insuficientes",
+    "etapas": [
+      {
+        "papel": "research",
+        "status": "concluida",
+        "duracao_ms": 40
+      },
+      {
+        "papel": "analysis",
+        "status": "dados_insuficientes",
+        "duracao_ms": 800
+      }
+    ]
+  }
+}

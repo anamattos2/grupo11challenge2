@@ -1,0 +1,24 @@
+{
+  "schema": "SaidaPesquisa",
+  "caso": "sem_evidencias_tudo_negado",
+  "motivo": "Tudo negado é falta de permissão, não busca vazia.",
+  "erro_esperado": "value_error",
+  "documento": {
+    "versao": "1.0",
+    "status": "sem_evidencias",
+    "modo": "prototipo_fixtures",
+    "evidencias": [],
+    "chamadas": [
+      {
+        "ferramenta": "financeiro.consultar",
+        "operacao": "listar_contas",
+        "status": "negada",
+        "codigo_erro": "permissao_ausente",
+        "duracao_ms": 0
+      }
+    ],
+    "observacoes": [
+      "Consulta financeira não autorizada para esta requisição."
+    ]
+  }
+}

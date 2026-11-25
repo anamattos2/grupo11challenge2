@@ -81,10 +81,32 @@ ImproperlyConfigured: Variável de ambiente obrigatória ausente: POSTGRES_PASSW
 `python3 scripts/verificar_legado.py` terminou com
 `OK: 70 arquivos históricos preservados no índice e no worktree.`
 
+## Guia de instalação
+
+Os comandos de [instalacao-backend.md](instalacao-backend.md) foram executados em uma cópia
+limpa da branch, com ambiente virtual novo e volume Docker separado.
+
+| Etapa | Resultado |
+|---|---|
+| `docker run --rm hello-world` | `Hello from Docker!` |
+| `docker compose ... config --quiet` | Código de saída 0 |
+| `docker compose ... up -d --wait` | Serviço `postgres` com estado `healthy` |
+| `pg_isready` | `accepting connections` |
+| `SELECT version();` | PostgreSQL 17.12 |
+| `manage.py check`, `migrate` e `migrate --check` | Sem erros; 15 migrations aplicadas |
+| `GET /api/health` | HTTP 200 com `{"status": "ok", "database": "ok"}` |
+| `manage.py test` | 5 testes passando |
+| `down` seguido de `up` | Dados preservados, sem migrations pendentes |
+| Usuário e banco criados com o SQL da alternativa sem Docker | `migrate` e testes executados com sucesso |
+
+As mensagens de porta ocupada, senha incorreta, banco parado, variável ausente, `.env`
+ausente e host não permitido foram reproduzidas.
+
 ## Limites da evidência
 
 O job `backend` da CI e a execução com Python 3.12 dependem do push e do PR.
-Linux e Windows não foram executados localmente. Modelos financeiros,
+Linux e Windows não foram executados localmente; a instalação do PostgreSQL sem Docker
+também não, embora o SQL do guia tenha sido validado em um PostgreSQL 17. Modelos financeiros,
 autenticação e endpoints de negócio estão fora do escopo desta issue.
 
 ## Correspondência com critérios de aceite

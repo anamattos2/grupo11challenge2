@@ -69,6 +69,12 @@ inexistente.
 Parâmetro desconhecido responde 422. Os itens vêm da data mais recente para a mais
 antiga. `totais` e `quantidade` consideram todos os registros do filtro, não só a página.
 
+- **Formato dos totais:** texto decimal com sinal, até 18 dígitos inteiros e sempre 2
+  casas (`^-?[0-9]{1,18}\.[0-9]{2}$`). É um formato próprio, maior que o de um valor
+  individual, porque a soma de valores válidos passa de 12 dígitos.
+- **Consistência:** itens, `totais` e `quantidade` vêm da mesma consulta ao banco. Uma
+  transação gravada ao mesmo tempo aparece em todos eles ou em nenhum.
+
 ```http
 GET /api/transacoes?data_inicio=2026-03-01&data_fim=2026-03-31&limite=1
 ```
@@ -106,7 +112,7 @@ GET /api/transacoes?data_inicio=2026-03-01&data_fim=2026-03-31&limite=1
 | 401 | Sem sessão válida | `{"detail": "Unauthorized"}` |
 | 403 | Escrita sem token CSRF válido | `{"detail": "CSRF check Failed"}` |
 | 404 | Registro inexistente ou de outra usuária, sem distinção | `{"detail": "..."}` |
-| 409 | Nome de categoria repetido, ou categoria em uso ao excluir ou trocar o tipo | `{"detail": "..."}` |
+| 409 | Nome de categoria repetido no mesmo tipo, ou categoria em uso ao excluir ou trocar o tipo. Outros erros de integridade não viram 409 | `{"detail": "..."}` |
 | 422 | Dados ou filtros inválidos | `{"detail": [{"type": "...", "loc": ["body", "dados", "campo"], "msg": "..."}]}` |
 
 No 422, use o último item de `loc` para associar o erro ao campo e `type` para escolher

@@ -1,0 +1,13 @@
+{
+  "schema": "SaidaAnalise",
+  "caso": "precisa_calculo_sem_pedido",
+  "motivo": "'precisa_calculo' exige pedidos.",
+  "erro_esperado": "value_error",
+  "documento": {
+    "versao": "1.0",
+    "status": "precisa_calculo",
+    "afirmacoes": [],
+    "calculos": [],
+    "lacunas": []
+  }
+}

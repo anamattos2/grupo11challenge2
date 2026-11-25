@@ -1,0 +1,23 @@
+{
+  "schema": "SaidaPesquisa",
+  "caso": "sem_permissao",
+  "descricao": "Todas as chamadas negadas: diferente de busca vazia.",
+  "documento": {
+    "versao": "1.0",
+    "status": "sem_permissao",
+    "modo": "prototipo_fixtures",
+    "evidencias": [],
+    "chamadas": [
+      {
+        "ferramenta": "financeiro.consultar",
+        "operacao": "listar_contas",
+        "status": "negada",
+        "codigo_erro": "permissao_ausente",
+        "duracao_ms": 0
+      }
+    ],
+    "observacoes": [
+      "Consulta financeira não autorizada para esta requisição."
+    ]
+  }
+}

@@ -1,6 +1,90 @@
 {
   "components": {
     "schemas": {
+      "Campo": {
+        "properties": {
+          "candidatos": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 5,
+            "title": "Candidatos",
+            "type": "array"
+          },
+          "estado": {
+            "enum": [
+              "presente",
+              "ausente",
+              "ambiguo"
+            ],
+            "title": "Estado",
+            "type": "string"
+          },
+          "motivo": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Motivo"
+          },
+          "trecho": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Texto lido que sustenta o valor.",
+            "title": "Trecho"
+          },
+          "valor": {
+            "anyOf": [
+              {
+                "maxLength": 120,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Normalizado: '19.40', '2026-10-03' ou o nome lido.",
+            "title": "Valor"
+          }
+        },
+        "required": [
+          "estado"
+        ],
+        "title": "Campo",
+        "type": "object"
+      },
+      "CamposExtraidos": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/Campo"
+          },
+          "estabelecimento": {
+            "$ref": "#/components/schemas/Campo"
+          },
+          "valor_total": {
+            "$ref": "#/components/schemas/Campo"
+          }
+        },
+        "required": [
+          "valor_total",
+          "data",
+          "estabelecimento"
+        ],
+        "title": "CamposExtraidos",
+        "type": "object"
+      },
       "CategoriaIn": {
         "additionalProperties": false,
         "properties": {
@@ -67,6 +151,57 @@
           "atualizado_em"
         ],
         "title": "CategoriaOut",
+        "type": "object"
+      },
+      "ComprovanteOut": {
+        "properties": {
+          "altura": {
+            "title": "Altura",
+            "type": "integer"
+          },
+          "criado_em": {
+            "format": "date-time",
+            "title": "Criado Em",
+            "type": "string"
+          },
+          "expira_em": {
+            "format": "date-time",
+            "title": "Expira Em",
+            "type": "string"
+          },
+          "formato": {
+            "title": "Formato",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "largura": {
+            "title": "Largura",
+            "type": "integer"
+          },
+          "tamanho_bytes": {
+            "title": "Tamanho Bytes",
+            "type": "integer"
+          },
+          "tipo_mime": {
+            "title": "Tipo Mime",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "formato",
+          "tipo_mime",
+          "tamanho_bytes",
+          "largura",
+          "altura",
+          "criado_em",
+          "expira_em"
+        ],
+        "title": "ComprovanteOut",
         "type": "object"
       },
       "ContaIn": {
@@ -188,12 +323,17 @@
       },
       "ErroOut": {
         "properties": {
+          "codigo": {
+            "title": "Codigo",
+            "type": "string"
+          },
           "detail": {
             "title": "Detail",
             "type": "string"
           }
         },
         "required": [
+          "codigo",
           "detail"
         ],
         "title": "ErroOut",
@@ -214,6 +354,46 @@
           "detail"
         ],
         "title": "ErroValidacaoOut",
+        "type": "object"
+      },
+      "ExtracaoOut": {
+        "properties": {
+          "avisos": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Avisos",
+            "type": "array"
+          },
+          "campos": {
+            "$ref": "#/components/schemas/CamposExtraidos"
+          },
+          "comprovante_id": {
+            "format": "uuid",
+            "title": "Comprovante Id",
+            "type": "string"
+          },
+          "motor": {
+            "title": "Motor",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "completa",
+              "parcial",
+              "ilegivel"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "comprovante_id",
+          "status",
+          "campos",
+          "motor"
+        ],
+        "title": "ExtracaoOut",
         "type": "object"
       },
       "FerramentaOut": {
@@ -1468,25 +1648,25 @@
         "properties": {
           "despesas": {
             "examples": [
-              "1500.50"
+              "1250.40"
             ],
-            "pattern": "^-?[0-9]{1,12}(\\.[0-9]{1,2})?$",
+            "pattern": "^-?[0-9]{1,18}\\.[0-9]{2}$",
             "title": "Despesas",
             "type": "string"
           },
           "receitas": {
             "examples": [
-              "1500.50"
+              "1250.40"
             ],
-            "pattern": "^-?[0-9]{1,12}(\\.[0-9]{1,2})?$",
+            "pattern": "^-?[0-9]{1,18}\\.[0-9]{2}$",
             "title": "Receitas",
             "type": "string"
           },
           "resultado": {
             "examples": [
-              "1500.50"
+              "1250.40"
             ],
-            "pattern": "^-?[0-9]{1,12}(\\.[0-9]{1,2})?$",
+            "pattern": "^-?[0-9]{1,18}\\.[0-9]{2}$",
             "title": "Resultado",
             "type": "string"
           }
@@ -2207,6 +2387,291 @@
         "summary": "Editar Categoria",
         "tags": [
           "categorias"
+        ]
+      }
+    },
+    "/api/comprovantes": {
+      "get": {
+        "operationId": "comprovantes_api_listar",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ComprovanteOut"
+                  },
+                  "title": "Response",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "SessionAuth": []
+          }
+        ],
+        "summary": "Listar meus comprovantes",
+        "tags": [
+          "comprovantes"
+        ]
+      },
+      "post": {
+        "description": "Recebe JPEG, PNG ou WebP, valida e guarda uma cópia sem metadados.",
+        "operationId": "comprovantes_api_enviar",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "properties": {
+                  "arquivo": {
+                    "format": "binary",
+                    "title": "Arquivo",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "arquivo"
+                ],
+                "title": "FileParams",
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ComprovanteOut"
+                }
+              }
+            },
+            "description": "Created"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroOut"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroOut"
+                }
+              }
+            },
+            "description": "Content Too Large"
+          },
+          "415": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroOut"
+                }
+              }
+            },
+            "description": "Unsupported Media Type"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroOut"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "security": [
+          {
+            "SessionAuth": []
+          }
+        ],
+        "summary": "Enviar imagem de comprovante",
+        "tags": [
+          "comprovantes"
+        ]
+      }
+    },
+    "/api/comprovantes/{comprovante_id}": {
+      "delete": {
+        "operationId": "comprovantes_api_excluir",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "comprovante_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Comprovante Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "security": [
+          {
+            "SessionAuth": []
+          }
+        ],
+        "summary": "Excluir um comprovante",
+        "tags": [
+          "comprovantes"
+        ]
+      },
+      "get": {
+        "operationId": "comprovantes_api_detalhar",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "comprovante_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Comprovante Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ComprovanteOut"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "SessionAuth": []
+          }
+        ],
+        "summary": "Ver dados de um comprovante",
+        "tags": [
+          "comprovantes"
+        ]
+      }
+    },
+    "/api/comprovantes/{comprovante_id}/arquivo": {
+      "get": {
+        "operationId": "comprovantes_api_baixar",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "comprovante_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Comprovante Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroOut"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "security": [
+          {
+            "SessionAuth": []
+          }
+        ],
+        "summary": "Baixar a imagem de um comprovante",
+        "tags": [
+          "comprovantes"
+        ]
+      }
+    },
+    "/api/comprovantes/{comprovante_id}/extracao": {
+      "post": {
+        "description": "Lê a imagem e devolve os campos com estado presente, ausente ou ambíguo.\n\nNão cria despesa: o resultado alimenta a prévia editável (RF17).",
+        "operationId": "comprovantes_api_extrair_campos",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "comprovante_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Comprovante Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExtracaoOut"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroOut"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroOut"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "security": [
+          {
+            "SessionAuth": []
+          }
+        ],
+        "summary": "Extrair valor, data e estabelecimento",
+        "tags": [
+          "comprovantes"
         ]
       }
     },
