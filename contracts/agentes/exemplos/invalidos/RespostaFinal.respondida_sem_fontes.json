@@ -1,0 +1,59 @@
+{
+  "schema": "RespostaFinal",
+  "caso": "respondida_sem_fontes",
+  "motivo": "Resposta sem fonte não pode sair como respondida.",
+  "erro_esperado": "value_error",
+  "documento": {
+    "versao": "1.0",
+    "correlation_id": "req-20261118-0001",
+    "estado": "respondida",
+    "texto": "Em outubro de 2026 você registrou R$ 1.850,40 em despesas que marcou como essenciais. [1]\n\nTer uma reserva de emergência ajuda a cobrir esse tipo de gasto se a sua renda for interrompida ou surgir um imprevisto. [2]",
+    "redacao": "communication",
+    "fontes": [],
+    "ligacoes": [
+      {
+        "afirmacao_id": "a1",
+        "evidencias_ids": [
+          "fin:resumo_transacoes:53dd2d27e384"
+        ]
+      },
+      {
+        "afirmacao_id": "a2",
+        "evidencias_ids": [
+          "doc:4ca5959e85ae1899"
+        ]
+      }
+    ],
+    "limites": [
+      "Valores declarados por você no aplicativo, sem conexão com bancos."
+    ],
+    "perguntas_complemento": [],
+    "motivo": null,
+    "etapas": [
+      {
+        "papel": "research",
+        "status": "concluida",
+        "duracao_ms": 45,
+        "codigo": null
+      },
+      {
+        "papel": "analysis",
+        "status": "analisada",
+        "duracao_ms": 900,
+        "codigo": null
+      },
+      {
+        "papel": "validation",
+        "status": "aprovada",
+        "duracao_ms": 15,
+        "codigo": null
+      },
+      {
+        "papel": "communication",
+        "status": "ok",
+        "duracao_ms": 700,
+        "codigo": null
+      }
+    ]
+  }
+}

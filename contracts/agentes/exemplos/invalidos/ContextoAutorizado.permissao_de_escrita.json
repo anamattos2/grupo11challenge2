@@ -1,0 +1,16 @@
+{
+  "schema": "ContextoAutorizado",
+  "caso": "permissao_de_escrita",
+  "motivo": "Não existe permissão de escrita para agentes.",
+  "erro_esperado": "enum",
+  "documento": {
+    "correlation_id": "req-20261118-0001",
+    "usuaria_ref": "usuaria-ficticia-a",
+    "conversa_id": "conv-ficticia-01",
+    "permissoes": [
+      "financeiro:escrever"
+    ],
+    "data_referencia": "2026-11-18",
+    "memoria": []
+  }
+}

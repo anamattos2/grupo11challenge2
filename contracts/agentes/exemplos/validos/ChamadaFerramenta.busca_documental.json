@@ -1,0 +1,9 @@
+{
+  "schema": "ChamadaFerramenta",
+  "caso": "busca_documental",
+  "descricao": "Busca no corpus educativo.",
+  "documento": {
+    "ferramenta": "documentos.buscar",
+    "consulta": "por que ter uma reserva de emergência"
+  }
+}

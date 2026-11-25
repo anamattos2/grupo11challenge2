@@ -1,9 +1,12 @@
 from decimal import Decimal
+from unittest import mock
 
 from django.contrib.auth import get_user_model
 from django.core.management import call_command
+from django.db import IntegrityError
 from django.test import Client, TestCase
 
+from financas.api import salvar_conta
 from financas.management.commands.exportar_contrato import normalizar_contrato
 from financas.models import ContaManual, PerfilFinanceiro
 
@@ -229,6 +232,29 @@ class ContaTests(BaseFinancas):
         self.assertEqual(self.enviar("post", "/api/contas", CONTA).status_code, 201)
 
 
+    def test_outro_erro_de_integridade_nao_vira_conflito_de_nome(self):
+        # NOT NULL violado: erro de integridade sem relação com o nome.
+        conta = ContaManual(usuaria=self.ana, nome="Conta nova", tipo="corrente", saldo_declarado=None)
+
+        with self.assertRaises(IntegrityError):
+            salvar_conta(conta)
+        self.assertFalse(ContaManual.objects.exists())
+
+    def test_outra_restricao_unica_nao_responde_409(self):
+        # Outra restrição única violada durante o save: não pode virar "nome duplicado".
+        PerfilFinanceiro.objects.create(usuaria=self.ana, nome_exibicao="Clara")
+
+        def viola_perfil_unico(*args, **kwargs):
+            PerfilFinanceiro.objects.create(usuaria=self.ana, nome_exibicao="Outra")
+
+        cliente = Client(raise_request_exception=False)
+        cliente.force_login(self.ana)
+        with mock.patch.object(ContaManual, "save", viola_perfil_unico):
+            resposta = self.enviar("post", "/api/contas", CONTA, cliente)
+
+        self.assertEqual(resposta.status_code, 500)
+
+
 class IsolamentoDeContasTests(BaseFinancas):
     def setUp(self):
         super().setUp()
@@ -302,6 +328,7 @@ class ContratoTests(TestCase):
                     "post": {
                         "responses": {
                             201: {"description": "Created"},
+                            413: {"description": "Request Entity Too Large"},
                             422: {"description": "Unprocessable Entity"},
                         }
                     }
@@ -312,6 +339,7 @@ class ContratoTests(TestCase):
         respostas = normalizar_contrato(contrato)["paths"]["/api/contas"]["post"]["responses"]
 
         self.assertEqual(respostas[201]["description"], "Created")
+        self.assertEqual(respostas[413]["description"], "Content Too Large")
         self.assertEqual(respostas[422]["description"], "Unprocessable Content")
 
     def test_saldo_e_publicado_como_texto_decimal(self):

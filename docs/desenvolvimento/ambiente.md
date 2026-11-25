@@ -24,7 +24,8 @@ completa da aplicação.
   `setuptools==80.9.0`, fixado em `packages/ai/pyproject.toml`.
 - Nenhuma dependência de execução de terceiros, chave de API, Docker, Node,
   PostgreSQL ou Ollama é necessária para verificar o pacote de IA.
-- O backend exige Docker com Compose para executar o PostgreSQL local.
+- O backend exige Docker com Compose para executar o PostgreSQL local. Veja o
+  [guia de instalação do backend](instalacao-backend.md).
 
 Dependências do produto serão declaradas junto à implementação de cada frente.
 Os dois `requirements.txt` históricos permanecem intactos e são específicos dos
@@ -87,6 +88,10 @@ consome essas variáveis.
 | POSTGRES_PASSWORD | troque-esta-senha-local | Senha do banco; obrigatória |
 | POSTGRES_HOST | localhost | Endereço do banco; `localhost` se ausente |
 | POSTGRES_PORT | 5432 | Porta do banco; `5432` se ausente |
+| COMPROVANTES_DIR | .runtime/comprovantes | Pasta privada das imagens de comprovante; fora de rotas estáticas |
+| COMPROVANTES_TAMANHO_MAXIMO_MB | 5 | Tamanho máximo de cada imagem enviada |
+| COMPROVANTES_RETENCAO_HORAS | 72 | Prazo até a imagem vencer e ser apagada pela limpeza |
+| COMPROVANTES_ENVIOS_POR_HORA | 30 | Limite de envios por usuária |
 
 Com `DJANGO_DEBUG=false`, os cookies de sessão e CSRF só trafegam por HTTPS.
 

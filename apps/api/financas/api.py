@@ -18,6 +18,7 @@ contas_router = Router(tags=["contas manuais"])
 PADRAO_SALDO = r"^-?[0-9]{1,12}(\.[0-9]{1,2})?$"
 ESQUEMA_SALDO = {"type": "string", "pattern": PADRAO_SALDO, "examples": ["1500.50"]}
 CONTA_DUPLICADA = {"detail": "Já existe uma conta com este nome."}
+RESTRICAO_NOME_UNICO = "conta_nome_unico_por_usuaria"
 
 
 def validar_saldo(valor: Any) -> Decimal:
@@ -94,14 +95,31 @@ ERROS_LEITURA = {401: ErroOut}
 ERROS_ESCRITA = {401: ErroOut, 403: ErroOut, 422: ErroValidacaoOut}
 
 
-def salvar_com_nome_unico(registro) -> bool:
-    """Grava o registro e informa se o nome já estava em uso pela usuária."""
+def viola_nome_unico(erro: IntegrityError, restricao: str = RESTRICAO_NOME_UNICO) -> bool:
+    """Se o erro veio da restrição de nome único ``restricao``."""
+    diagnostico = getattr(erro.__cause__, "diag", None)
+    return getattr(diagnostico, "constraint_name", None) == restricao
+
+
+def salvar_com_nome_unico(registro, restricao: str) -> bool:
+    """Grava o registro e informa se o nome já estava em uso pela usuária.
+
+    Só a violação da restrição ``restricao`` vira ``False`` (409). Qualquer
+    outro erro de integridade é relançado e segue o tratamento normal (500).
+    """
     try:
         with transaction.atomic():
             registro.save()
-    except IntegrityError:
-        return False
+    except IntegrityError as erro:
+        if viola_nome_unico(erro, restricao):
+            return False
+        raise
     return True
+
+
+def salvar_conta(conta: ContaManual) -> bool:
+    """Grava a conta; ``False`` quando o nome já está em uso pela usuária."""
+    return salvar_com_nome_unico(conta, RESTRICAO_NOME_UNICO)
 
 
 @perfil_router.get("", response={200: PerfilOut, 404: ErroOut, **ERROS_LEITURA})
@@ -130,7 +148,7 @@ def listar_contas(request):
 def criar_conta(request, dados: ContaIn):
     """Cria uma conta manual; o nome é único por usuária, sem diferenciar caixa."""
     conta = ContaManual(usuaria=request.auth, **dados.model_dump())
-    if not salvar_com_nome_unico(conta):
+    if not salvar_conta(conta):
         return 409, CONTA_DUPLICADA
     return 201, conta
 
@@ -153,6 +171,6 @@ def editar_conta(request, conta_id: int, dados: ContaIn):
     conta = obter_da_usuaria_ou_404(ContaManual, request.auth, id=conta_id)
     for campo, valor in dados.model_dump().items():
         setattr(conta, campo, valor)
-    if not salvar_com_nome_unico(conta):
+    if not salvar_conta(conta):
         return 409, CONTA_DUPLICADA
     return 200, conta

@@ -1,0 +1,24 @@
+{
+  "schema": "ContextoAutorizado",
+  "caso": "memoria_ilimitada",
+  "motivo": "Memória limitada a 5 itens.",
+  "erro_esperado": "too_long",
+  "documento": {
+    "correlation_id": "req-20261118-0001",
+    "usuaria_ref": "usuaria-ficticia-a",
+    "conversa_id": "conv-ficticia-01",
+    "permissoes": [
+      "documentos:ler",
+      "financeiro:ler"
+    ],
+    "data_referencia": "2026-11-18",
+    "memoria": [
+      "x",
+      "x",
+      "x",
+      "x",
+      "x",
+      "x"
+    ]
+  }
+}

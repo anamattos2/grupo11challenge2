@@ -31,6 +31,7 @@ categorias_router = Router(tags=["categorias"])
 transacoes_router = Router(tags=["transações"])
 
 PADRAO_VALOR = r"^[0-9]{1,12}(\.[0-9]{1,2})?$"
+RESTRICAO_CATEGORIA_UNICA = "categoria_nome_unico_por_usuaria_tipo"
 CATEGORIA_DUPLICADA = {"detail": "Já existe uma categoria deste tipo com este nome."}
 CATEGORIA_EM_USO = {"detail": "Esta categoria possui transações vinculadas."}
 
@@ -226,7 +227,7 @@ def listar_categorias(request):
 def criar_categoria(request, dados: CategoriaIn):
     """Cria uma categoria; o nome é único por usuária e tipo."""
     categoria = Categoria(usuaria=request.auth, **dados.model_dump())
-    if not salvar_com_nome_unico(categoria):
+    if not salvar_com_nome_unico(categoria, RESTRICAO_CATEGORIA_UNICA):
         return 409, CATEGORIA_DUPLICADA
     return 201, categoria
 
@@ -252,7 +253,7 @@ def editar_categoria(request, categoria_id: int, dados: CategoriaIn):
         return 409, CATEGORIA_EM_USO
     for campo, valor in dados.model_dump().items():
         setattr(categoria, campo, valor)
-    if not salvar_com_nome_unico(categoria):
+    if not salvar_com_nome_unico(categoria, RESTRICAO_CATEGORIA_UNICA):
         return 409, CATEGORIA_DUPLICADA
     return 200, categoria
 

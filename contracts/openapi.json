@@ -69,6 +69,57 @@
         "title": "CategoriaOut",
         "type": "object"
       },
+      "ComprovanteOut": {
+        "properties": {
+          "altura": {
+            "title": "Altura",
+            "type": "integer"
+          },
+          "criado_em": {
+            "format": "date-time",
+            "title": "Criado Em",
+            "type": "string"
+          },
+          "expira_em": {
+            "format": "date-time",
+            "title": "Expira Em",
+            "type": "string"
+          },
+          "formato": {
+            "title": "Formato",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "largura": {
+            "title": "Largura",
+            "type": "integer"
+          },
+          "tamanho_bytes": {
+            "title": "Tamanho Bytes",
+            "type": "integer"
+          },
+          "tipo_mime": {
+            "title": "Tipo Mime",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "formato",
+          "tipo_mime",
+          "tamanho_bytes",
+          "largura",
+          "altura",
+          "criado_em",
+          "expira_em"
+        ],
+        "title": "ComprovanteOut",
+        "type": "object"
+      },
       "ContaIn": {
         "additionalProperties": false,
         "properties": {
@@ -188,12 +239,17 @@
       },
       "ErroOut": {
         "properties": {
+          "codigo": {
+            "title": "Codigo",
+            "type": "string"
+          },
           "detail": {
             "title": "Detail",
             "type": "string"
           }
         },
         "required": [
+          "codigo",
           "detail"
         ],
         "title": "ErroOut",
@@ -1124,6 +1180,232 @@
         "summary": "Editar Categoria",
         "tags": [
           "categorias"
+        ]
+      }
+    },
+    "/api/comprovantes": {
+      "get": {
+        "operationId": "comprovantes_api_listar",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ComprovanteOut"
+                  },
+                  "title": "Response",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "SessionAuth": []
+          }
+        ],
+        "summary": "Listar meus comprovantes",
+        "tags": [
+          "comprovantes"
+        ]
+      },
+      "post": {
+        "description": "Recebe JPEG, PNG ou WebP, valida e guarda uma cópia sem metadados.",
+        "operationId": "comprovantes_api_enviar",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "properties": {
+                  "arquivo": {
+                    "format": "binary",
+                    "title": "Arquivo",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "arquivo"
+                ],
+                "title": "FileParams",
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ComprovanteOut"
+                }
+              }
+            },
+            "description": "Created"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroOut"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroOut"
+                }
+              }
+            },
+            "description": "Content Too Large"
+          },
+          "415": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroOut"
+                }
+              }
+            },
+            "description": "Unsupported Media Type"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroOut"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "security": [
+          {
+            "SessionAuth": []
+          }
+        ],
+        "summary": "Enviar imagem de comprovante",
+        "tags": [
+          "comprovantes"
+        ]
+      }
+    },
+    "/api/comprovantes/{comprovante_id}": {
+      "delete": {
+        "operationId": "comprovantes_api_excluir",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "comprovante_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Comprovante Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "security": [
+          {
+            "SessionAuth": []
+          }
+        ],
+        "summary": "Excluir um comprovante",
+        "tags": [
+          "comprovantes"
+        ]
+      },
+      "get": {
+        "operationId": "comprovantes_api_detalhar",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "comprovante_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Comprovante Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ComprovanteOut"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "SessionAuth": []
+          }
+        ],
+        "summary": "Ver dados de um comprovante",
+        "tags": [
+          "comprovantes"
+        ]
+      }
+    },
+    "/api/comprovantes/{comprovante_id}/arquivo": {
+      "get": {
+        "operationId": "comprovantes_api_baixar",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "comprovante_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Comprovante Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroOut"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "security": [
+          {
+            "SessionAuth": []
+          }
+        ],
+        "summary": "Baixar a imagem de um comprovante",
+        "tags": [
+          "comprovantes"
         ]
       }
     },
