@@ -92,6 +92,9 @@ consome essas variáveis.
 | COMPROVANTES_TAMANHO_MAXIMO_MB | 5 | Tamanho máximo de cada imagem enviada |
 | COMPROVANTES_RETENCAO_HORAS | 72 | Prazo até a imagem vencer e ser apagada pela limpeza |
 | COMPROVANTES_ENVIOS_POR_HORA | 30 | Limite de envios por usuária |
+| COMPROVANTES_OCR_MOTOR | tesseract | `tesseract` ou `desligado` (a extração responde 503) |
+| COMPROVANTES_OCR_IDIOMA | por | Idioma do Tesseract |
+| COMPROVANTES_OCR_TEMPO_LIMITE_S | 20 | Tempo máximo de uma leitura de comprovante |
 
 Com `DJANGO_DEBUG=false`, os cookies de sessão e CSRF só trafegam por HTTPS.
 

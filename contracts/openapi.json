@@ -1,6 +1,90 @@
 {
   "components": {
     "schemas": {
+      "Campo": {
+        "properties": {
+          "candidatos": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 5,
+            "title": "Candidatos",
+            "type": "array"
+          },
+          "estado": {
+            "enum": [
+              "presente",
+              "ausente",
+              "ambiguo"
+            ],
+            "title": "Estado",
+            "type": "string"
+          },
+          "motivo": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Motivo"
+          },
+          "trecho": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Texto lido que sustenta o valor.",
+            "title": "Trecho"
+          },
+          "valor": {
+            "anyOf": [
+              {
+                "maxLength": 120,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Normalizado: '19.40', '2026-10-03' ou o nome lido.",
+            "title": "Valor"
+          }
+        },
+        "required": [
+          "estado"
+        ],
+        "title": "Campo",
+        "type": "object"
+      },
+      "CamposExtraidos": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/Campo"
+          },
+          "estabelecimento": {
+            "$ref": "#/components/schemas/Campo"
+          },
+          "valor_total": {
+            "$ref": "#/components/schemas/Campo"
+          }
+        },
+        "required": [
+          "valor_total",
+          "data",
+          "estabelecimento"
+        ],
+        "title": "CamposExtraidos",
+        "type": "object"
+      },
       "CategoriaIn": {
         "additionalProperties": false,
         "properties": {
@@ -270,6 +354,46 @@
           "detail"
         ],
         "title": "ErroValidacaoOut",
+        "type": "object"
+      },
+      "ExtracaoOut": {
+        "properties": {
+          "avisos": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Avisos",
+            "type": "array"
+          },
+          "campos": {
+            "$ref": "#/components/schemas/CamposExtraidos"
+          },
+          "comprovante_id": {
+            "format": "uuid",
+            "title": "Comprovante Id",
+            "type": "string"
+          },
+          "motor": {
+            "title": "Motor",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "completa",
+              "parcial",
+              "ilegivel"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "comprovante_id",
+          "status",
+          "campos",
+          "motor"
+        ],
+        "title": "ExtracaoOut",
         "type": "object"
       },
       "FiltrosIn": {
@@ -1404,6 +1528,65 @@
           }
         ],
         "summary": "Baixar a imagem de um comprovante",
+        "tags": [
+          "comprovantes"
+        ]
+      }
+    },
+    "/api/comprovantes/{comprovante_id}/extracao": {
+      "post": {
+        "description": "Lê a imagem e devolve os campos com estado presente, ausente ou ambíguo.\n\nNão cria despesa: o resultado alimenta a prévia editável (RF17).",
+        "operationId": "comprovantes_api_extrair_campos",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "comprovante_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Comprovante Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExtracaoOut"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroOut"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroOut"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "security": [
+          {
+            "SessionAuth": []
+          }
+        ],
+        "summary": "Extrair valor, data e estabelecimento",
         "tags": [
           "comprovantes"
         ]
