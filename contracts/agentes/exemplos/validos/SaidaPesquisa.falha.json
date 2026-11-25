@@ -1,0 +1,20 @@
+{
+  "schema": "SaidaPesquisa",
+  "caso": "falha",
+  "descricao": "Ferramenta com erro e nada recuperado: falha, nunca 'não encontrei'.",
+  "documento": {
+    "versao": "1.0",
+    "status": "falha",
+    "modo": "prototipo_fixtures",
+    "evidencias": [],
+    "chamadas": [
+      {
+        "ferramenta": "documentos.buscar",
+        "status": "erro",
+        "codigo_erro": "index_not_found",
+        "duracao_ms": 12
+      }
+    ],
+    "observacoes": []
+  }
+}

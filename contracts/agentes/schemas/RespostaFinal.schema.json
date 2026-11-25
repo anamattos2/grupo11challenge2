@@ -1,0 +1,232 @@
+{
+  "$defs": {
+    "EtapaRastro": {
+      "additionalProperties": false,
+      "properties": {
+        "codigo": {
+          "anyOf": [
+            {
+              "pattern": "^[a-z_]{3,40}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Codigo"
+        },
+        "duracao_ms": {
+          "minimum": 0,
+          "title": "Duracao Ms",
+          "type": "integer"
+        },
+        "papel": {
+          "$ref": "#/$defs/Papel"
+        },
+        "status": {
+          "pattern": "^[a-z_]{2,40}$",
+          "title": "Status",
+          "type": "string"
+        }
+      },
+      "required": [
+        "papel",
+        "status",
+        "duracao_ms"
+      ],
+      "title": "EtapaRastro",
+      "type": "object"
+    },
+    "FonteCitada": {
+      "additionalProperties": false,
+      "properties": {
+        "evidencia_id": {
+          "pattern": "^(doc:[0-9a-f]{16,64}|fin:[a-z_]{3,40}:[0-9a-f]{12})$",
+          "title": "Evidencia Id",
+          "type": "string"
+        },
+        "rotulo": {
+          "description": "Como a fonte aparece para a usuária (ex.: 'F003, p. 12').",
+          "maxLength": 300,
+          "minLength": 1,
+          "title": "Rotulo",
+          "type": "string"
+        }
+      },
+      "required": [
+        "evidencia_id",
+        "rotulo"
+      ],
+      "title": "FonteCitada",
+      "type": "object"
+    },
+    "Ligacao": {
+      "additionalProperties": false,
+      "description": "Explica qual evidência sustenta cada afirmação usada no texto.",
+      "properties": {
+        "afirmacao_id": {
+          "pattern": "^a[0-9]{1,3}$",
+          "title": "Afirmacao Id",
+          "type": "string"
+        },
+        "evidencias_ids": {
+          "items": {
+            "pattern": "^(doc:[0-9a-f]{16,64}|fin:[a-z_]{3,40}:[0-9a-f]{12})$",
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Evidencias Ids",
+          "type": "array"
+        }
+      },
+      "required": [
+        "afirmacao_id",
+        "evidencias_ids"
+      ],
+      "title": "Ligacao",
+      "type": "object"
+    },
+    "MotivoEncerramento": {
+      "enum": [
+        "sem_evidencias",
+        "sem_permissao",
+        "dados_insuficientes",
+        "calculo_indisponivel",
+        "validacao_reprovada",
+        "falha_pesquisa",
+        "falha_analise",
+        "falha_validacao",
+        "falha_comunicacao",
+        "contrato_invalido",
+        "tempo_esgotado",
+        "erro_interno"
+      ],
+      "title": "MotivoEncerramento",
+      "type": "string"
+    },
+    "Papel": {
+      "enum": [
+        "research",
+        "analysis",
+        "validation",
+        "communication",
+        "orquestrador"
+      ],
+      "title": "Papel",
+      "type": "string"
+    }
+  },
+  "$id": "https://github.com/anamattos2/grupo11challenge2/contracts/agentes/schemas/RespostaFinal.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "O que a API devolve à PWA.\n\n``redacao`` diz quem escreveu o texto de uma resposta aprovada:\n``communication`` (parágrafos conferidos) ou ``literal`` (texto das\nafirmações aprovadas, usado quando a redação não passou na checagem).",
+  "properties": {
+    "correlation_id": {
+      "pattern": "^[A-Za-z0-9_-]{8,64}$",
+      "title": "Correlation Id",
+      "type": "string"
+    },
+    "estado": {
+      "enum": [
+        "respondida",
+        "abstencao",
+        "pedido_complemento",
+        "falha"
+      ],
+      "title": "Estado",
+      "type": "string"
+    },
+    "etapas": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/EtapaRastro"
+      },
+      "title": "Etapas",
+      "type": "array"
+    },
+    "fontes": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/FonteCitada"
+      },
+      "title": "Fontes",
+      "type": "array"
+    },
+    "ligacoes": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/Ligacao"
+      },
+      "title": "Ligacoes",
+      "type": "array"
+    },
+    "limites": {
+      "default": [],
+      "items": {
+        "maxLength": 300,
+        "minLength": 1,
+        "type": "string"
+      },
+      "title": "Limites",
+      "type": "array"
+    },
+    "motivo": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/MotivoEncerramento"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "perguntas_complemento": {
+      "default": [],
+      "items": {
+        "maxLength": 300,
+        "minLength": 1,
+        "type": "string"
+      },
+      "title": "Perguntas Complemento",
+      "type": "array"
+    },
+    "redacao": {
+      "anyOf": [
+        {
+          "enum": [
+            "communication",
+            "literal"
+          ],
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Redacao"
+    },
+    "texto": {
+      "maxLength": 4000,
+      "minLength": 1,
+      "title": "Texto",
+      "type": "string"
+    },
+    "versao": {
+      "const": "1.0",
+      "default": "1.0",
+      "title": "Versao",
+      "type": "string"
+    }
+  },
+  "required": [
+    "correlation_id",
+    "estado",
+    "texto"
+  ],
+  "title": "RespostaFinal",
+  "type": "object",
+  "x-versao-contrato": "1.0"
+}

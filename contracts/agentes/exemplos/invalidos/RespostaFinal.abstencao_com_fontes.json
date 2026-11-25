@@ -1,0 +1,34 @@
+{
+  "schema": "RespostaFinal",
+  "caso": "abstencao_com_fontes",
+  "motivo": "Só resposta aprovada cita fontes.",
+  "erro_esperado": "value_error",
+  "documento": {
+    "versao": "1.0",
+    "correlation_id": "req-20261118-0001",
+    "estado": "abstencao",
+    "texto": "Não encontrei informações suficientes nos documentos e nos dados cadastrados para responder com segurança. Você pode reformular a pergunta?",
+    "fontes": [
+      {
+        "evidencia_id": "fin:resumo_transacoes:53dd2d27e384",
+        "rotulo": "[1] Despesas em categorias essenciais de 01/10/2026 a 31/10/2026: 3 registros, total 1850.40 BRL."
+      },
+      {
+        "evidencia_id": "doc:4ca5959e85ae1899",
+        "rotulo": "[2] Guia fictício de reserva de emergência, p. 1"
+      }
+    ],
+    "limites": [
+      "Valores financeiros são os declarados por você no aplicativo, sem conexão com bancos."
+    ],
+    "perguntas_complemento": [],
+    "motivo": "sem_evidencias",
+    "etapas": [
+      {
+        "papel": "research",
+        "status": "sem_evidencias",
+        "duracao_ms": 30
+      }
+    ]
+  }
+}

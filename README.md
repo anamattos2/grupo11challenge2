@@ -13,6 +13,7 @@ Artificial — Desafio 02, Grupo 11.
 - [Política de versionamento e preservação de pesquisa](docs/desenvolvimento/versionamento.md)
 - [Arquitetura inicial e responsabilidades](docs/arquitetura/arquitetura-inicial.md)
 - [Ambiente de desenvolvimento e organização do monorepositório](docs/desenvolvimento/ambiente.md)
+- [Instalação do backend: Docker, PostgreSQL e Django](docs/desenvolvimento/instalacao-backend.md)
 - [Experimentos RAG preservados](experiments/rag/README.md)
 - [Issue #55 — BASE-01](https://github.com/anamattos2/grupo11challenge2/issues/55)
 

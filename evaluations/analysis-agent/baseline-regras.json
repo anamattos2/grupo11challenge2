@@ -1,0 +1,13 @@
+{
+  "casos_versao": "1.0",
+  "redator": "regras",
+  "casos": 14,
+  "status_correto": 1.0,
+  "pedido_correto": 1.0,
+  "lacunas_corretas": 1.0,
+  "valores_corretos": 1.0,
+  "afirmacoes_rastreaveis": 1.0,
+  "numeros_sem_origem": 0,
+  "rascunhos_recusados": 0,
+  "reserva_acionada": 0
+}

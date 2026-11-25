@@ -1,0 +1,13 @@
+{
+  "casos_versao": "1.1",
+  "planejador": "regras",
+  "casos": 16,
+  "selecao_exata": 0.786,
+  "precisao": 0.846,
+  "revocacao": 0.786,
+  "periodo_correto": 0.625,
+  "status_correto": 1.0,
+  "violacoes_isolamento": 0,
+  "planos_bloqueados": 0,
+  "reserva_acionada": 0
+}

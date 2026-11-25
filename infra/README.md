@@ -1,6 +1,7 @@
 # Execução e implantação
 
-O [guia local](../docs/desenvolvimento/ambiente.md) documenta a instalação.
+O [guia de instalação do backend](../docs/desenvolvimento/instalacao-backend.md) explica
+como instalar e verificar o Docker e como configurar o PostgreSQL.
 
 `compose.yaml` inicia o PostgreSQL local usado pelo
 [backend](../apps/api/README.md). A porta fica acessível somente em `127.0.0.1`.

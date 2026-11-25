@@ -1,0 +1,276 @@
+{
+ "aviso": "Respostas gravadas da BE-06 real (branch feat-88-consultas-financeiras-ferramentas, commit 7f2d920) em 23/11/2026, PostgreSQL embutido, dados inteiramente fictícios. Geradas por scripts/integracao_research_be06.py. Usadas por tests/test_research_backend.py.",
+ "data_referencia": "2026-11-18",
+ "chamadas": [
+  {
+   "usuaria": "usuaria-ficticia-a",
+   "ferramenta": "resumo_periodo",
+   "parametros": {
+    "data_inicio": "2026-10-01",
+    "data_fim": "2026-10-31"
+   },
+   "resultado": {
+    "evidencia_id": "fin-5b2b44641ae235de",
+    "tipo_evidencia": "financeira",
+    "origem": "registros_declarados",
+    "moeda": "BRL",
+    "periodo": {
+     "inicio": "2026-10-01",
+     "fim": "2026-10-31"
+    },
+    "parametros": {
+     "data_inicio": "2026-10-01",
+     "data_fim": "2026-10-31"
+    },
+    "ferramenta": "resumo_periodo",
+    "dados": {
+     "receitas": "3000.00",
+     "despesas": "1930.40",
+     "despesas_essenciais": "1850.40",
+     "resultado": "1069.60",
+     "quantidade": 5
+    }
+   }
+  },
+  {
+   "usuaria": "usuaria-ficticia-a",
+   "ferramenta": "totais_por_categoria",
+   "parametros": {
+    "data_inicio": "2026-10-01",
+    "data_fim": "2026-10-31",
+    "tipo": "despesa"
+   },
+   "resultado": {
+    "evidencia_id": "fin-6c2e3f55ea15c6f3",
+    "tipo_evidencia": "financeira",
+    "origem": "registros_declarados",
+    "moeda": "BRL",
+    "periodo": {
+     "inicio": "2026-10-01",
+     "fim": "2026-10-31"
+    },
+    "parametros": {
+     "data_inicio": "2026-10-01",
+     "data_fim": "2026-10-31",
+     "tipo": "despesa"
+    },
+    "ferramenta": "totais_por_categoria",
+    "dados": {
+     "receitas": "0.00",
+     "despesas": "1930.40",
+     "resultado": "-1930.40",
+     "quantidade": 4,
+     "categorias": [
+      {
+       "categoria_id": 1,
+       "categoria_nome": "Moradia",
+       "tipo": "despesa",
+       "essencial": true,
+       "total": "1200.00",
+       "quantidade": 1
+      },
+      {
+       "categoria_id": 2,
+       "categoria_nome": "Mercado",
+       "tipo": "despesa",
+       "essencial": true,
+       "total": "650.40",
+       "quantidade": 2
+      },
+      {
+       "categoria_id": 3,
+       "categoria_nome": "Lazer",
+       "tipo": "despesa",
+       "essencial": false,
+       "total": "80.00",
+       "quantidade": 1
+      }
+     ]
+    }
+   }
+  },
+  {
+   "usuaria": "usuaria-ficticia-b",
+   "ferramenta": "totais_por_categoria",
+   "parametros": {
+    "data_inicio": "2026-10-01",
+    "data_fim": "2026-10-31",
+    "tipo": "despesa"
+   },
+   "resultado": {
+    "evidencia_id": "fin-a2ad12ec16c0707f",
+    "tipo_evidencia": "financeira",
+    "origem": "registros_declarados",
+    "moeda": "BRL",
+    "periodo": {
+     "inicio": "2026-10-01",
+     "fim": "2026-10-31"
+    },
+    "parametros": {
+     "data_inicio": "2026-10-01",
+     "data_fim": "2026-10-31",
+     "tipo": "despesa"
+    },
+    "ferramenta": "totais_por_categoria",
+    "dados": {
+     "receitas": "0.00",
+     "despesas": "999.99",
+     "resultado": "-999.99",
+     "quantidade": 1,
+     "categorias": [
+      {
+       "categoria_id": 5,
+       "categoria_nome": "Mercado",
+       "tipo": "despesa",
+       "essencial": true,
+       "total": "999.99",
+       "quantidade": 1
+      }
+     ]
+    }
+   }
+  },
+  {
+   "usuaria": "usuaria-ficticia-a",
+   "ferramenta": "saldos_contas",
+   "parametros": {},
+   "resultado": {
+    "evidencia_id": "fin-bf72a70810007322",
+    "tipo_evidencia": "financeira",
+    "origem": "registros_declarados",
+    "moeda": "BRL",
+    "periodo": null,
+    "parametros": {},
+    "ferramenta": "saldos_contas",
+    "dados": {
+     "total_declarado": "1800.00",
+     "quantidade": 2,
+     "contas": [
+      {
+       "id": 1,
+       "nome": "Conta corrente",
+       "tipo": "corrente",
+       "saldo_declarado": "1200.00"
+      },
+      {
+       "id": 2,
+       "nome": "Reserva",
+       "tipo": "reserva",
+       "saldo_declarado": "600.00"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "usuaria": "usuaria-ficticia-a",
+   "ferramenta": "consultar_reserva",
+   "parametros": {},
+   "resultado": {
+    "evidencia_id": "fin-ae38be78640992e9",
+    "tipo_evidencia": "financeira",
+    "origem": "registros_declarados",
+    "moeda": "BRL",
+    "periodo": {
+     "inicio": "2026-08-01",
+     "fim": "2026-10-31"
+    },
+    "parametros": {},
+    "ferramenta": "consultar_reserva",
+    "dados": {
+     "estado": "calculado",
+     "faltando": [],
+     "moeda": "BRL",
+     "periodo": {
+      "mes_inicio": "2026-08",
+      "mes_fim": "2026-10",
+      "meses_no_periodo": 3,
+      "meses_com_registro": 1
+     },
+     "despesas_essenciais_total": "1850.40",
+     "despesas_essenciais_mensais": "1850.40",
+     "meses_cobertura": 3,
+     "meses_cobertos": "0.32",
+     "saldo_inicial": "500.00",
+     "aportes": "200.00",
+     "retiradas": "100.00",
+     "saldo_declarado": "600.00",
+     "meta": "5551.20",
+     "progresso_percentual": "10.81"
+    }
+   }
+  },
+  {
+   "usuaria": "usuaria-ficticia-b",
+   "ferramenta": "consultar_reserva",
+   "parametros": {},
+   "resultado": {
+    "evidencia_id": "fin-28252291b8164a0f",
+    "tipo_evidencia": "financeira",
+    "origem": "registros_declarados",
+    "moeda": "BRL",
+    "periodo": {
+     "inicio": "2026-08-01",
+     "fim": "2026-10-31"
+    },
+    "parametros": {},
+    "ferramenta": "consultar_reserva",
+    "dados": {
+     "estado": "dados_insuficientes",
+     "faltando": [
+      "meses_cobertura",
+      "saldo_inicial"
+     ],
+     "moeda": "BRL",
+     "periodo": {
+      "mes_inicio": "2026-08",
+      "mes_fim": "2026-10",
+      "meses_no_periodo": 3,
+      "meses_com_registro": 1
+     },
+     "despesas_essenciais_total": "999.99",
+     "despesas_essenciais_mensais": "999.99",
+     "meses_cobertura": null,
+     "meses_cobertos": null,
+     "saldo_inicial": null,
+     "aportes": "0.00",
+     "retiradas": "0.00",
+     "saldo_declarado": null,
+     "meta": null,
+     "progresso_percentual": null
+    }
+   }
+  },
+  {
+   "usuaria": "usuaria-ficticia-a",
+   "ferramenta": "executar_sql",
+   "parametros": {},
+   "erro": {
+    "classe": "FerramentaNaoPermitida",
+    "codigo": "ferramenta_nao_permitida"
+   }
+  },
+  {
+   "usuaria": "usuaria-ficticia-a",
+   "ferramenta": "resumo_periodo",
+   "parametros": {
+    "data_inicio": "2026-10-01"
+   },
+   "erro": {
+    "classe": "ParametrosInvalidos",
+    "codigo": "parametros_invalidos"
+   }
+  },
+  {
+   "usuaria": "usuaria-ficticia-a",
+   "ferramenta": "saldos_contas",
+   "parametros": {
+    "usuaria_id": 2
+   },
+   "erro": {
+    "classe": "ParametrosInvalidos",
+    "codigo": "parametros_invalidos"
+   }
+  }
+ ]
+}

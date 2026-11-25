@@ -17,7 +17,10 @@ interfaces HTTP. Nunca aceitar identidade sugerida pelo modelo como autorizaçã
 
 ## Executar localmente
 
-Pré-requisitos: Python 3.12 a 3.14 e Docker com Compose. Na raiz do repositório:
+Pré-requisitos: Python 3.12 a 3.14 e Docker com Compose. A instalação, a configuração
+e a verificação de cada ferramenta estão no
+[guia de instalação do backend](../../docs/desenvolvimento/instalacao-backend.md).
+Com as ferramentas prontas, execute na raiz do repositório:
 
 ```bash
 cp .env.example .env
@@ -90,11 +93,29 @@ e erros estão em [contracts/reserva.md](../../contracts/reserva.md).
 
 ## Contrato OpenAPI
 
-Ao alterar uma rota ou schema, atualize o contrato versionado em `apps/api`:
+Ao alterar uma rota ou schema, atualize o contrato versionado em
+`contracts/openapi.json`, na raiz, rodando o comando dentro de `apps/api`:
 
 ```bash
 ../../.venv-api/bin/python manage.py exportar_contrato
 ```
+
+## Comprovantes por imagem
+
+Upload autenticado de comprovantes (S5-01 / #95): JPEG, PNG ou WebP até 5 MB,
+validados pelo conteúdo, guardados sem metadados numa pasta privada e apagados
+depois de 72 horas. Rotas, validações, retenção e logs estão em
+[comprovantes](../../docs/arquitetura/comprovantes.md). A limpeza dos vencidos
+roda com:
+
+```bash
+.venv-api/bin/python apps/api/manage.py limpar_comprovantes
+```
+
+`POST /api/comprovantes/{id}/extracao` lê valor total, data e estabelecimento
+com o Tesseract (local), marcando cada campo como presente, ausente ou ambíguo
+(S5-02 / #96). Sem o Tesseract instalado, a rota responde 503. Detalhes em
+[extração de comprovantes](../../docs/arquitetura/extracao-comprovantes.md).
 
 ## Testar
 

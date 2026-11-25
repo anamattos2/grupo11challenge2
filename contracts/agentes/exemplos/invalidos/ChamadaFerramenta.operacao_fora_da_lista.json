@@ -1,0 +1,16 @@
+{
+  "schema": "ChamadaFerramenta",
+  "caso": "operacao_fora_da_lista",
+  "motivo": "Só operações da lista fechada; nada de SQL livre.",
+  "erro_esperado": "enum",
+  "documento": {
+    "ferramenta": "financeiro.consultar",
+    "operacao": "executar_sql",
+    "parametros": {
+      "periodo_inicio": "2026-10-01",
+      "periodo_fim": "2026-10-31",
+      "tipo": "despesa",
+      "somente_essenciais": true
+    }
+  }
+}

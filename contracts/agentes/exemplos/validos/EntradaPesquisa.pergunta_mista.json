@@ -1,0 +1,23 @@
+{
+  "schema": "EntradaPesquisa",
+  "caso": "pergunta_mista",
+  "descricao": "Pergunta com parte pessoal e parte educativa.",
+  "documento": {
+    "contexto": {
+      "correlation_id": "req-20261118-0001",
+      "usuaria_ref": "usuaria-ficticia-a",
+      "conversa_id": "conv-ficticia-01",
+      "permissoes": [
+        "documentos:ler",
+        "financeiro:ler"
+      ],
+      "data_referencia": "2026-11-18",
+      "memoria": []
+    },
+    "pergunta": "Quanto gastei com despesas essenciais em outubro e por que devo ter uma reserva de emergência?",
+    "limites": {
+      "max_trechos": 5,
+      "max_chamadas": 4
+    }
+  }
+}
