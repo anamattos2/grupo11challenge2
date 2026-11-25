@@ -1,0 +1,28 @@
+{
+  "schema": "RespostaFinal",
+  "caso": "falha",
+  "descricao": "Tempo esgotado na Analysis.",
+  "documento": {
+    "versao": "1.0",
+    "correlation_id": "req-20261118-0001",
+    "estado": "falha",
+    "texto": "Não foi possível concluir sua pergunta agora. Nenhum dado seu foi alterado. Tente novamente em instantes.",
+    "fontes": [],
+    "limites": [],
+    "perguntas_complemento": [],
+    "motivo": "tempo_esgotado",
+    "etapas": [
+      {
+        "papel": "research",
+        "status": "concluida",
+        "duracao_ms": 41
+      },
+      {
+        "papel": "analysis",
+        "status": "erro",
+        "duracao_ms": 30000,
+        "codigo": "tempo_esgotado"
+      }
+    ]
+  }
+}

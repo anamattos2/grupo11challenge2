@@ -1,0 +1,24 @@
+{
+  "schema": "SaidaAnalise",
+  "caso": "precisa_calculo",
+  "descricao": "Analysis pede ao backend o total de setembro.",
+  "documento": {
+    "versao": "1.0",
+    "status": "precisa_calculo",
+    "afirmacoes": [],
+    "calculos": [
+      {
+        "id": "c1",
+        "operacao": "resumo_transacoes",
+        "parametros": {
+          "periodo_inicio": "2026-09-01",
+          "periodo_fim": "2026-09-30",
+          "tipo": "despesa",
+          "somente_essenciais": true
+        },
+        "motivo": "A pergunta compara outubro com setembro; setembro não veio na pesquisa."
+      }
+    ],
+    "lacunas": []
+  }
+}

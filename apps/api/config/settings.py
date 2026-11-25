@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "autenticacao",
+    "comprovantes",
 ]
 
 MIDDLEWARE = [
@@ -86,3 +87,12 @@ USE_I18N = True
 USE_TZ = True
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# Comprovantes por imagem (S5-01 / #95). Pasta privada, fora de qualquer rota estática.
+COMPROVANTES_DIR = Path(os.environ.get("COMPROVANTES_DIR", ".runtime/comprovantes"))
+if not COMPROVANTES_DIR.is_absolute():  # caminho relativo é sempre a partir da raiz do repositório
+    COMPROVANTES_DIR = BASE_DIR.parent.parent / COMPROVANTES_DIR
+COMPROVANTES_TAMANHO_MAXIMO_BYTES = int(os.environ.get("COMPROVANTES_TAMANHO_MAXIMO_MB", "5")) * 1024 * 1024
+COMPROVANTES_MAXIMO_PIXELS = 40_000_000  # ~40 megapixels: acima disso é provável "bomba de descompressão"
+COMPROVANTES_RETENCAO_HORAS = int(os.environ.get("COMPROVANTES_RETENCAO_HORAS", "72"))
+COMPROVANTES_ENVIOS_POR_HORA = int(os.environ.get("COMPROVANTES_ENVIOS_POR_HORA", "30"))

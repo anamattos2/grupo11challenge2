@@ -1,0 +1,25 @@
+{
+  "schema": "SaidaComunicacao",
+  "caso": "paragrafos",
+  "descricao": "Parágrafos ligados a afirmações aprovadas; sem fontes próprias.",
+  "documento": {
+    "versao": "1.0",
+    "paragrafos": [
+      {
+        "afirmacoes_ids": [
+          "a1"
+        ],
+        "texto": "Em outubro de 2026 você registrou R$ 1.850,40 em despesas que marcou como essenciais."
+      },
+      {
+        "afirmacoes_ids": [
+          "a2"
+        ],
+        "texto": "Ter uma reserva de emergência ajuda a cobrir esse tipo de gasto se a sua renda for interrompida ou surgir um imprevisto."
+      }
+    ],
+    "limites": [
+      "Valores declarados por você no aplicativo, sem conexão com bancos."
+    ]
+  }
+}

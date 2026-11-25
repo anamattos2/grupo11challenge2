@@ -4,10 +4,12 @@ from ninja import NinjaAPI, Schema
 
 from autenticacao.api import router as autenticacao_router
 from autenticacao.api import sessao
+from comprovantes.api import router as comprovantes_router
 
 # Toda rota exige sessão, salvo as marcadas explicitamente com auth=None.
 api = NinjaAPI(title="Grupo 11 - API financeira", version="0.1.0", auth=sessao)
 api.add_router("/auth", autenticacao_router)
+api.add_router("/comprovantes", comprovantes_router)
 
 
 class HealthOut(Schema):

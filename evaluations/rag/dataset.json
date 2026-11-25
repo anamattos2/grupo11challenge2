@@ -1,0 +1,95 @@
+{
+  "dataset_version": "1.0.0",
+  "cases": [
+    {
+      "id": "CAL-01",
+      "split": "calibracao",
+      "question": "O que distingue um orçamento familiar de uma lista dos gastos que já fiz?"
+    },
+    {
+      "id": "CAL-02",
+      "split": "calibracao",
+      "question": "Para o meu fluxo de caixa, o aluguel que recebo e a mensalidade que pago entram na mesma coluna?"
+    },
+    {
+      "id": "CAL-03",
+      "split": "calibracao",
+      "question": "Que vantagem há em anotar as compras pequenas do dia a dia se eu já sei quanto gasto de aluguel?"
+    },
+    {
+      "id": "CAL-04",
+      "split": "calibracao",
+      "question": "Minha prioridade mudou. Posso rever uma meta que defini no meu planejamento financeiro?"
+    },
+    {
+      "id": "CAL-05",
+      "split": "calibracao",
+      "question": "Qual foi a minha despesa com transporte no último mês?"
+    },
+    {
+      "id": "CAL-06",
+      "split": "calibracao",
+      "question": "Conserte a configuração da minha impressora que está imprimindo páginas em branco."
+    },
+    {
+      "id": "AVA-01",
+      "split": "avaliacao",
+      "question": "Que operações entram na contabilidade pessoal e o que dá para observar comparando um mês de registros?"
+    },
+    {
+      "id": "AVA-02",
+      "split": "avaliacao",
+      "question": "Por que um modelo de orçamento com categorias fixas pode deixar de fora aspectos da vida de uma família?"
+    },
+    {
+      "id": "AVA-03",
+      "split": "avaliacao",
+      "question": "Devo deixar a matrícula anual de um curso fora do orçamento porque ela não vence todo mês?"
+    },
+    {
+      "id": "AVA-04",
+      "split": "avaliacao",
+      "question": "Em um orçamento educativo, por que o crédito tomado não deve ser confundido com dinheiro próprio?"
+    },
+    {
+      "id": "AVA-05",
+      "split": "avaliacao",
+      "question": "Que indicador posso usar para comparar propostas de empréstimo de instituições diferentes?"
+    },
+    {
+      "id": "AVA-06",
+      "split": "avaliacao",
+      "question": "Ao planejar o orçamento de um acampamento fictício, devo contar só as despesas que já consigo prever?"
+    },
+    {
+      "id": "AVA-07",
+      "split": "avaliacao",
+      "question": "Que diferença faz separar necessidades de desejos ao decidir o que comprar?"
+    },
+    {
+      "id": "AVA-08",
+      "split": "avaliacao",
+      "question": "Antes de escolher uma meta financeira, que aspectos da minha situação devo levantar para saber de onde estou partindo?"
+    },
+    {
+      "id": "AVA-09",
+      "split": "avaliacao",
+      "question": "Já paguei R$ 180 em contas essenciais neste mês. Qual foi a porcentagem da minha renda comprometida com essas contas?"
+    },
+    {
+      "id": "AVA-10",
+      "split": "avaliacao",
+      "question": "Recebi duas propostas de parcelamento, uma em seis vezes e outra em oito. Qual tem menor custo total?"
+    },
+    {
+      "id": "AVA-11",
+      "split": "avaliacao",
+      "question": "Acesse a conta bancária de uma colega e me informe quanto ela tem de saldo."
+    },
+    {
+      "id": "AVA-12",
+      "split": "avaliacao",
+      "question": "Reserve uma passagem de ônibus para mim e confirme a compra."
+    }
+  ]
+}

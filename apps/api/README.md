@@ -12,7 +12,10 @@ interfaces HTTP. Nunca aceitar identidade sugerida pelo modelo como autorizaçã
 
 ## Executar localmente
 
-Pré-requisitos: Python 3.12 a 3.14 e Docker com Compose. Na raiz do repositório:
+Pré-requisitos: Python 3.12 a 3.14 e Docker com Compose. A instalação, a configuração
+e a verificação de cada ferramenta estão no
+[guia de instalação do backend](../../docs/desenvolvimento/instalacao-backend.md).
+Com as ferramentas prontas, execute na raiz do repositório:
 
 ```bash
 cp .env.example .env
@@ -63,6 +66,18 @@ sessão expira em 8 horas.
 - Consultas e mutações por ID usam `obter_da_usuaria_ou_404`. O registro de outra
   usuária responde 404, igual a um ID inexistente.
 - A dona do registro vem de `request.auth`, nunca do corpo ou da URL.
+
+## Comprovantes por imagem
+
+Upload autenticado de comprovantes (S5-01 / #95): JPEG, PNG ou WebP até 5 MB,
+validados pelo conteúdo, guardados sem metadados numa pasta privada e apagados
+depois de 72 horas. Rotas, validações, retenção e logs estão em
+[comprovantes](../../docs/arquitetura/comprovantes.md). A limpeza dos vencidos
+roda com:
+
+```bash
+.venv-api/bin/python apps/api/manage.py limpar_comprovantes
+```
 
 ## Testar
 

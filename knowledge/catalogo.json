@@ -24,7 +24,15 @@
       ],
       "status": "identificado",
       "use_conditions": "Reprodução total ou parcial autorizada com citação da fonte; aviso na página física 3.",
-      "approved_for_ingestion": false
+      "approved_for_ingestion": true,
+      "ingestion_review": {
+        "pages": [
+          20,
+          21
+        ],
+        "evidence": "Aviso de autorização de reprodução total ou parcial com citação na página física 3. Escopo revisado: fundamentos de planejamento e orçamento familiar.",
+        "citation": "Fernando Ramirez Rosal Marinho. A educação financeira para a gestão do orçamento pessoal e familiar. UNITINS, 2021. https://www.unitins.br/RepositorioDigital/Publico/VisualizarArquivo/368. Trecho extraído e normalizado."
+      }
     },
     {
       "id": "F002",
@@ -79,7 +87,7 @@
       "year": 2018,
       "origin": {
         "description": "Silvia Helena Rocatelli / RCiC-UFMT",
-        "url": null,
+        "url": "https://periodicoscientificos.ufmt.br/ojs/index.php/rcic/article/view/5548/0",
         "evidence": "Capa e identificação bibliográfica nas duas primeiras páginas do PDF; URL é referência, não comprovação de igualdade binária."
       },
       "sha256": "9f7545c5148f2da28c6dfc165027e27fb3652a6c722002d7f3b7b33242a34696",
@@ -92,8 +100,16 @@
         "fontes/almeida-santos,+ID-5548+modificado-4.pdf"
       ],
       "status": "identificado",
-      "use_conditions": "Licença ou autorização de reutilização não identificada; requer verificação com a origem.",
-      "approved_for_ingestion": false
+      "use_conditions": "Uso educacional e não comercial com atribuição, conforme seção Licença na página oficial do artigo.",
+      "approved_for_ingestion": true,
+      "ingestion_review": {
+        "pages": [
+          5
+        ],
+        "scope": "academic_local",
+        "evidence": "A revista permite uso educacional não comercial e reprodução com atribuição. Aprovação limitada ao protótipo acadêmico local, sem distribuição do índice.",
+        "citation": "Silvia Helena Rocatelli. Planejamento financeiro pessoal: fluxo de caixa. RCiC-UFMT, 2018. https://periodicoscientificos.ufmt.br/ojs/index.php/rcic/article/view/5548/0. Trecho extraído e normalizado. Uso acadêmico local e não comercial."
+      }
     },
     {
       "id": "F005",
@@ -410,7 +426,16 @@
       ],
       "status": "identificado",
       "use_conditions": "CC BY 4.0; aviso na página física 1; manter atribuição e indicação das alterações.",
-      "approved_for_ingestion": false
+      "approved_for_ingestion": true,
+      "ingestion_review": {
+        "pages": [
+          4,
+          5,
+          6
+        ],
+        "evidence": "Licença CC BY 4.0 no cabeçalho da página física 1. Escopo revisado: educação e planejamento financeiro pessoal. A página com contatos dos autores fica fora da seleção.",
+        "citation": "Elvis Gomes Marques Filho et al. A contabilidade no planejamento das finanças pessoais: um estudo de caso com os acadêmicos do curso de Ciências Contábeis da UESPI de Picos. Research, Society and Development, 2021. https://doi.org/10.33448/rsd-v10i7.16879. CC BY 4.0: https://creativecommons.org/licenses/by/4.0/. Trecho extraído e normalizado."
+      }
     },
     {
       "id": "F019",
@@ -419,7 +444,7 @@
       "year": 2021,
       "origin": {
         "description": "Costa; Souza; Amaral / Cadernos de Graduação",
-        "url": null,
+        "url": "https://periodicos.set.edu.br/cadernohumanas/article/view/7683",
         "evidence": "Capa e identificação bibliográfica nas duas primeiras páginas do PDF; URL é referência, não comprovação de igualdade binária."
       },
       "sha256": "a12d2ccdf51b12de4788207399fc4f0999887ea6078a473f298edc586fe9457a",
@@ -431,8 +456,15 @@
         "fontes/ellenfumagali,+5.pdf"
       ],
       "status": "identificado",
-      "use_conditions": "Licença ou autorização de reutilização não identificada; requer verificação com a origem.",
-      "approved_for_ingestion": false
+      "use_conditions": "Reutilização e distribuição autorizadas com citação, conforme seção Licença na página oficial do artigo.",
+      "approved_for_ingestion": true,
+      "ingestion_review": {
+        "pages": [
+          8
+        ],
+        "evidence": "A seção Licença da página do artigo autoriza livre uso, cópia e distribuição com citação. Página selecionada: registro de receitas e despesas.",
+        "citation": "Costa, Souza e Amaral. Gestão das finanças pessoais: uma vida economicamente correta. Cadernos de Graduação, 2021. https://periodicos.set.edu.br/cadernohumanas/article/view/7683. Trecho extraído e normalizado."
+      }
     },
     {
       "id": "F020",
@@ -441,7 +473,7 @@
       "year": 2017,
       "origin": {
         "description": "Elaine da Silveira Leite / TOMO",
-        "url": null,
+        "url": "https://periodicos.ufs.br/tomo/article/view/6713",
         "evidence": "Capa e identificação bibliográfica nas duas primeiras páginas do PDF; URL é referência, não comprovação de igualdade binária."
       },
       "sha256": "9080177503241e24781d02261f25c55bbb13295fe628738cc956688195b2e2d6",
@@ -453,8 +485,16 @@
         "fontes/fnmarcon,+05+-+Elaine.pdf"
       ],
       "status": "identificado",
-      "use_conditions": "Licença ou autorização de reutilização não identificada; requer verificação com a origem.",
-      "approved_for_ingestion": false
+      "use_conditions": "CC BY 4.0, conforme seção Licença na página oficial do artigo. Manter atribuição, link e indicação das alterações.",
+      "approved_for_ingestion": true,
+      "ingestion_review": {
+        "pages": [
+          3,
+          4
+        ],
+        "evidence": "A seção Licença da página oficial do artigo declara CC BY 4.0. Páginas selecionadas: categorias de orçamento e contexto social.",
+        "citation": "Elaine da Silveira Leite. De dispositivo de prescrição às racionalidades cotidianas: o orçamento doméstico e familiar no Brasil. Revista TOMO, 2017. https://doi.org/10.21669/tomo.v0i0.6713. CC BY 4.0: https://creativecommons.org/licenses/by/4.0/. Trecho extraído e normalizado."
+      }
     },
     {
       "id": "F021",
