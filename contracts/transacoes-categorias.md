@@ -72,7 +72,8 @@ antiga. `totais` e `quantidade` consideram todos os registros do filtro, não s�
 - **Formato dos totais:** texto decimal com sinal, até 18 dígitos inteiros e sempre 2
   casas (`^-?[0-9]{1,18}\.[0-9]{2}$`). É um formato próprio, maior que o de um valor
   individual, porque a soma de valores válidos passa de 12 dígitos.
-- **Consistência:** itens, `totais` e `quantidade` vêm da mesma consulta ao banco. Uma
+- **Consistência:** itens, `totais` e `quantidade` refletem o mesmo estado do banco, inclusive
+  quando a página vem vazia. A listagem roda numa transação `REPEATABLE READ`: uma
   transação gravada ao mesmo tempo aparece em todos eles ou em nenhum.
 
 ```http

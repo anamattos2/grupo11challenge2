@@ -4,7 +4,9 @@ from datetime import date, datetime
 from decimal import Decimal
 from typing import Annotated, Any, Optional
 
-from django.db import transaction
+from contextlib import contextmanager
+
+from django.db import connection, transaction
 from django.db.models import Case, Count, DecimalField, Q, RestrictedError, Sum, Value, When, Window
 from django.db.models.functions import Coalesce
 from django.shortcuts import get_object_or_404
@@ -230,6 +232,23 @@ def somar(tipo: TipoLancamento):
     )
 
 
+@contextmanager
+def mesmo_estado_do_banco():
+    """Transação ``REPEATABLE READ``: todas as consultas veem o mesmo snapshot.
+
+    No PostgreSQL, o snapshot é tirado na primeira consulta da transação e vale
+    até o fim dela, então escritas concorrentes confirmadas no meio não aparecem.
+    O nível só pode ser definido no início da transação; dentro de uma
+    transação já aberta (por exemplo, em ``TestCase``), vale o nível dela.
+    """
+    abre_transacao = not connection.in_atomic_block
+    with transaction.atomic():
+        if abre_transacao and connection.vendor == "postgresql":
+            with connection.cursor() as cursor:
+                cursor.execute("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ")
+        yield
+
+
 def somar_na_janela(tipo: TipoLancamento) -> Window:
     """Soma de ``tipo`` sobre todo o filtro, repetida em cada linha da página.
 
@@ -327,30 +346,32 @@ def listar_transacoes(request, filtros: Query[FiltrosIn]):
     if filtros.tipo:
         transacoes = transacoes.filter(tipo=filtros.tipo)
 
-    # Itens, totais e quantidade saem da mesma consulta, logo do mesmo estado do
-    # banco: uma escrita concorrente não pode deixar a página e os totais
-    # incompatíveis. Só uma página vazia precisa da consulta de agregação.
+    # Itens, totais e quantidade refletem o mesmo estado do banco. Com itens,
+    # tudo sai de uma consulta (totais na janela). Com a página vazia, a
+    # agregação é uma segunda consulta, por isso as duas rodam no mesmo
+    # snapshot: uma escrita concorrente não aparece em uma e falta na outra.
     inicio = filtros.deslocamento
-    itens = list(
-        transacoes.select_related("categoria").annotate(
-            _total_receitas=somar_na_janela(TipoLancamento.RECEITA),
-            _total_despesas=somar_na_janela(TipoLancamento.DESPESA),
-            _quantidade=Window(Count("id")),
-        )[inicio : inicio + filtros.limite]
-    )
-    if itens:
-        primeiro = itens[0]
-        resumo = {
-            "receitas": primeiro._total_receitas,
-            "despesas": primeiro._total_despesas,
-            "quantidade": primeiro._quantidade,
-        }
-    else:
-        resumo = transacoes.aggregate(
-            receitas=somar(TipoLancamento.RECEITA),
-            despesas=somar(TipoLancamento.DESPESA),
-            quantidade=Count("id"),
+    with mesmo_estado_do_banco():
+        itens = list(
+            transacoes.select_related("categoria").annotate(
+                _total_receitas=somar_na_janela(TipoLancamento.RECEITA),
+                _total_despesas=somar_na_janela(TipoLancamento.DESPESA),
+                _quantidade=Window(Count("id")),
+            )[inicio : inicio + filtros.limite]
         )
+        if itens:
+            primeiro = itens[0]
+            resumo = {
+                "receitas": primeiro._total_receitas,
+                "despesas": primeiro._total_despesas,
+                "quantidade": primeiro._quantidade,
+            }
+        else:
+            resumo = transacoes.aggregate(
+                receitas=somar(TipoLancamento.RECEITA),
+                despesas=somar(TipoLancamento.DESPESA),
+                quantidade=Count("id"),
+            )
     return {
         "periodo": {"inicio": filtros.data_inicio, "fim": filtros.data_fim},
         "moeda": "BRL",
