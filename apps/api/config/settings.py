@@ -96,3 +96,8 @@ COMPROVANTES_TAMANHO_MAXIMO_BYTES = int(os.environ.get("COMPROVANTES_TAMANHO_MAX
 COMPROVANTES_MAXIMO_PIXELS = 40_000_000  # ~40 megapixels: acima disso é provável "bomba de descompressão"
 COMPROVANTES_RETENCAO_HORAS = int(os.environ.get("COMPROVANTES_RETENCAO_HORAS", "72"))
 COMPROVANTES_ENVIOS_POR_HORA = int(os.environ.get("COMPROVANTES_ENVIOS_POR_HORA", "30"))
+
+# Extração de campos dos comprovantes (S5-02 / #96). "tesseract" roda local; "desligado" responde 503.
+COMPROVANTES_OCR_MOTOR = os.environ.get("COMPROVANTES_OCR_MOTOR", "tesseract")
+COMPROVANTES_OCR_IDIOMA = os.environ.get("COMPROVANTES_OCR_IDIOMA", "por")
+COMPROVANTES_OCR_TEMPO_LIMITE_S = float(os.environ.get("COMPROVANTES_OCR_TEMPO_LIMITE_S", "20"))

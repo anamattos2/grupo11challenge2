@@ -116,4 +116,5 @@ pessoal, e confere que nada disso aparece nos logs.
   `client_max_body_size 6m` no nginx).
 - HEIC (padrão do iPhone) não é aceito nesta etapa. A PWA pode converter para
   JPEG antes de enviar, ou o formato entra numa issue futura.
-- A extração de campos (OCR) e a prévia editável são as próximas etapas (RF16 e RF17).
+- A extração de campos está em [extração de comprovantes](extracao-comprovantes.md) (S5-02);
+  a prévia editável é a próxima etapa (RF17).

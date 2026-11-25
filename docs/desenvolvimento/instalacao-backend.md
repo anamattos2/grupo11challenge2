@@ -154,6 +154,21 @@ cd apps/api
 ../../.venv-api/bin/python manage.py test
 ```
 
+### Leitura de comprovantes (Tesseract)
+
+A extração de campos de comprovantes ([S5-02](../arquitetura/extracao-comprovantes.md))
+usa o Tesseract com o idioma português. Sem ele, a API continua funcionando e a
+rota de extração responde 503 (`ocr_nao_instalado`); os testes com OCR real são
+pulados.
+
+| Sistema | Instalação |
+|---|---|
+| macOS | `brew install tesseract tesseract-lang` |
+| Ubuntu/Debian | `sudo apt-get install tesseract-ocr tesseract-ocr-por` |
+| Windows | Instalador do projeto UB-Mannheim, marcando o idioma Portuguese |
+
+Confira com `tesseract --list-langs`: a lista precisa ter `por`.
+
 ## 6. Uso diário e problemas comuns
 
 | Ação | Comando |
