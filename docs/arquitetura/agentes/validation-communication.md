@@ -76,7 +76,9 @@ continua sendo revisão humana.
      afirmações que declara. É a checagem própria do texto que pega uma frase
      nova sem números;
   4. nenhuma palavra das afirmações aparecer com a polaridade trocada
-     ("você registrou" virando "você não registrou").
+     ("você registrou" virando "você não registrou");
+  5. o texto preservar integralmente as afirmações, na ordem dos IDs
+     declarados. O redator pode agrupar e reordenar, mantendo o texto aprovado.
 
   Em qualquer outro caso, inclusive exceção do redator, a Communication usa o
   modelo, com o texto literal das afirmações aprovadas, e o motivo fica em

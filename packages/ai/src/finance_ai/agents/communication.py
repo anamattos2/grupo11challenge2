@@ -26,6 +26,9 @@ Checagens da redação do redator:
    polaridade trocada ("você registrou" virando "você não registrou"). A
    cobertura ignora a negação; esta checagem não.
 
+5. O texto do parágrafo preserva integralmente as afirmações associadas,
+   na ordem declarada. O redator pode agrupar e ordenar afirmações.
+
 Na dúvida, vale a redação literal: qualquer checagem que falhe faz a
 Communication usar o texto das próprias afirmações aprovadas.
 
@@ -126,8 +129,8 @@ def prompt_redacao(entrada: EntradaComunicacao) -> str:
     aprovadas = set(entrada.validacao.afirmacoes_aprovadas)
     afirmacoes = [{"id": a.id, "texto": a.texto} for a in entrada.analise.afirmacoes if a.id in aprovadas]
     return (
-        "Reescreva as afirmações abaixo como uma resposta curta e clara em português do Brasil, "
-        "dirigida à usuária. Use somente o conteúdo das afirmações: não acrescente fatos, números, "
+        "Organize as afirmações abaixo em uma resposta curta e clara em português do Brasil, "
+        "dirigida à usuária. Copie integralmente o texto de cada afirmação, na ordem dos IDs do parágrafo. Não acrescente fatos, números, "
         "conselhos nem fontes. Todas as afirmações devem aparecer. "
         'Responda só com JSON no formato {"paragrafos": [{"afirmacoes_ids": ["a1"], "texto": "..."}]}.\n'
         f"Pergunta: {entrada.pergunta}\n"
@@ -136,7 +139,7 @@ def prompt_redacao(entrada: EntradaComunicacao) -> str:
 
 
 def problemas_redacao(entrada: EntradaComunicacao, saida: SaidaComunicacao) -> list[str]:
-    """Checagens 2 e 3 do módulo. Lista vazia quando a redação pode ser usada."""
+    """Checagens de conteúdo do módulo. Lista vazia quando a redação pode ser usada."""
     problemas = inconsistencias_comunicacao(entrada.analise, entrada.validacao, saida)
     por_id = {a.id: a.texto for a in entrada.analise.afirmacoes}
     for indice, paragrafo in enumerate(saida.paragrafos, start=1):
@@ -147,6 +150,8 @@ def problemas_redacao(entrada: EntradaComunicacao, saida: SaidaComunicacao) -> l
         invertidas = sentido_invertido(paragrafo.texto, referencia)
         if invertidas:
             problemas.append(f"parágrafo {indice} inverte o sentido das afirmações em: {', '.join(invertidas)}")
+        if paragrafo.texto.split() != referencia.split():
+            problemas.append(f"parágrafo {indice} modifica o texto aprovado")
     return problemas
 
 

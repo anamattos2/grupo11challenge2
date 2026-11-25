@@ -157,6 +157,15 @@ class ValidationTest(unittest.TestCase):
                  "o resultado do mês foi -R$ 1.850,40.")
         self.assertEqual(self.validar(analise(afirmacao("a1", certa, "calculo"))).decisao, "aprovada_com_alertas")
 
+    def test_campos_com_dois_pontos_preservam_valor_e_sinal(self):
+        for texto in ("Receitas: R$ 1.850,40.", "Resultado: R$ 1.850,40.", "Despesas: -R$ 1.850,40."):
+            with self.subTest(texto=texto):
+                saida = self.validar(analise(afirmacao("a1", texto, "calculo")))
+                self.assertEqual(saida.motivo_bloqueio, c.MotivoBloqueio.NUMERO_DIVERGENTE)
+        correto = "Resultado: R$ -1.850,40. Despesas: R$ 1.850,40."
+        saida = self.validar(analise(afirmacao("a1", correto, "calculo")))
+        self.assertEqual(saida.decisao, "aprovada_com_alertas")
+
     def test_numero_que_so_a_pergunta_traz_nao_confirma_dado_pessoal(self):
         entrada = self.base.model_copy(update={
             "pergunta": "Gastei R$ 3.000,00 com despesas essenciais em outubro de 2026?",
@@ -250,11 +259,9 @@ class CommunicationTest(unittest.TestCase):
         self.assertTrue(all(len(p.texto) <= 800 for p in saida.paragrafos))
 
     def test_redator_valido_e_usado(self):
+        texto_a2 = self.base.analise.afirmacoes[1].texto
         redigido = {"paragrafos": [
-            {"afirmacoes_ids": ["a1"], "texto": "Em outubro de 2026, suas despesas essenciais registradas "
-                                                "somaram R$ 1.850,40."},
-            {"afirmacoes_ids": ["a2"], "texto": "A reserva de emergência serve para cobrir despesas "
-                                                "essenciais se a renda for interrompida ou surgir um imprevisto."},
+            {"afirmacoes_ids": ["a2", "a1"], "texto": f"{texto_a2} {TEXTO_A1}"},
         ]}
         agente = CommunicationAgent(redator=lambda prompt: json.dumps(redigido, ensure_ascii=False))
         saida = agente(self.entrada())
@@ -268,6 +275,8 @@ class CommunicationTest(unittest.TestCase):
                 {"afirmacoes_ids": ["a2"], "texto": self.base.analise.afirmacoes[1].texto},
             ]})
         casos = {
+            "mudança de categoria": (
+                lambda p: com(TEXTO_A1.replace("despesas", "receitas")), "modifica o texto aprovado"),
             "número novo": (lambda p: com(TEXTO_A1 + " Isso é 12% da sua renda."), "números"),
             "frase nova sem número": (
                 lambda p: com(TEXTO_A1 + " Você deveria cortar gastos com lazer e viagens imediatamente."),

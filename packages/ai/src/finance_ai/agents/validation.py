@@ -96,6 +96,7 @@ _CAMPOS = (
     (r"falta(?:m|va|vam)?", "falta"),
 )
 _TERMO_CAMPO = re.compile("|".join(rf"\b(?P<c{i}>{termo})\b" for i, (termo, _) in enumerate(_CAMPOS)))
+_SINAL_NEGATIVO = re.compile(r"(?<![0-9])[-−]\s*(?:r\$\s*)?$|r\$\s*[-−]\s*$")
 _LIGACAO_DEPOIS = re.compile(r"\s*(?:em|de)\s+(?:suas\s+|seus\s+)?")
 
 
@@ -115,6 +116,8 @@ def _campos_por_valor(evidencias: list[Evidencia]) -> tuple[dict[str, set[str]],
                 continue
             presentes.add(campo)
             for numero in numeros(valor):
+                if numero != "0" and valor.startswith("-"):
+                    numero = f"-{numero}"
                 por_valor.setdefault(numero, set()).add(campo)
     return por_valor, presentes
 
@@ -131,7 +134,7 @@ def _campo_ligado(normalizado: str, inicio: int, fim: int) -> str | None:
         termo = _TERMO_CAMPO.match(normalizado, ligacao.end())
         if termo:
             return _campo_do_termo(termo)
-    oracao = re.split(r"[.;:!?]|,\s", normalizado[:inicio])[-1]
+    oracao = re.split(r"\.(?![0-9])|[;!?]|,\s", normalizado[:inicio])[-1]
     termos = list(_TERMO_CAMPO.finditer(oracao))
     return _campo_do_termo(termos[-1]) if termos else None
 
@@ -148,11 +151,12 @@ def _valores_trocados(texto: str, evidencias: list[Evidencia]) -> list[str]:
     trocados = []
     for m in _NUMERO.finditer(normalizado):
         numero = _normalizar_numero(m.group())
-        campos = por_valor.get(numero)
-        if not campos:
-            continue
+        if numero != "0" and _SINAL_NEGATIVO.search(normalizado[:m.start()]):
+            numero = f"-{numero}"
         campo = _campo_ligado(normalizado, m.start(), m.end())
-        if campo in presentes and campo not in campos:
+        magnitude = numero.lstrip("-")
+        if (campo in presentes and (magnitude in por_valor or f"-{magnitude}" in por_valor)
+                and campo not in por_valor.get(numero, set())):
             trocados.append(f"{m.group()} não é o valor de {campo}")
     return trocados
 
