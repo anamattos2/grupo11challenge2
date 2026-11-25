@@ -122,6 +122,8 @@ class ValidationTest(unittest.TestCase):
             "produto": "Invista em fundos imobiliários a sua reserva de emergência.",
             "banco": "Informe a senha do banco para conferir a reserva de emergência.",
             "escrita": "Já registrei a despesa essencial de moradia na sua reserva de emergência.",
+            "escrita no passado": "Excluí a despesa essencial de moradia da sua reserva de emergência.",
+            "negação de outra oração": "Não se preocupe, informe a senha do banco para a reserva de emergência.",
         }
         for nome, texto in casos.items():
             with self.subTest(nome):
@@ -142,6 +144,44 @@ class ValidationTest(unittest.TestCase):
         ))
         self.assertEqual(saida.motivo_bloqueio, c.MotivoBloqueio.FORA_DO_ESCOPO)
         self.assertEqual(saida.alegacoes_sem_suporte, ("a1", "a2"))
+
+    def test_valores_trocados_entre_campos_reprovam(self):
+        # Revisão do PR #140: receitas 0,00 e despesas 1.850,40 constam na evidência,
+        # mas cada valor precisa estar no campo certo.
+        trocada = "Em outubro de 2026 você teve R$ 1.850,40 de receitas e R$ 0,00 de despesas."
+        saida = self.validar(analise(afirmacao("a1", trocada, "calculo")))
+        self.assertEqual((saida.decisao, saida.motivo_bloqueio), ("reprovada", c.MotivoBloqueio.NUMERO_DIVERGENTE))
+        self.assertTrue(any("campo errado" in f for f in saida.feedback), saida.feedback)
+
+        certa = ("Em outubro de 2026 você registrou R$ 0,00 em receitas e R$ 1.850,40 em despesas; "
+                 "o resultado do mês foi -R$ 1.850,40.")
+        self.assertEqual(self.validar(analise(afirmacao("a1", certa, "calculo"))).decisao, "aprovada_com_alertas")
+
+    def test_numero_que_so_a_pergunta_traz_nao_confirma_dado_pessoal(self):
+        entrada = self.base.model_copy(update={
+            "pergunta": "Gastei R$ 3.000,00 com despesas essenciais em outubro de 2026?",
+            "analise": analise(afirmacao("a1", TEXTO_A1.replace("1.850,40", "3.000,00"), "dado_pessoal"))})
+        saida = validar(c.EntradaValidacao.model_validate(entrada.model_dump()))
+        self.assertEqual(saida.motivo_bloqueio, c.MotivoBloqueio.NUMERO_DIVERGENTE)
+        self.assertIn("3000", saida.feedback[0])
+
+    def test_orientacao_que_nega_o_trecho_reprova(self):
+        # Revisão do PR #140: o trecho diz que a reserva serve para cobrir despesas essenciais.
+        negada = "A reserva de emergência não serve para cobrir despesas essenciais."
+        saida = self.validar(analise(afirmacao("a2", negada, "orientacao_educativa", DOC)))
+        self.assertEqual(saida.motivo_bloqueio, c.MotivoBloqueio.SEM_SUPORTE)
+        self.assertTrue(any("inverte o sentido" in f for f in saida.feedback), saida.feedback)
+
+    def test_negacao_e_verbo_no_presente_nao_disparam_escopo(self):
+        casos = (
+            "Nunca compartilhe sua senha ou token com ninguém.",
+            "Eu não recomendo comprar ações sem ter uma reserva de emergência.",
+            "O orçamento básico exclui gastos com lazer.",
+        )
+        for texto in casos:
+            with self.subTest(texto):
+                saida = self.validar(analise(afirmacao("a2", texto, "orientacao_educativa", DOC)))
+                self.assertIn(("escopo_permitido", "a2"), self.regras(saida, "ok"))
 
     def test_pesquisa_parcial_gera_alerta_geral(self):
         a2 = exemplo("SaidaAnalise.analisada").afirmacoes[1]
@@ -232,6 +272,13 @@ class CommunicationTest(unittest.TestCase):
             "frase nova sem número": (
                 lambda p: com(TEXTO_A1 + " Você deveria cortar gastos com lazer e viagens imediatamente."),
                 "palavras fora"),
+            "negação invertida": (lambda p: com(TEXTO_A1.replace("você registrou", "você não registrou")),
+                                  "inverte o sentido"),
+            "negação removida": (lambda p: json.dumps({"paragrafos": [
+                {"afirmacoes_ids": ["a1"], "texto": TEXTO_A1},
+                {"afirmacoes_ids": ["a2"], "texto": "A reserva de emergência serve para cobrir despesas "
+                                                    "essenciais, mas nunca quando a renda é interrompida."}]}),
+                                 "inverte o sentido"),
             "afirmação não aprovada": (lambda p: json.dumps({"paragrafos": [
                 {"afirmacoes_ids": ["a1", "a9"], "texto": TEXTO_A1}]}), "não foi aprovada"),
             "json inválido": (lambda p: "não é json", "redação inválida"),
@@ -242,6 +289,7 @@ class CommunicationTest(unittest.TestCase):
                 agente = CommunicationAgent(redator=redator)
                 saida = agente(self.entrada())
                 self.assertEqual(saida.paragrafos[0].texto, TEXTO_A1)
+                self.assertEqual(saida.paragrafos[1].texto, self.base.analise.afirmacoes[1].texto)
                 self.assertTrue(any(motivo in problema for problema in agente.ultimo_descarte),
                                 agente.ultimo_descarte)
 
@@ -253,7 +301,7 @@ class FluxoComAgentesTest(unittest.TestCase):
         self.contexto = exemplo("ContextoAutorizado.requisicao_chat")
         self.pergunta = "Quanto gastei com despesas essenciais em outubro?"
 
-    def rodar(self, *analises):
+    def rodar(self, *analises, communication=None):
         respostas = list(analises)
         entradas = []
 
@@ -262,8 +310,23 @@ class FluxoComAgentesTest(unittest.TestCase):
             return respostas.pop(0)
 
         agentes = Agentes(research=lambda e: exemplo("SaidaPesquisa.concluida"), analysis=analysis,
-                          validation=ValidationAgent(), communication=CommunicationAgent())
+                          validation=ValidationAgent(), communication=communication or CommunicationAgent())
         return executar_fluxo(construir_grafo(agentes), self.contexto, self.pergunta), entradas
+
+    def test_redator_que_inverte_o_sentido_nao_chega_a_resposta_final(self):
+        # Revisão do PR #140: "você registrou" virava "você não registrou" com a citação original.
+        def redator(prompt):
+            return json.dumps({"paragrafos": [
+                {"afirmacoes_ids": ["a1"], "texto": TEXTO_A1.replace("você registrou", "você não registrou")},
+                {"afirmacoes_ids": ["a2"], "texto": exemplo("SaidaAnalise.analisada").afirmacoes[1].texto},
+            ]}, ensure_ascii=False)
+
+        communication = CommunicationAgent(redator=redator)
+        resposta, _ = self.rodar(exemplo("SaidaAnalise.analisada"), communication=communication)
+        self.assertEqual(resposta.estado, "respondida")
+        self.assertTrue(resposta.texto.startswith(TEXTO_A1 + " [1]"))
+        self.assertNotIn("não registrou", resposta.texto)
+        self.assertTrue(any("inverte o sentido" in p for p in communication.ultimo_descarte))
 
     def test_analise_aprovada_vira_resposta_redigida(self):
         resposta, _ = self.rodar(exemplo("SaidaAnalise.analisada"))

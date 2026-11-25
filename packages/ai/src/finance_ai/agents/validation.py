@@ -8,17 +8,21 @@ checagem vira uma ``Verificacao`` com resultado ``ok``, ``alerta`` ou ``falha``.
 |---|---|---|
 | ``referencias_existentes`` | evidência citada não está na pesquisa | fonte sintética, pesquisa parcial |
 | ``natureza_compativel`` | dado pessoal/cálculo sem ``fin:``; orientação sem ``doc:`` | |
-| ``numeros_conferem`` | número da afirmação ausente das evidências citadas | |
-| ``suporte_documental`` | orientação com pouca sobreposição com o trecho | sobreposição parcial, score baixo |
-| ``escopo_permitido`` | ativo específico, acesso bancário, escrita, evidência sem permissão | |
+| ``numeros_conferem`` | número ausente das evidências citadas; valor atribuído ao campo errado (receitas x despesas) | |
+| ``suporte_documental`` | orientação com pouca sobreposição com o trecho ou com a negação invertida | sobreposição parcial, score baixo |
+| ``escopo_permitido`` | ativo específico, acesso bancário, escrita, evidência sem permissão (exceto quando negados) | |
 
 Qualquer falha reprova a análise, lista as afirmações bloqueadas em
 ``alegacoes_sem_suporte`` e devolve feedback objetivo para uma revisão da
 Analysis. Sem falha, todas as afirmações são aprovadas (com ou sem alertas).
 
-Limite conhecido: ``suporte_documental`` mede sobreposição de palavras, não
-significado. Uma paráfrase fiel com outras palavras pode virar alerta, e uma
-frase que reaproveita as palavras do trecho com sentido diferente pode passar.
+Números da pergunta só são aceitos em orientação educativa: um valor que só a
+pergunta traz nunca é confirmado como dado da usuária.
+
+Limite conhecido: ``suporte_documental`` mede sobreposição de palavras e a
+polaridade delas, não significado. Uma paráfrase fiel com outras palavras pode
+virar alerta, e uma frase que reaproveita as palavras do trecho com sentido
+diferente, sem negação explícita ("serve" x "não é indicada"), ainda pode passar.
 """
 
 from __future__ import annotations
@@ -34,8 +38,8 @@ from .contratos import (
     SaidaValidacao,
     Verificacao,
 )
-from .fluxo import numeros
-from .texto import cobertura, curto, normalizar
+from .fluxo import _NUMERO, _normalizar_numero, numeros
+from .texto import cobertura, curto, negacao_antes, normalizar, sentido_invertido
 
 COBERTURA_MINIMA = 0.5
 """Abaixo disso, a orientação não é sustentada pelo trecho citado (falha)."""
@@ -55,10 +59,102 @@ _FORA_DO_ESCOPO: tuple[tuple[str, re.Pattern[str]], ...] = (
     ("menciona acesso bancário", re.compile(
         r"\b(?:senha|token|open finance|login do banco|internet banking)\b"
         r"|\b(?:acesse|acessar|conecte|conectar)\b.{0,20}\bconta (?:bancaria|do banco)\b")),
+    # "exclui" fica de fora: sem acento, é também o presente ("o orçamento
+    # exclui gastos"). O passado "excluí" é conferido no texto original.
     ("promete ação de escrita", re.compile(
-        r"\b(?:registrei|cadastrei|lancei|apaguei|exclui|transferi|movimentei|alterei)\b"
+        r"\b(?:registrei|cadastrei|lancei|apaguei|transferi|movimentei|alterei)\b"
         r"|\bvou (?:registrar|cadastrar|lancar|apagar|excluir|transferir|alterar)\b")),
 )
+_EXCLUI_PASSADO = re.compile(r"\bexcluí\b")
+
+
+def _problemas_de_escopo(texto: str) -> list[str]:
+    """Padrões fora do escopo que aparecem afirmados.
+
+    Uma ocorrência logo depois de uma negação ("nunca compartilhe sua senha",
+    "não recomendo comprar ações") é orientação de segurança, não violação.
+    """
+    normalizado = normalizar(texto)
+    problemas = [nome for nome, padrao in _FORA_DO_ESCOPO
+                 if any(not negacao_antes(normalizado, m.start()) for m in padrao.finditer(normalizado))]
+    if _EXCLUI_PASSADO.search(texto.lower()):
+        problemas.append("promete ação de escrita")
+    return list(dict.fromkeys(problemas))
+
+
+# Termo do texto (já normalizado) -> campo de ``Evidencia.valores`` que ele nomeia.
+# Os termos mais longos vêm antes para "saldo total" não ser lido como outro saldo.
+_CAMPOS = (
+    (r"saldo total", "saldo_total_declarado"),
+    (r"saldo declarado", "saldo_declarado"),
+    (r"receitas?", "receitas"),
+    (r"receb(?:i|eu|emos|eram)", "receitas"),
+    (r"despesas?", "despesas"),
+    (r"gast[a-z]*", "despesas"),
+    (r"resultado", "resultado"),
+    (r"metas?", "meta"),
+    (r"falta(?:m|va|vam)?", "falta"),
+)
+_TERMO_CAMPO = re.compile("|".join(rf"\b(?P<c{i}>{termo})\b" for i, (termo, _) in enumerate(_CAMPOS)))
+_LIGACAO_DEPOIS = re.compile(r"\s*(?:em|de)\s+(?:suas\s+|seus\s+)?")
+
+
+def _campo_do_termo(m: re.Match[str]) -> str:
+    return _CAMPOS[int(m.lastgroup[1:])][1]
+
+
+def _campos_por_valor(evidencias: list[Evidencia]) -> tuple[dict[str, set[str]], set[str]]:
+    """Valor canônico -> campos que têm esse valor, e os campos presentes."""
+    por_valor: dict[str, set[str]] = {}
+    presentes: set[str] = set()
+    for evidencia in evidencias:
+        if evidencia.tipo != "financeira":
+            continue
+        for campo, valor in evidencia.valores.items():
+            if valor is None:
+                continue
+            presentes.add(campo)
+            for numero in numeros(valor):
+                por_valor.setdefault(numero, set()).add(campo)
+    return por_valor, presentes
+
+
+def _campo_ligado(normalizado: str, inicio: int, fim: int) -> str | None:
+    """Campo que o texto associa ao número em ``[inicio, fim)``, se houver.
+
+    Primeiro "R$ 1.850,40 em/de despesas", depois o termo mais próximo antes do
+    número na mesma oração ("o resultado do mês foi R$ ..."). Vírgula com
+    espaço encerra a oração; a vírgula decimal não tem espaço.
+    """
+    ligacao = _LIGACAO_DEPOIS.match(normalizado, fim)
+    if ligacao:
+        termo = _TERMO_CAMPO.match(normalizado, ligacao.end())
+        if termo:
+            return _campo_do_termo(termo)
+    oracao = re.split(r"[.;:!?]|,\s", normalizado[:inicio])[-1]
+    termos = list(_TERMO_CAMPO.finditer(oracao))
+    return _campo_do_termo(termos[-1]) if termos else None
+
+
+def _valores_trocados(texto: str, evidencias: list[Evidencia]) -> list[str]:
+    """Números que existem nas evidências, mas em outro campo do que o texto diz.
+
+    Só confere números que são valores das evidências citadas e campos que
+    essas evidências têm; datas, anos e números sem campo nomeado ficam com
+    ``numeros_conferem``.
+    """
+    por_valor, presentes = _campos_por_valor(evidencias)
+    normalizado = normalizar(texto)
+    trocados = []
+    for m in _NUMERO.finditer(normalizado):
+        numero = _normalizar_numero(m.group())
+        campos = por_valor.get(numero)
+        if not campos:
+            continue
+        campo = _campo_ligado(normalizado, m.start(), m.end())
+        if campo in presentes and campo not in campos:
+            trocados.append(f"{m.group()} não é o valor de {campo}")
+    return trocados
 
 _PERMISSAO_POR_TIPO = {"financeira": Permissao.FINANCEIRO_LER, "documental": Permissao.DOCUMENTOS_LER}
 
@@ -71,9 +167,14 @@ _PRIORIDADE = (
 )
 
 
-def _numeros_permitidos(evidencias: list[Evidencia], pergunta: str) -> set[str]:
-    """Números que uma afirmação pode repetir: os das evidências e os da pergunta."""
-    permitidos = numeros(pergunta)
+def _numeros_permitidos(evidencias: list[Evidencia], pergunta: str, natureza: str) -> set[str]:
+    """Números que uma afirmação pode repetir: os das evidências citadas.
+
+    Os da pergunta só valem para orientação educativa ("o que é a regra
+    50-30-20?"). Num dado pessoal ou cálculo, um valor que só a pergunta traz
+    ("gastei R$ 3.000?") não pode ser confirmado como registro da usuária.
+    """
+    permitidos = numeros(pergunta) if natureza == "orientacao_educativa" else set()
     for evidencia in evidencias:
         if evidencia.tipo == "financeira":
             permitidos |= numeros(evidencia.resumo)
@@ -140,20 +241,32 @@ def validar(entrada: EntradaValidacao) -> SaidaValidacao:
                       f"{afirmacao.natureza} precisa de evidência {exige}", aid, MotivoBloqueio.SEM_SUPORTE)
 
         # numeros_conferem
-        divergentes = sorted(numeros(afirmacao.texto) - _numeros_permitidos(citadas, entrada.pergunta))
+        divergentes = sorted(numeros(afirmacao.texto)
+                             - _numeros_permitidos(citadas, entrada.pergunta, afirmacao.natureza))
+        trocados = _valores_trocados(afirmacao.texto, citadas)
         if divergentes:
             registrar(RegraValidacao.NUMEROS_CONFEREM, "falha",
                       f"números que não estão nas evidências citadas: {', '.join(divergentes)}",
                       aid, MotivoBloqueio.NUMERO_DIVERGENTE)
-        else:
+        if trocados:
+            registrar(RegraValidacao.NUMEROS_CONFEREM, "falha",
+                      f"valores atribuídos ao campo errado: {'; '.join(trocados)}",
+                      aid, MotivoBloqueio.NUMERO_DIVERGENTE)
+        if not divergentes and not trocados:
             registrar(RegraValidacao.NUMEROS_CONFEREM, "ok", "números conferem com as evidências", aid)
 
         # suporte_documental (só para orientação, que é o que vem de documento)
         documentais = [e for e in citadas if e.tipo == "documental"]
         if afirmacao.natureza == "orientacao_educativa" and documentais:
-            fracao = cobertura(afirmacao.texto, " ".join(e.trecho for e in documentais))
+            trechos = " ".join(e.trecho for e in documentais)
+            fracao = cobertura(afirmacao.texto, trechos)
             score = max(e.score for e in documentais)
-            if fracao < COBERTURA_MINIMA:
+            invertidas = sentido_invertido(afirmacao.texto, trechos)
+            if invertidas:
+                registrar(RegraValidacao.SUPORTE_DOCUMENTAL, "falha",
+                          "a orientação inverte o sentido do trecho citado "
+                          f"(negação em: {', '.join(invertidas)})", aid, MotivoBloqueio.SEM_SUPORTE)
+            elif fracao < COBERTURA_MINIMA:
                 registrar(RegraValidacao.SUPORTE_DOCUMENTAL, "falha",
                           f"o trecho citado não sustenta a orientação (cobertura {fracao:.2f})",
                           aid, MotivoBloqueio.SEM_SUPORTE)
@@ -164,8 +277,7 @@ def validar(entrada: EntradaValidacao) -> SaidaValidacao:
                 registrar(RegraValidacao.SUPORTE_DOCUMENTAL, "ok", f"cobertura {fracao:.2f}", aid)
 
         # escopo_permitido
-        problemas_escopo = [nome for nome, padrao in _FORA_DO_ESCOPO
-                            if padrao.search(normalizar(afirmacao.texto))]
+        problemas_escopo = _problemas_de_escopo(afirmacao.texto)
         sem_permissao = sorted({e.id for e in citadas if _PERMISSAO_POR_TIPO[e.tipo] not in permissoes})
         if sem_permissao:
             problemas_escopo.append(f"usa evidência sem permissão no contexto: {', '.join(sem_permissao)}")

@@ -22,6 +22,12 @@ Checagens da redação do redator:
    palavras de conteúdo que não estão nas afirmações que ele declara. É a
    avaliação própria do texto que o contrato pede: uma frase nova sem números
    não passa pela checagem 2, mas passa por esta.
+4. ``sentido_invertido``: nenhuma palavra das afirmações pode aparecer com a
+   polaridade trocada ("você registrou" virando "você não registrou"). A
+   cobertura ignora a negação; esta checagem não.
+
+Na dúvida, vale a redação literal: qualquer checagem que falhe faz a
+Communication usar o texto das próprias afirmações aprovadas.
 
 Os limites explicam de onde vem o suporte (números entre colchetes), avisam
 quando há dados de demonstração ou fontes que não puderam ser consultadas e
@@ -41,7 +47,7 @@ from pydantic import ValidationError
 
 from .contratos import EntradaComunicacao, Paragrafo, SaidaComunicacao
 from .fluxo import LIMITE_PADRAO, inconsistencias_comunicacao
-from .texto import cobertura, curto
+from .texto import cobertura, curto, sentido_invertido
 
 MAX_PALAVRAS_NOVAS = 0.4
 """Fração máxima de palavras de conteúdo novas num parágrafo do redator."""
@@ -138,6 +144,9 @@ def problemas_redacao(entrada: EntradaComunicacao, saida: SaidaComunicacao) -> l
         fracao = palavras_novas(paragrafo.texto, referencia)
         if fracao > MAX_PALAVRAS_NOVAS:
             problemas.append(f"parágrafo {indice} traz {fracao:.0%} de palavras fora das afirmações")
+        invertidas = sentido_invertido(paragrafo.texto, referencia)
+        if invertidas:
+            problemas.append(f"parágrafo {indice} inverte o sentido das afirmações em: {', '.join(invertidas)}")
     return problemas
 
 

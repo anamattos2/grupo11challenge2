@@ -67,6 +67,63 @@ def cobertura(texto: str, referencia: str) -> float:
     return len(palavras & palavras_conteudo(referencia)) / len(palavras)
 
 
+NEGACOES = frozenset({"nao", "nunca", "jamais", "nem", "nenhum", "nenhuma"})
+"""Palavras que invertem o sentido do que vem logo depois.
+
+Ficam fora da cobertura (são funcionais), mas a polaridade é conferida à parte:
+sem isso, "não serve para cobrir" teria a mesma cobertura que "serve para cobrir".
+"""
+
+_ALCANCE_NEGACAO = 3
+"""Quantas palavras de conteúdo depois de uma negação ficam negadas."""
+
+_TOKEN = re.compile(r"[a-z]+|[.,;:!?]")
+
+
+def _polaridade(texto: str) -> tuple[set[str], set[str]]:
+    """Radicais de conteúdo que aparecem afirmados e os que aparecem negados.
+
+    Uma negação alcança as próximas ``_ALCANCE_NEGACAO`` palavras de conteúdo
+    da mesma oração (pára na pontuação). Uma palavra pode estar nos dois
+    conjuntos quando aparece com os dois sentidos no texto.
+    """
+    afirmadas: set[str] = set()
+    negadas: set[str] = set()
+    restante = 0
+    for token in _TOKEN.findall(normalizar(texto)):
+        if not token.isalpha():
+            restante = 0
+        elif token in NEGACOES:
+            restante = _ALCANCE_NEGACAO
+        elif len(token) >= 3 and token not in PALAVRAS_FUNCIONAIS:
+            (negadas if restante else afirmadas).add(_radical(token))
+            restante = max(restante - 1, 0)
+    return afirmadas, negadas
+
+
+def sentido_invertido(texto: str, referencia: str) -> list[str]:
+    """Palavras de ``texto`` usadas com o sentido oposto ao de ``referencia``.
+
+    Conta só palavras que a referência usa num único sentido: "não cobre"
+    contra uma referência que só diz "cobre", ou o contrário. Lista vazia
+    quando a polaridade é compatível.
+    """
+    afirmadas, negadas = _polaridade(texto)
+    ref_afirmadas, ref_negadas = _polaridade(referencia)
+    invertidas = (negadas & (ref_afirmadas - ref_negadas)) | (afirmadas & (ref_negadas - ref_afirmadas))
+    return sorted(invertidas)
+
+
+def negacao_antes(texto_normalizado: str, posicao: int, palavras: int = 5) -> bool:
+    """Se há uma negação entre as ``palavras`` palavras anteriores a ``posicao``, na mesma oração.
+
+    A vírgula também encerra a oração: em "não se preocupe, informe a senha"
+    a negação não alcança "senha".
+    """
+    anteriores = re.split(r"[.,;:!?]", texto_normalizado[:posicao])[-1]
+    return any(p in NEGACOES for p in _PALAVRA.findall(anteriores)[-palavras:])
+
+
 def curto(texto: str, limite: int = 300) -> str:
     """Corta para caber em ``TextoCurto`` sem quebrar no meio de forma silenciosa."""
     texto = " ".join(texto.split())
