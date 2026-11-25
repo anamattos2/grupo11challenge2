@@ -5,8 +5,10 @@ Servidor Django / Django Ninja com persistência em PostgreSQL, inicializado na
 [BE-02 / #84](https://github.com/anamattos2/grupo11challenge2/issues/84) adiciona
 sessão e isolamento por usuária, e a
 [BE-03 / #85](https://github.com/anamattos2/grupo11challenge2/issues/85), perfil
-financeiro e contas manuais. Os demais modelos financeiros e endpoints de negócio
-pertencem às respectivas issues.
+financeiro e contas manuais. A
+[BE-04 / #86](https://github.com/anamattos2/grupo11challenge2/issues/86) adiciona
+categorias, receitas e despesas. Os demais modelos financeiros e endpoints de
+negócio pertencem às respectivas issues.
 
 Responsabilidades: sessão, autorização, regras financeiras, persistência e
 ferramentas determinísticas para os agentes. OpenAPI é a referência das
@@ -73,9 +75,18 @@ sessão expira em 8 horas.
 
 Perfis, nomes e saldos são declarados pela usuária e não são sincronizados com
 bancos. Rotas, validações e erros estão em
-[contracts/perfil-contas.md](../../contracts/perfil-contas.md). Ao alterar uma rota
-ou schema, atualize o contrato versionado em `contracts/openapi.json`, na raiz,
-rodando o comando dentro de `apps/api`:
+[contracts/perfil-contas.md](../../contracts/perfil-contas.md).
+
+## Categorias, receitas e despesas
+
+Transações são informadas pela usuária, nunca importadas de bancos, e não alteram o
+saldo declarado das contas. Rotas, validações, filtros e totais estão em
+[contracts/transacoes-categorias.md](../../contracts/transacoes-categorias.md).
+
+## Contrato OpenAPI
+
+Ao alterar uma rota ou schema, atualize o contrato versionado em
+`contracts/openapi.json`, na raiz, rodando o comando dentro de `apps/api`:
 
 ```bash
 ../../.venv-api/bin/python manage.py exportar_contrato

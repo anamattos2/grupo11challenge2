@@ -95,26 +95,31 @@ ERROS_LEITURA = {401: ErroOut}
 ERROS_ESCRITA = {401: ErroOut, 403: ErroOut, 422: ErroValidacaoOut}
 
 
-def viola_nome_unico(erro: IntegrityError) -> bool:
-    """Se o erro veio da restrição de nome único por usuária."""
+def viola_nome_unico(erro: IntegrityError, restricao: str = RESTRICAO_NOME_UNICO) -> bool:
+    """Se o erro veio da restrição de nome único ``restricao``."""
     diagnostico = getattr(erro.__cause__, "diag", None)
-    return getattr(diagnostico, "constraint_name", None) == RESTRICAO_NOME_UNICO
+    return getattr(diagnostico, "constraint_name", None) == restricao
 
 
-def salvar_conta(conta: ContaManual) -> bool:
-    """Grava a conta e informa se o nome já estava em uso pela usuária.
+def salvar_com_nome_unico(registro, restricao: str) -> bool:
+    """Grava o registro e informa se o nome já estava em uso pela usuária.
 
-    Só a violação do nome único vira ``False`` (409). Qualquer outro erro de
-    integridade é relançado e segue o tratamento normal (500).
+    Só a violação da restrição ``restricao`` vira ``False`` (409). Qualquer
+    outro erro de integridade é relançado e segue o tratamento normal (500).
     """
     try:
         with transaction.atomic():
-            conta.save()
+            registro.save()
     except IntegrityError as erro:
-        if viola_nome_unico(erro):
+        if viola_nome_unico(erro, restricao):
             return False
         raise
     return True
+
+
+def salvar_conta(conta: ContaManual) -> bool:
+    """Grava a conta; ``False`` quando o nome já está em uso pela usuária."""
+    return salvar_com_nome_unico(conta, RESTRICAO_NOME_UNICO)
 
 
 @perfil_router.get("", response={200: PerfilOut, 404: ErroOut, **ERROS_LEITURA})
