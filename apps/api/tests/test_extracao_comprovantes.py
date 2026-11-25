@@ -153,6 +153,40 @@ class InterpretacaoTests(SimpleTestCase):
     def test_total_zerado_nao_e_presente(self):
         self.assertNotEqual(extrair_valor_total(leitura("TOTAL 0,00")).estado, "presente")
 
+    def test_total_negativo_nao_vira_despesa_positiva(self):
+        casos = (
+            ("TOTAL -R$ 19,40",),
+            ("TOTAL R$ −19,40",),
+            ("TOTAL (R$ 19,40)",),
+            ("TOTAL -19.40", "TOTAL 20,00"),
+        )
+        for linhas in casos:
+            with self.subTest(linhas=linhas):
+                campo = extrair_valor_total(leitura(*linhas))
+                self.assertEqual((campo.estado, campo.valor), ("ambiguo", None))
+                self.assertIn("-19.40", campo.candidatos)
+
+    def test_data_de_impressao_nao_substitui_data_de_compra(self):
+        casos = (
+            (("Data da compra: 31/02/2026", "Data de impressão: 03/03/2026"), "ambiguo", None),
+            (("Data da compra: 03/03/2026 Data de impressão: 04/03/2026",), "presente", "2026-03-03"),
+            (("Data de impressão: 03/03/2026",), "ambiguo", None),
+        )
+        for linhas, estado, valor in casos:
+            with self.subTest(linhas=linhas):
+                campo = extrair_data(leitura(*linhas), HOJE)
+                self.assertEqual((campo.estado, campo.valor), (estado, valor))
+
+    def test_estabelecimentos_explicitos_conflitantes_sao_ambiguos(self):
+        campo = extrair_estabelecimento(leitura(
+            "Estabelecimento: Padaria Primavera", "Estabelecimento: Mercado Central"))
+        self.assertEqual((campo.estado, campo.valor), ("ambiguo", None))
+        self.assertEqual(campo.candidatos, ["Padaria Primavera", "Mercado Central"])
+
+        repetido = extrair_estabelecimento(leitura(
+            "Estabelecimento: Farmácia Saúde", "Loja: FARMACIA SAUDE"))
+        self.assertEqual((repetido.estado, repetido.valor), ("presente", "Farmácia Saúde"))
+
     def test_datas(self):
         casos = [
             (("03/10/26 14:32",), "presente", "2026-10-03"),

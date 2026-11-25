@@ -46,9 +46,9 @@ preencher manualmente ou tentar de novo.
 
 | Campo | Fica `presente` quando | Fica `ambiguo` quando |
 |---|---|---|
-| Valor total | Uma linha com rótulo de total (`TOTAL`, `VALOR TOTAL`, `TOTAL A PAGAR`…) traz um único valor positivo; linhas de subtotal, troco, desconto, tributos, itens e valor recebido não contam | Dois totais diferentes; valores sem rótulo de total; total com baixa confiança; total zerado |
-| Data | Uma única data válida, não futura, de 2000 em diante (`dd/mm/aaaa`, `dd/mm/aa`, `dd-mm-aaaa`, `dd.mm.aaaa`) | Mais de uma data (ex.: emissão e validade); data impossível (31/02) ou futura; baixa confiança |
-| Estabelecimento | Rótulo explícito (`Estabelecimento:`) ou primeira linha do cabeçalho, antes de CNPJ, data, valores e itens, que parece nome (letras, sem palavras como cupom, rua, CNPJ) | Baixa confiança na linha |
+| Valor total | Uma linha com rótulo de total (`TOTAL`, `VALOR TOTAL`, `TOTAL A PAGAR`…) traz um único valor positivo; linhas de subtotal, troco, desconto, tributos, itens e valor recebido não contam | Dois totais diferentes; valores sem rótulo de total; total com baixa confiança; total zero ou negativo, com o sinal preservado |
+| Data | Uma única data válida, não futura, de 2000 em diante (`dd/mm/aaaa`, `dd/mm/aa`, `dd-mm-aaaa`, `dd.mm.aaaa`). Rótulos de compra, venda, pagamento ou transação têm prioridade sobre datas auxiliares | Datas conflitantes; data impossível ou futura; apenas data auxiliar (ex.: impressão); baixa confiança |
+| Estabelecimento | Rótulo explícito (`Estabelecimento:`) ou primeira linha do cabeçalho, antes de CNPJ, data, valores e itens, que parece nome (letras, sem palavras como cupom, rua, CNPJ) | Mais de um nome explícito distinto ou baixa confiança na linha |
 
 Princípios:
 

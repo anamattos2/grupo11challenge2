@@ -9,6 +9,7 @@ usuária. O código nunca completa, corrige ou estima um valor.
 from __future__ import annotations
 
 from datetime import date
+from decimal import Decimal
 import re
 import unicodedata
 
@@ -20,6 +21,10 @@ MINIMO_CARACTERES_LEGIVEIS = 15
 
 _DINHEIRO = re.compile(r"(?<![\d,.])(\d{1,3}(?:\.\d{3})+,\d{2}|\d+,\d{2})(?![\d,])")
 _DINHEIRO_PONTO = re.compile(r"(?<![\d,.])(\d+\.\d{2})(?![\d.])")  # "19.40", só em linha de total
+_SINAL_NEGATIVO = re.compile(r"[-−]\s*(?:r\$\s*)?$", re.IGNORECASE)
+_ABRE_VALOR = re.compile(r"\(\s*(?:r\$\s*)?$", re.IGNORECASE)
+_DATA_COMPRA = re.compile(r"\b(?:compra|venda|pagamento|transacao)\b")
+_DATA_AUXILIAR = re.compile(r"\b(?:impressao|reimpressao|validade|vencimento)\b")
 _DATA = re.compile(r"(?<!\d)(\d{2})[/.\-](\d{2})[/.\-](\d{4}|\d{2})(?!\d)")
 _CNPJ = re.compile(r"\d{2}\.?\d{3}\.?\d{3}/?\d{4}-?\d{2}")
 
@@ -53,26 +58,40 @@ def _baixa_confianca(linha: Linha) -> bool:
 # --------------------------------------------------------------------------
 
 
+def _valores_da_linha(texto: str, padrao: re.Pattern[str]) -> list[str]:
+    valores = []
+    for numero in padrao.finditer(texto):
+        anterior = texto[:numero.start()]
+        posterior = texto[numero.end():]
+        negativo = (_SINAL_NEGATIVO.search(anterior)
+                    or (_ABRE_VALOR.search(anterior) and posterior.lstrip().startswith(")")))
+        valor = _decimal_de(numero.group())
+        valores.append(f"-{valor}" if negativo else valor)
+    return valores
+
+
 def extrair_valor_total(leitura: Leitura) -> Campo:
     nos_totais: dict[str, Linha] = {}
     em_qualquer_linha: list[str] = []
     for linha in leitura.linhas:
         normal = _sem_acento(linha.texto)
-        valores = [_decimal_de(v) for v in _DINHEIRO.findall(linha.texto)]
+        valores = _valores_da_linha(linha.texto, _DINHEIRO)
         if _TOTAL.search(normal) and not _NAO_E_TOTAL.search(normal):
-            valores = valores or [_decimal_de(v) for v in _DINHEIRO_PONTO.findall(linha.texto)]
+            valores.extend(_valores_da_linha(linha.texto, _DINHEIRO_PONTO))
             for valor in valores:
                 nos_totais.setdefault(valor, linha)
         em_qualquer_linha += [v for v in valores if v not in em_qualquer_linha]
 
-    positivos = {v: l for v, l in nos_totais.items() if float(v) > 0}
-    if len(positivos) == 1:
-        (valor, linha), = positivos.items()
+    if any(Decimal(valor) <= 0 for valor in nos_totais):
+        return Campo(estado="ambiguo", candidatos=list(nos_totais)[:5],
+                     motivo="há total zero ou negativo no comprovante")
+    if len(nos_totais) == 1:
+        (valor, linha), = nos_totais.items()
         if _baixa_confianca(linha):
             return Campo(estado="ambiguo", candidatos=[valor], motivo="leitura do total com baixa confiança")
         return Campo(estado="presente", valor=valor, trecho=linha.texto.strip()[:200])
-    if len(positivos) > 1:
-        return Campo(estado="ambiguo", candidatos=sorted(positivos)[:5],
+    if len(nos_totais) > 1:
+        return Campo(estado="ambiguo", candidatos=sorted(nos_totais)[:5],
                      motivo="mais de um valor em linhas de total")
     if em_qualquer_linha:
         return Campo(estado="ambiguo", candidatos=em_qualquer_linha[:5],
@@ -88,20 +107,47 @@ def extrair_valor_total(leitura: Leitura) -> Campo:
 def extrair_data(leitura: Leitura, hoje: date) -> Campo:
     validas: dict[str, Linha] = {}
     invalidas: list[str] = []
+    compras: list[tuple[Linha, re.Match[str]]] = []
+    outras: list[tuple[Linha, re.Match[str]]] = []
+    tem_auxiliares = False
     for linha in leitura.linhas:
-        for dia, mes, ano in _DATA.findall(linha.texto):
-            ano_completo = int(ano) + 2000 if len(ano) == 2 else int(ano)
-            bruto = f"{dia}/{mes}/{ano}"
-            try:
-                lida = date(ano_completo, int(mes), int(dia))
-            except ValueError:
-                invalidas.append(bruto)
-                continue
-            if lida > hoje or lida.year < 2000:
-                invalidas.append(bruto)
-                continue
-            validas.setdefault(lida.isoformat(), linha)
+        fim_anterior = 0
+        for encontrada in _DATA.finditer(linha.texto):
+            rotulo = _sem_acento(linha.texto[fim_anterior:encontrada.start()])
+            fim_anterior = encontrada.end()
+            if _DATA_AUXILIAR.search(rotulo):
+                tem_auxiliares = True
+            elif _DATA_COMPRA.search(rotulo):
+                compras.append((linha, encontrada))
+            else:
+                outras.append((linha, encontrada))
 
+    selecionadas = compras or outras
+    if not selecionadas and tem_auxiliares:
+        return Campo(estado="ambiguo", motivo="há apenas datas auxiliares no comprovante")
+
+    for linha, encontrada in selecionadas:
+        dia, mes, ano = encontrada.groups()
+        ano_completo = int(ano) + 2000 if len(ano) == 2 else int(ano)
+        bruto = encontrada.group()
+        try:
+            lida = date(ano_completo, int(mes), int(dia))
+        except ValueError:
+            invalidas.append(bruto)
+            continue
+        if lida > hoje or lida.year < 2000:
+            invalidas.append(bruto)
+            continue
+        validas.setdefault(lida.isoformat(), linha)
+
+    # Uma data válida sem rótulo e outra data auxiliar continuam ambíguas:
+    # só o rótulo de compra permite resolver o papel de cada data.
+    if not compras and tem_auxiliares and validas:
+        return Campo(estado="ambiguo", candidatos=list(validas)[:5],
+                     motivo="não foi possível distinguir a data da compra das datas auxiliares")
+    if invalidas:
+        return Campo(estado="ambiguo", candidatos=(list(validas) + invalidas)[:5],
+                     motivo="data da compra impossível, futura ou conflitante")
     if len(validas) == 1:
         (valor, linha), = validas.items()
         if _baixa_confianca(linha):
@@ -109,8 +155,6 @@ def extrair_data(leitura: Leitura, hoje: date) -> Campo:
         return Campo(estado="presente", valor=valor, trecho=linha.texto.strip()[:200])
     if len(validas) > 1:
         return Campo(estado="ambiguo", candidatos=sorted(validas)[:5], motivo="mais de uma data no comprovante")
-    if invalidas:
-        return Campo(estado="ambiguo", candidatos=invalidas[:5], motivo="data lida é impossível ou futura")
     return Campo(estado="ausente")
 
 
@@ -127,16 +171,26 @@ def _parece_nome(texto: str) -> bool:
 
 
 def extrair_estabelecimento(leitura: Leitura) -> Campo:
-    # 1) rótulo explícito ("Estabelecimento: ...")
+    # 1) rótulos explícitos têm precedência sobre o cabeçalho.
+    explicitos: dict[str, tuple[str, Linha]] = {}
     for linha in leitura.linhas:
         encontrado = _ROTULO_LOJA.match(_sem_acento(linha.texto).strip())
         if encontrado:
             inicio = len(linha.texto.strip()) - len(encontrado.group(2))
             nome = linha.texto.strip()[inicio:].strip(" .:-")
             if _parece_nome(nome):
-                if _baixa_confianca(linha):
-                    return Campo(estado="ambiguo", candidatos=[nome[:120]], motivo="leitura do nome com baixa confiança")
-                return Campo(estado="presente", valor=nome[:120], trecho=linha.texto.strip()[:200])
+                chave = " ".join(_sem_acento(nome).split())
+                existente = explicitos.get(chave)
+                if existente is None or existente[1].confianca < linha.confianca:
+                    explicitos[chave] = (nome, linha)
+    if len(explicitos) > 1:
+        return Campo(estado="ambiguo", candidatos=[nome[:120] for nome, _ in explicitos.values()][:5],
+                     motivo="mais de um estabelecimento identificado no comprovante")
+    if explicitos:
+        (nome, linha), = explicitos.values()
+        if _baixa_confianca(linha):
+            return Campo(estado="ambiguo", candidatos=[nome[:120]], motivo="leitura do nome com baixa confiança")
+        return Campo(estado="presente", valor=nome[:120], trecho=linha.texto.strip()[:200])
 
     # 2) cabeçalho: linhas antes do CNPJ, da data, de valores ou dos itens
     cabecalho = []
