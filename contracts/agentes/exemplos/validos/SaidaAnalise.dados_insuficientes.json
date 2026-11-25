@@ -1,0 +1,17 @@
+{
+  "schema": "SaidaAnalise",
+  "caso": "dados_insuficientes",
+  "descricao": "Falta marcar categorias essenciais.",
+  "documento": {
+    "versao": "1.0",
+    "status": "dados_insuficientes",
+    "afirmacoes": [],
+    "lacunas": [
+      {
+        "codigo": "sem_categoria_essencial",
+        "descricao": "Nenhuma categoria de despesa está marcada como essencial.",
+        "pergunta_complemento": "Quais categorias de despesa você considera essenciais (ex.: moradia, mercado)?"
+      }
+    ]
+  }
+}

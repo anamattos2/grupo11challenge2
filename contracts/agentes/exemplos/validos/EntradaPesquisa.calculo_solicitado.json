@@ -1,0 +1,32 @@
+{
+  "schema": "EntradaPesquisa",
+  "caso": "calculo_solicitado",
+  "descricao": "Research executa o cálculo pedido pela Analysis, sem planejar.",
+  "documento": {
+    "contexto": {
+      "correlation_id": "req-20261118-0001",
+      "usuaria_ref": "usuaria-ficticia-a",
+      "conversa_id": "conv-ficticia-01",
+      "permissoes": [
+        "documentos:ler",
+        "financeiro:ler"
+      ],
+      "data_referencia": "2026-11-18",
+      "memoria": []
+    },
+    "pergunta": "Quanto gastei com despesas essenciais em outubro e por que devo ter uma reserva de emergência?",
+    "chamadas_solicitadas": [
+      {
+        "ferramenta": "financeiro.consultar",
+        "operacao": "resumo_transacoes",
+        "parametros": {
+          "periodo_inicio": "2026-09-01",
+          "periodo_fim": "2026-09-30",
+          "tipo": "despesa",
+          "somente_essenciais": true
+        },
+        "pedido_id": "c1"
+      }
+    ]
+  }
+}
