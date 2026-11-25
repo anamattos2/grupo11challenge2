@@ -5,7 +5,7 @@ from decimal import Decimal
 from typing import Annotated, Any, Optional
 
 from django.db import transaction
-from django.db.models import Count, DecimalField, Q, RestrictedError, Sum, Value
+from django.db.models import Case, Count, DecimalField, Q, RestrictedError, Sum, Value, When, Window
 from django.db.models.functions import Coalesce
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
@@ -31,6 +31,10 @@ categorias_router = Router(tags=["categorias"])
 transacoes_router = Router(tags=["transações"])
 
 PADRAO_VALOR = r"^[0-9]{1,12}(\.[0-9]{1,2})?$"
+# Os totais somam valores de até 12 dígitos inteiros, então precisam de mais
+# espaço que um valor individual: até 18 dígitos inteiros (DecimalField 20,2).
+DIGITOS_TOTAL = 20
+PADRAO_TOTAL = r"^-?[0-9]{1,18}\.[0-9]{2}$"
 RESTRICAO_CATEGORIA_UNICA = "categoria_nome_unico_por_usuaria_tipo"
 CATEGORIA_DUPLICADA = {"detail": "Já existe uma categoria deste tipo com este nome."}
 CATEGORIA_EM_USO = {"detail": "Esta categoria possui transações vinculadas."}
@@ -150,10 +154,16 @@ class PeriodoOut(Schema):
     fim: Optional[date]
 
 
+TotalSaida = Annotated[
+    Decimal,
+    WithJsonSchema({"type": "string", "pattern": PADRAO_TOTAL, "examples": ["1250.40"]}),
+]
+
+
 class TotaisOut(Schema):
-    receitas: SaldoSaida
-    despesas: SaldoSaida
-    resultado: SaldoSaida
+    receitas: TotalSaida
+    despesas: TotalSaida
+    resultado: TotalSaida
 
 
 class ListaTransacoesOut(Schema):
@@ -209,12 +219,26 @@ def preencher_transacao(registro: Transacao, usuaria, dados: TransacaoIn) -> Tra
     return registro
 
 
+CAMPO_TOTAL = DecimalField(max_digits=DIGITOS_TOTAL, decimal_places=2)
+
+
 def somar(tipo: TipoLancamento):
     return Coalesce(
         Sum("valor", filter=Q(tipo=tipo)),
         Value(Decimal("0.00")),
-        output_field=DecimalField(max_digits=20, decimal_places=2),
+        output_field=CAMPO_TOTAL,
     )
+
+
+def somar_na_janela(tipo: TipoLancamento) -> Window:
+    """Soma de ``tipo`` sobre todo o filtro, repetida em cada linha da página.
+
+    A janela sem partição nem ordenação cobre todas as linhas filtradas, e o
+    PostgreSQL a calcula antes do LIMIT/OFFSET.
+    """
+    valor_do_tipo = Case(When(tipo=tipo, then="valor"), default=Value(Decimal("0.00")),
+                         output_field=CAMPO_TOTAL)
+    return Window(Sum(valor_do_tipo, output_field=CAMPO_TOTAL), output_field=CAMPO_TOTAL)
 
 
 @categorias_router.get("", response={200: list[CategoriaOut], **ERROS_LEITURA})
@@ -303,12 +327,30 @@ def listar_transacoes(request, filtros: Query[FiltrosIn]):
     if filtros.tipo:
         transacoes = transacoes.filter(tipo=filtros.tipo)
 
-    resumo = transacoes.aggregate(
-        receitas=somar(TipoLancamento.RECEITA),
-        despesas=somar(TipoLancamento.DESPESA),
-        quantidade=Count("id"),
-    )
+    # Itens, totais e quantidade saem da mesma consulta, logo do mesmo estado do
+    # banco: uma escrita concorrente não pode deixar a página e os totais
+    # incompatíveis. Só uma página vazia precisa da consulta de agregação.
     inicio = filtros.deslocamento
+    itens = list(
+        transacoes.select_related("categoria").annotate(
+            _total_receitas=somar_na_janela(TipoLancamento.RECEITA),
+            _total_despesas=somar_na_janela(TipoLancamento.DESPESA),
+            _quantidade=Window(Count("id")),
+        )[inicio : inicio + filtros.limite]
+    )
+    if itens:
+        primeiro = itens[0]
+        resumo = {
+            "receitas": primeiro._total_receitas,
+            "despesas": primeiro._total_despesas,
+            "quantidade": primeiro._quantidade,
+        }
+    else:
+        resumo = transacoes.aggregate(
+            receitas=somar(TipoLancamento.RECEITA),
+            despesas=somar(TipoLancamento.DESPESA),
+            quantidade=Count("id"),
+        )
     return {
         "periodo": {"inicio": filtros.data_inicio, "fim": filtros.data_fim},
         "moeda": "BRL",
@@ -320,7 +362,7 @@ def listar_transacoes(request, filtros: Query[FiltrosIn]):
         "quantidade": resumo["quantidade"],
         "limite": filtros.limite,
         "deslocamento": inicio,
-        "itens": list(transacoes.select_related("categoria")[inicio : inicio + filtros.limite]),
+        "itens": itens,
     }
 
 

@@ -1,9 +1,13 @@
 from datetime import date, timedelta
 from decimal import Decimal
+import json
+import threading
+from unittest import mock
 
+from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.db import IntegrityError, transaction
-from django.test import Client, TestCase
+from django.db import IntegrityError, connection, connections, transaction
+from django.test import Client, TestCase, TransactionTestCase
 from django.utils import timezone
 
 from financas.models import Categoria, ContaManual, TipoLancamento, Transacao
@@ -218,7 +222,7 @@ class TransacaoTests(BaseTransacoes):
     def test_recusa_valor_invalido(self):
         invalidos = [
             10.5, 10, None, True, "", "0", "0.00", "-1.00", "abc", "10,50", "1.234",
-            "1e3", "NaN", "Infinity", " 10.00", "10.00\n", "١٠", "1000000000000.00",
+            "1e3", "NaN", "Infinity", " 10.00", "10.00\n", "١٠", "1000000000000.00", "89.901",
         ]
 
         for valor in invalidos:
@@ -524,3 +528,117 @@ class IsolamentoDeTransacoesTests(BaseTransacoes):
 
         self.assertEqual([r.status_code for r in respostas], [403] * 3)
         self.assertEqual(Transacao.objects.count(), 2)
+
+
+CONTRATO = settings.BASE_DIR.parent.parent / "contracts" / "openapi.json"
+
+
+class TotaisNoContratoTests(BaseTransacoes):
+    """Revisão do PR #127: os totais não podem usar o formato do valor individual."""
+
+    def padrao_publicado(self, campo):
+        esquemas = json.loads(CONTRATO.read_text(encoding="utf-8"))["components"]["schemas"]
+        return esquemas["TotaisOut"]["properties"][campo]["pattern"]
+
+    def test_total_acima_de_12_digitos_respeita_o_contrato_publicado(self):
+        for _ in range(2):
+            self.transacao(categoria=self.salario, valor=Decimal("600000000000.00"))
+        self.transacao(valor=Decimal("999999999999.99"))
+
+        totais = self.client.get("/api/transacoes").json()["totais"]
+
+        self.assertEqual(totais, {"receitas": "1200000000000.00", "despesas": "999999999999.99",
+                                  "resultado": "200000000000.01"})
+        for campo, valor in totais.items():
+            with self.subTest(campo=campo):
+                self.assertRegex(valor, self.padrao_publicado(campo))
+
+    def test_total_negativo_e_zero_respeitam_o_contrato_publicado(self):
+        self.transacao(valor=Decimal("600000000000.00"))
+        self.transacao(valor=Decimal("600000000000.00"))
+
+        totais = self.client.get("/api/transacoes").json()["totais"]
+
+        self.assertEqual(totais["resultado"], "-1200000000000.00")
+        self.assertEqual(totais["receitas"], "0.00")
+        for campo, valor in totais.items():
+            self.assertRegex(valor, self.padrao_publicado(campo))
+
+    def test_pagina_vazia_mantem_os_totais_do_filtro(self):
+        self.transacao(valor=Decimal("10.00"))
+        self.transacao(valor=Decimal("5.50"))
+
+        corpo = self.client.get("/api/transacoes?deslocamento=10").json()
+
+        self.assertEqual(corpo["itens"], [])
+        self.assertEqual((corpo["quantidade"], corpo["totais"]["despesas"]), (2, "15.50"))
+
+
+class ConflitoDeNomeDeCategoriaTests(BaseTransacoes):
+    def test_outra_restricao_unica_nao_vira_nome_duplicado(self):
+        # Revisão do PR #127: só a restrição de nome único da categoria responde 409.
+        def viola_conta_unica(*args, **kwargs):
+            for _ in range(2):
+                ContaManual.objects.create(usuaria=self.ana, nome="Repetida", tipo="corrente",
+                                           saldo_declarado=Decimal("0.00"))
+
+        cliente = Client(raise_request_exception=False)
+        cliente.force_login(self.ana)
+        with mock.patch.object(Categoria, "save", viola_conta_unica):
+            resposta = self.enviar("post", "/api/categorias", {"nome": "Nova", "tipo": "despesa"}, cliente)
+
+        self.assertEqual(resposta.status_code, 500)
+
+    def test_nome_repetido_continua_respondendo_409(self):
+        resposta = self.enviar("post", "/api/categorias", {"nome": "mercado", "tipo": "despesa"})
+
+        self.assertEqual(resposta.status_code, 409)
+
+
+class ListagemConsistenteTests(TransactionTestCase):
+    """Revisão do PR #127: itens e totais saem do mesmo estado do banco.
+
+    Uma transação é gravada, por outra conexão, logo depois da primeira leitura
+    da tabela feita pela listagem. Com duas consultas (totais e depois itens), a
+    segunda já enxergaria o registro novo e a resposta ficaria incoerente.
+    """
+
+    def setUp(self):
+        Usuaria = get_user_model()
+        self.ana = Usuaria.objects.create_user("ana.ficticia")
+        self.mercado = Categoria.objects.create(usuaria=self.ana, nome="Mercado", tipo=DESPESA)
+        for valor in ("10.00", "20.00"):
+            Transacao.objects.create(usuaria=self.ana, categoria=self.mercado, tipo=DESPESA,
+                                     valor=Decimal(valor), data=date(2026, 3, 10))
+        self.client.force_login(self.ana)
+
+    def gravar_por_outra_conexao(self):
+        def gravar():
+            try:
+                Transacao.objects.create(usuaria=self.ana, categoria=self.mercado, tipo=DESPESA,
+                                         valor=Decimal("1000.00"), data=date(2026, 3, 11))
+            finally:
+                connections.close_all()
+
+        tarefa = threading.Thread(target=gravar)
+        tarefa.start()
+        tarefa.join()
+
+    def test_escrita_concorrente_nao_separa_itens_e_totais(self):
+        gravou = []
+
+        def depois_da_primeira_leitura(execute, sql, params, many, context):
+            resultado = execute(sql, params, many, context)
+            if not gravou and sql.lstrip().upper().startswith("SELECT") and '"financas_transacao"' in sql:
+                gravou.append(True)
+                self.gravar_por_outra_conexao()
+            return resultado
+
+        with connection.execute_wrapper(depois_da_primeira_leitura):
+            corpo = self.client.get("/api/transacoes").json()
+
+        self.assertTrue(gravou)
+        soma_dos_itens = sum(Decimal(item["valor"]) for item in corpo["itens"])
+        self.assertEqual(corpo["quantidade"], len(corpo["itens"]))
+        self.assertEqual(Decimal(corpo["totais"]["despesas"]), soma_dos_itens)
+        self.assertEqual(Transacao.objects.count(), 3)

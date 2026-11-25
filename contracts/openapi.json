@@ -530,25 +530,25 @@
         "properties": {
           "despesas": {
             "examples": [
-              "1500.50"
+              "1250.40"
             ],
-            "pattern": "^-?[0-9]{1,12}(\\.[0-9]{1,2})?$",
+            "pattern": "^-?[0-9]{1,18}\\.[0-9]{2}$",
             "title": "Despesas",
             "type": "string"
           },
           "receitas": {
             "examples": [
-              "1500.50"
+              "1250.40"
             ],
-            "pattern": "^-?[0-9]{1,12}(\\.[0-9]{1,2})?$",
+            "pattern": "^-?[0-9]{1,18}\\.[0-9]{2}$",
             "title": "Receitas",
             "type": "string"
           },
           "resultado": {
             "examples": [
-              "1500.50"
+              "1250.40"
             ],
-            "pattern": "^-?[0-9]{1,12}(\\.[0-9]{1,2})?$",
+            "pattern": "^-?[0-9]{1,18}\\.[0-9]{2}$",
             "title": "Resultado",
             "type": "string"
           }
