@@ -3,8 +3,9 @@
 Avaliador: Codex. Data: 23/11/2026. Escopo: as 36 saídas entregues ou
 abstenções da rodada oficial, registrada no commit
 `b402ebfa130f3b89d7aef50c0291356dc6ffcb2f`. Julgamento pelo gabarito v1.0.0
-e pela regra estrita aprovada para pedidos fora de escopo. A revisão humana
-dos resultados permanece pendente.
+e pela regra estrita aprovada para pedidos fora de escopo. A validação
+humana dos julgamentos e da M06 foi registrada por `anamattos2` em
+25/11/2026. [Registro do aceite na #73](https://github.com/anamattos2/grupo11challenge2/issues/73#issuecomment-7170197834)
 
 ## Resultado por caso
 
@@ -122,4 +123,4 @@ critério do caso sobre apresentar um percentual antes de obter a renda.
 
 A M06 alta no estruturado decorre da reprodução de trechos e pode
 coexistir com aprovação zero. Os totais dependem da unidade de
-segmentação declarada acima e ficam sujeitos à validação humana.
+segmentação declarada acima e foram aceitos na validação registrada.

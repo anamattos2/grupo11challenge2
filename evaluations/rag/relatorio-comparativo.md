@@ -1,6 +1,6 @@
 # Relatório comparativo de LLM e RAG
 
-**Semana 3 · Rodada oficial de 23/11/2026 · Validação humana pendente**
+**Semana 3 · Rodada oficial de 23/11/2026 · Validação humana em 25/11/2026**
 
 ## Resultados oficiais
 
@@ -126,7 +126,8 @@ esta rodada. A triagem experimental ficou fora da rodada oficial. Nas duas varia
 a recuperação da página esperada no top 5 caiu de 4/4 na calibração para
 5/8 na rodada oficial, mesmo com todas as referências presentes no índice.
 
-Codex fez a revisão assistida. A equipe ainda precisa validar os
-julgamentos e registrar os revisores humanos. Os JSONL brutos da rodada
+Codex fez a revisão assistida. Em 25/11/2026, `anamattos2` validou os
+julgamentos e a M06. [Registro do aceite na #73](https://github.com/anamattos2/grupo11challenge2/issues/73#issuecomment-7170197834)
+Os JSONL brutos da rodada
 oficial permanecem em `.runtime/avaliacoes/issue-73/oficial-2026-11-23/`.
 Veja o [relatório de qualidade](avaliacao-qualidade.md) para as evidências.

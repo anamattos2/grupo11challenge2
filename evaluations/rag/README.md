@@ -39,13 +39,14 @@ caso da avaliação.
 
 ## Revisores
 
-A revisão humana está pendente. O responsável pela issue coordena a indicação
-dos revisores no PR.
+Na rodada oficial, Codex fez a revisão assistida e `anamattos2` validou
+os julgamentos e a M06 em 25/11/2026. [Registro do aceite na #73](https://github.com/anamattos2/grupo11challenge2/issues/73#issuecomment-7170197834)
+As funções abaixo orientam a indicação de revisores em novas rodadas.
 
 | Função | Responsabilidade | Identificação |
 | --- | --- | --- |
-| Revisor de conteúdo | Conferir unicidade, escopo e suporte nas páginas do catálogo | A indicar pela equipe |
-| Revisor de avaliação | Conferir a separação das partições, os critérios e o tratamento de falhas | A indicar pela equipe |
+| Revisor de conteúdo | Conferir unicidade, escopo e suporte nas páginas do catálogo | A definir por rodada |
+| Revisor de avaliação | Conferir a separação das partições, os critérios e o tratamento de falhas | A definir por rodada |
 
 Registre no PR o nome ou login de quem revisou, o commit revisado, a data e as
 decisões sobre divergências. Congele a versão após essa revisão e antes de
@@ -64,4 +65,4 @@ A [comparação de qualidade e citações](avaliacao-qualidade.md) registra a
 calibração das três variantes e os denominadores da revisão.
 
 O [relatório comparativo da semana 3](relatorio-comparativo.md) consolida
-a calibração de 18/11 e a rodada oficial de 23/11, com validação humana pendente.
+a calibração de 18/11 e a rodada oficial de 23/11, validada em 25/11.

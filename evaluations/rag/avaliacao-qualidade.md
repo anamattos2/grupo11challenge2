@@ -119,5 +119,6 @@ contagem de cobertura de suporte por afirmação.
 As oito páginas de referência estavam presentes na coleção. O RAG
 estruturado reproduziu os trechos citados, mas a seleção de passagens
 não satisfez integralmente o gabarito em nenhum caso desta rodada.
-A revisão foi assistida por Codex e aguarda validação humana.
+Codex fez a revisão assistida. Em 25/11/2026, `anamattos2` validou os
+julgamentos pelo gabarito e a contagem da M06. [Registro do aceite na #73](https://github.com/anamattos2/grupo11challenge2/issues/73#issuecomment-7170197834)
 Os JSONL brutos permanecem em `.runtime/avaliacoes/issue-73/oficial-2026-11-23/`.
