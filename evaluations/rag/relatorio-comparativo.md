@@ -17,7 +17,7 @@ selecionadas. As respostas entregues ainda ficaram aquém do gabarito.
 | Respostas adequadas a dados faltantes ou fora de escopo | 1/4 | 0/4 | 0/4 |
 | Referências com localização verificada | N/A | 8/8 | 13/13 |
 | M05 · Pares afirmação–citação sustentados | N/A | 2/8 | 13/13 |
-| M06 · Afirmações com suporte identificável | 9/12 | 8/12 | 9/9 |
+| M06 · Afirmações com suporte / afirmações avaliadas | 9/12 | 8/12 | 9/9 |
 | Página esperada no top 5 | N/A | 5/8 | 5/8 |
 | Abstenções do executor | 0/12 | 4/12 | 3/12 |
 | Falhas técnicas | 0/12 | 0/12 | 0/12 |
@@ -27,7 +27,8 @@ Os 12 casos oficiais usaram o mesmo código, modelo, prompt, parâmetros
 e coleção registrados para a calibração. Nenhum caso foi excluído.
 A [revisão caso a caso](revisao-avaliacao-oficial.md) documenta as
 contagens e os critérios. No estruturado, M05 e M06 refletem a
-fidelidade das passagens reproduzidas. A aprovação integral também
+fidelidade das passagens reproduzidas. A unidade de M06 é a afirmação.
+A aprovação integral também
 exige que as passagens escolhidas respondam à pergunta.
 
 ## Resultados de calibração de 18/11/2026
@@ -60,16 +61,18 @@ detalha o julgamento, as abstenções e as latências.
 ## Configuração e evidências
 
 - **Dataset e gabarito v1.0.0.** Seis perguntas de calibração, sendo quatro
-  com evidência, uma com dados insuficientes e uma fora de escopo. Os
-  doze casos oficiais permanecem reservados. [Dataset](dataset.json) · [Gabarito](gabarito.json)
+  com evidência, uma com dados insuficientes e uma fora de escopo. A rodada
+  oficial executou 12 casos: oito com evidência, dois com dados insuficientes
+  e dois fora de escopo. [Dataset](dataset.json) · [Gabarito](gabarito.json)
 - **Código executado.** Commit `b402ebfa130f3b89d7aef50c0291356dc6ffcb2f`.
   [Baseline](baseline-llm.md) · [RAG](variante-rag.md) · [Explicação estruturada](explicacao-estruturada.md)
 - **Ambiente e parâmetros.** Ollama 0.32.5, Qwen2.5 3B Q4_K_M, prompt base
   `direto-v2`, temperatura 0, seed 42, 256 tokens de saída e contexto
   de 2.048 tokens. Os dois RAGs usaram top 5 e limiar 0,85.
 - **Acervo.** Coleção acadêmica local de 20 PDFs, com 27 páginas selecionadas
-  e 87 trechos. As duas variantes RAG receberam os mesmos trechos. As quatro
-  páginas de referência estavam disponíveis. [Catálogo](../../knowledge/catalogo.json)
+  e 87 trechos. As duas variantes RAG receberam os mesmos trechos. A coleção
+  continha as quatro páginas de referência da calibração e as oito da rodada
+  oficial. [Catálogo](../../knowledge/catalogo.json)
 - **Identificadores e reprodução.** O relatório da #73 registra o digest do
   modelo, o hash do dataset, o nome da coleção e os comandos. Os três JSONL
   brutos ficam em `.runtime/avaliacoes/issue-73/`. [Registro da execução](avaliacao-qualidade.md)
@@ -119,7 +122,9 @@ saídas e os trechos recuperados permanecem em `.runtime/avaliacoes/` e
 A calibração tem seis casos e a avaliação oficial tem 12. Cada variante
 teve uma execução por partição na configuração comparável. A seleção
 acadêmica de páginas limita a generalização, e as contagens descrevem
-esta rodada. A triagem experimental ficou fora da rodada oficial.
+esta rodada. A triagem experimental ficou fora da rodada oficial. Nas duas variantes RAG,
+a recuperação da página esperada no top 5 caiu de 4/4 na calibração para
+5/8 na rodada oficial, mesmo com todas as referências presentes no índice.
 
 Codex fez a revisão assistida. A equipe ainda precisa validar os
 julgamentos e registrar os revisores humanos. Os JSONL brutos da rodada
