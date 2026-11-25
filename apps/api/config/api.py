@@ -2,9 +2,13 @@
 from django.db import DatabaseError, connection
 from ninja import NinjaAPI, Schema
 
+from autenticacao.api import router as autenticacao_router
+from autenticacao.api import sessao
 from comprovantes.api import router as comprovantes_router
 
-api = NinjaAPI(title="Grupo 11 - API financeira", version="0.1.0")
+# Toda rota exige sessão, salvo as marcadas explicitamente com auth=None.
+api = NinjaAPI(title="Grupo 11 - API financeira", version="0.1.0", auth=sessao)
+api.add_router("/auth", autenticacao_router)
 api.add_router("/comprovantes", comprovantes_router)
 
 
@@ -13,7 +17,12 @@ class HealthOut(Schema):
     database: str
 
 
-@api.get("/health", response={200: HealthOut, 503: HealthOut}, tags=["operação"])
+@api.get(
+    "/health",
+    response={200: HealthOut, 503: HealthOut},
+    tags=["operação"],
+    auth=None,
+)
 def health(request):
     """Informa se a API está no ar e consegue consultar o PostgreSQL."""
     try:

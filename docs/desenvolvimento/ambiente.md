@@ -82,6 +82,7 @@ consome essas variáveis.
 | DJANGO_SECRET_KEY | troque-esta-chave-local | Chave do Django; obrigatória |
 | DJANGO_DEBUG | true | Modo de depuração; `false` se ausente |
 | DJANGO_ALLOWED_HOSTS | localhost,127.0.0.1 | Hosts aceitos, separados por vírgula |
+| DJANGO_CSRF_TRUSTED_ORIGINS | http://localhost:5173 | Origens do frontend aceitas em escritas, separadas por vírgula; opcional |
 | POSTGRES_DB | grupo11 | Nome do banco; obrigatória |
 | POSTGRES_USER | grupo11 | Usuário do banco; obrigatória |
 | POSTGRES_PASSWORD | troque-esta-senha-local | Senha do banco; obrigatória |
@@ -92,8 +93,10 @@ consome essas variáveis.
 | COMPROVANTES_RETENCAO_HORAS | 72 | Prazo até a imagem vencer e ser apagada pela limpeza |
 | COMPROVANTES_ENVIOS_POR_HORA | 30 | Limite de envios por usuária |
 
-Não adicionar credenciais reais ao exemplo. Modelos, autenticação, retenção de
-imagens e cache PWA ainda dependem das decisões registradas na arquitetura.
+Com `DJANGO_DEBUG=false`, os cookies de sessão e CSRF só trafegam por HTTPS.
+
+Não adicionar credenciais reais ao exemplo. Modelos, retenção de imagens e cache
+PWA ainda dependem das decisões registradas na arquitetura.
 
 ## Organização incremental
 
